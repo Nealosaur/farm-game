@@ -57,3 +57,11 @@ func test_missing_keys_use_defaults() -> void:
 func test_no_file_returns_false() -> void:
 	assert_false(SaveManager.load_game())
 	assert_false(SaveManager.has_save())
+
+
+func test_version_mismatch_warns_but_loads() -> void:
+	var f := FileAccess.open(TEST_PATH, FileAccess.WRITE)
+	f.store_string('{"save_version": 99, "day": 4}')
+	f.close()
+	assert_true(SaveManager.load_game())
+	assert_eq(Clock.day, 4)

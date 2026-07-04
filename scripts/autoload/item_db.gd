@@ -20,7 +20,7 @@ func _load_dir(path: String, into: Dictionary) -> void:
 		push_warning("ItemDB: missing dir " + path)
 		return
 	for f in dir.get_files():
-		var fname := f.trim_suffix(".remap")
+		var fname := f
 		if not fname.ends_with(".tres"):
 			continue
 		var res: Resource = load(path + "/" + fname)

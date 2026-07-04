@@ -53,7 +53,8 @@ const CROPS := {
 
 
 func _init() -> void:
-	DirAccess.make_dir_recursive_absolute(OUT)
+	var dir_err := DirAccess.make_dir_recursive_absolute(OUT)
+	assert(dir_err == OK, "Cannot create " + OUT)
 	var count := 0
 	for n: String in TILES:
 		_write(n, 16, 16, Color(TILES[n]))
@@ -81,4 +82,5 @@ func _write(name: String, w: int, h: int, c: Color) -> void:
 	for y in h:
 		img.set_pixel(0, y, dark)
 		img.set_pixel(w - 1, y, dark)
-	img.save_png(OUT + name + ".png")
+	var err := img.save_png(OUT + name + ".png")
+	assert(err == OK, "Failed to write " + name)

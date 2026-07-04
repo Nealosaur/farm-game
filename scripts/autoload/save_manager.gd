@@ -5,6 +5,10 @@ extends Node
 const SAVE_VERSION := 1
 
 var save_path := "user://save1.json"
+## World-data contract (Plan 2+): scenes WRITE SaveManager.world[key] just before
+## save_game() fires (and on scene exit); scenes READ world.get(key, default) in
+## _ready(). No signal is emitted on load — callers must sequence scene loads
+## AFTER load_game()/new_game() completes.
 var world := {}  # map-owned persistent blobs (farm grid etc.), set by scenes
 
 
@@ -54,6 +58,9 @@ func load_game() -> bool:
 	if data == null or typeof(data) != TYPE_DICTIONARY:
 		push_warning("SaveManager: corrupt save file")
 		return false
+	var version := int(data.get("save_version", 0))
+	if version != SAVE_VERSION:
+		push_warning("SaveManager: save version %d != expected %d — loading with defaults for missing fields" % [version, SAVE_VERSION])
 	Clock.day = int(data.get("day", 1))
 	Clock.minutes = int(data.get("minutes", Clock.DAY_START_MINUTES))
 	GameState.from_dict(data.get("state", {}))

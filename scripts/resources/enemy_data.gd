@@ -1,5 +1,7 @@
 class_name EnemyData
 extends Resource
+## Sprite convention: assets/placeholder/char_<id>.png (single placeholder frame);
+## Plan 3 combat scenes resolve enemy visuals by this id-based convention.
 
 @export var id: String = ""
 @export var display_name: String = ""
