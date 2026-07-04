@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ToolData" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/placeholder/item_wooden_sword.png" id="1_ddwwj"]
+[ext_resource type="Script" path="res://scripts/resources/tool_data.gd" id="2_q4h6c"]
+
+[resource]
+script = ExtResource("2_q4h6c")
+tool_type = 2
+rp_cost = 3
+damage = 5
+id = "wooden_sword"
+display_name = "Wooden Sword"
+icon = ExtResource("1_ddwwj")
+max_stack = 1

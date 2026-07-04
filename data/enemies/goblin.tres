@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="EnemyData" format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/enemy_data.gd" id="1_4y8k2"]
+
+[resource]
+script = ExtResource("1_4y8k2")
+id = "goblin"
+display_name = "Goblin"
+max_hp = 35
+damage = 10
+speed = 45.0
+xp = 20
+gold_min = 8
+gold_max = 15
+drop_item_id = "goblin_fang"
+drop_chance = 0.4

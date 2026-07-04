@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="ToolData" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/placeholder/item_iron_sword.png" id="1_d3ohw"]
+[ext_resource type="Script" path="res://scripts/resources/tool_data.gd" id="2_fe1x0"]
+
+[resource]
+script = ExtResource("2_fe1x0")
+tool_type = 2
+rp_cost = 3
+damage = 11
+id = "iron_sword"
+display_name = "Iron Sword"
+icon = ExtResource("1_d3ohw")
+max_stack = 1
+buy_price = 2500

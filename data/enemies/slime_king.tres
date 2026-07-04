@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="EnemyData" format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/enemy_data.gd" id="1_qlqij"]
+
+[resource]
+script = ExtResource("1_qlqij")
+id = "slime_king"
+display_name = "Slime King"
+max_hp = 300
+damage = 14
+speed = 30.0
+xp = 150
+gold_min = 200
+gold_max = 300
+drop_item_id = "slime_gel"
+drop_chance = 1.0

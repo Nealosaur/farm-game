@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="SeedData" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/placeholder/item_turnip_seeds.png" id="1_x26w5"]
+[ext_resource type="Script" path="res://scripts/resources/seed_data.gd" id="2_aeoep"]
+
+[resource]
+script = ExtResource("2_aeoep")
+crop_id = "turnip"
+id = "turnip_seeds"
+display_name = "Turnip Seeds"
+icon = ExtResource("1_x26w5")
+buy_price = 20
+sell_price = 10

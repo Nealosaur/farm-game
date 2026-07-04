@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="CropData" format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/crop_data.gd" id="1_0v37i"]
+
+[resource]
+script = ExtResource("1_0v37i")
+id = "carrot"
+stage_days = Array[int]([1, 2, 2])
+product_id = "carrot"

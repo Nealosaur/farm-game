@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EnemyData" format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/enemy_data.gd" id="1_0oe32"]
+
+[resource]
+script = ExtResource("1_0oe32")
+id = "wisp"
+display_name = "Wisp"
+max_hp = 14
+damage = 6
+speed = 60.0
+xp = 12
+gold_min = 4
+gold_max = 8
+drop_item_id = "wisp_dust"

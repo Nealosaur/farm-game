@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/placeholder/item_slime_gel.png" id="1_55oee"]
+[ext_resource type="Script" path="res://scripts/resources/item_data.gd" id="2_hf38m"]
+
+[resource]
+script = ExtResource("2_hf38m")
+id = "slime_gel"
+display_name = "Slime Gel"
+icon = ExtResource("1_55oee")
+sell_price = 15

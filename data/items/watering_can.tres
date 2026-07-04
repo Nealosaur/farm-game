@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="ToolData" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/placeholder/item_watering_can.png" id="1_khya3"]
+[ext_resource type="Script" path="res://scripts/resources/tool_data.gd" id="2_qhcmd"]
+
+[resource]
+script = ExtResource("2_qhcmd")
+tool_type = 1
+id = "watering_can"
+display_name = "Watering Can"
+icon = ExtResource("1_khya3")
+max_stack = 1
