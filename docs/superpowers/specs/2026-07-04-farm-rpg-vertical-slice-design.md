@@ -116,6 +116,8 @@ No seasons in the slice: one endless "spring."
 - In-game clock 6:00 AM → 2:00 AM; ~14 real minutes per full day.
 - Sleep in bed any time → day rollover (crops advance, shipping pays,
   enemies respawn, autosave).
+- Sleep restores HP and RP to full. Collapse (HP 0 or 2:00 AM) also rolls the
+  day over but restores RP only to half of max (HP to full).
 - Clock pauses in menus and dialogs.
 
 ## 8. Economy
@@ -175,7 +177,9 @@ extra states (Slam, Summon).
 ### Farming implementation
 
 `FarmGrid` node on the farm map: `Dictionary[Vector2i → SoilPlot]` where
-SoilPlot = { tilled, watered, crop_id, stage, }. Rendering via TileMapLayer
+SoilPlot = { tilled, watered, crop_id, stage, days_in_stage } —
+`days_in_stage` counts watered days toward the current stage, so stages
+longer than one day work. Rendering via TileMapLayer
 (soil/water overlay) + one crop Sprite2D per planted plot. Listens to
 `EventBus.day_passed` for growth/reset. Serializes directly into the save.
 
