@@ -21,6 +21,7 @@ var _chain := 0
 var _time_since_last_swing := MAX_GAP + 1.0
 var _pending_damage := 0
 var _pending_knockback := 0.0
+var _base_knockback: float = -1.0  # captured once from the export default
 
 
 func _process(delta: float) -> void:
@@ -30,11 +31,14 @@ func _process(delta: float) -> void:
 
 
 func begin_swing(tool_data: ToolData) -> void:
+	if _base_knockback < 0.0:
+		_base_knockback = player.sword_hitbox.knockback_force
 	if _time_since_last_swing > MAX_GAP:
 		_chain = 0
 	_chain = mini(_chain + 1, MAX_CHAIN)
+	_time_since_last_swing = 0.0
 	_pending_damage = GameState.attack + tool_data.damage
-	_pending_knockback = player.sword_hitbox.knockback_force
+	_pending_knockback = _base_knockback
 	if _chain == MAX_CHAIN:
 		_pending_knockback *= THIRD_HIT_KNOCKBACK_MULT
 
@@ -47,7 +51,6 @@ func enter() -> void:
 	_elapsed = 0.0
 	_hitbox_on = false
 	_buffered = false
-	_time_since_last_swing = 0.0
 	player.velocity = Vector2.ZERO
 	player.play_anim("use")
 	player.sword_hitbox.position = Vector2(player.facing) * 14.0

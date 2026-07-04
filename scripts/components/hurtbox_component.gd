@@ -20,12 +20,28 @@ func _ready() -> void:
 	area_entered.connect(_on_area_entered)
 
 
+func _physics_process(_delta: float) -> void:
+	# Godot does not fire area_entered for areas that were ALREADY overlapping
+	# at the instant monitoring/monitorable flips on (e.g. a melee hitbox that
+	# activates directly on top of a stationary enemy). Poll as a safety net;
+	# _invincible dedupes so this never double-hits during one active window.
+	if _invincible or not monitoring:
+		return
+	for area in get_overlapping_areas():
+		if area is HitboxComponent:
+			_register_hit(area as HitboxComponent)
+			return
+
+
 func _on_area_entered(area: Area2D) -> void:
 	if not (area is HitboxComponent):
 		return
 	if _invincible:
 		return
-	var hitbox := area as HitboxComponent
+	_register_hit(area as HitboxComponent)
+
+
+func _register_hit(hitbox: HitboxComponent) -> void:
 	var origin: Node2D = owner if owner != null else get_parent()
 	var knockback := Vector2.ZERO
 	if origin is Node2D:

@@ -63,7 +63,7 @@ func setup(enemy_data: EnemyData) -> void:
 	((hurtbox.get_node("Shape") as CollisionShape2D).shape as RectangleShape2D).size = Vector2(14, 12)
 	hurtbox.position = Vector2(0, -6)
 	hurtbox.collision_layer = Layers.bit(Layers.ENEMY_HURTBOX)
-	hurtbox.collision_mask = 0
+	hurtbox.collision_mask = Layers.bit(Layers.PLAYER_HITBOX)
 	hurtbox.hit_taken.connect(_on_hurtbox_hit_taken)
 
 	(hitbox.get_node("Shape") as CollisionShape2D).shape = RectangleShape2D.new()
