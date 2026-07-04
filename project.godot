@@ -1,0 +1,125 @@
+; Engine configuration file.
+config_version=5
+
+[application]
+
+config/name="farm-rpg"
+config/features=PackedStringArray("4.6", "GL Compatibility")
+
+[display]
+
+window/size/viewport_width=640
+window/size/viewport_height=360
+window/size/window_width_override=1280
+window/size/window_height_override=720
+window/stretch/mode="canvas_items"
+window/stretch/scale_mode="integer"
+
+[input]
+
+move_up={
+"deadzone": 0.2,
+"events": [Object(InputEventKey,"physical_keycode":87)]
+}
+move_down={
+"deadzone": 0.2,
+"events": [Object(InputEventKey,"physical_keycode":83)]
+}
+move_left={
+"deadzone": 0.2,
+"events": [Object(InputEventKey,"physical_keycode":65)]
+}
+move_right={
+"deadzone": 0.2,
+"events": [Object(InputEventKey,"physical_keycode":68)]
+}
+use_item={
+"deadzone": 0.2,
+"events": [Object(InputEventMouseButton,"button_index":1), Object(InputEventKey,"physical_keycode":74)]
+}
+interact={
+"deadzone": 0.2,
+"events": [Object(InputEventKey,"physical_keycode":69)]
+}
+dodge={
+"deadzone": 0.2,
+"events": [Object(InputEventKey,"physical_keycode":32)]
+}
+inventory={
+"deadzone": 0.2,
+"events": [Object(InputEventKey,"physical_keycode":4194306)]
+}
+pause={
+"deadzone": 0.2,
+"events": [Object(InputEventKey,"physical_keycode":4194305)]
+}
+hotbar_1={
+"deadzone": 0.2,
+"events": [Object(InputEventKey,"physical_keycode":49)]
+}
+hotbar_2={
+"deadzone": 0.2,
+"events": [Object(InputEventKey,"physical_keycode":50)]
+}
+hotbar_3={
+"deadzone": 0.2,
+"events": [Object(InputEventKey,"physical_keycode":51)]
+}
+hotbar_4={
+"deadzone": 0.2,
+"events": [Object(InputEventKey,"physical_keycode":52)]
+}
+hotbar_5={
+"deadzone": 0.2,
+"events": [Object(InputEventKey,"physical_keycode":53)]
+}
+hotbar_6={
+"deadzone": 0.2,
+"events": [Object(InputEventKey,"physical_keycode":54)]
+}
+hotbar_7={
+"deadzone": 0.2,
+"events": [Object(InputEventKey,"physical_keycode":55)]
+}
+hotbar_8={
+"deadzone": 0.2,
+"events": [Object(InputEventKey,"physical_keycode":56)]
+}
+hotbar_9={
+"deadzone": 0.2,
+"events": [Object(InputEventKey,"physical_keycode":57)]
+}
+hotbar_10={
+"deadzone": 0.2,
+"events": [Object(InputEventKey,"physical_keycode":48)]
+}
+hotbar_next={
+"deadzone": 0.2,
+"events": [Object(InputEventMouseButton,"button_index":5)]
+}
+hotbar_prev={
+"deadzone": 0.2,
+"events": [Object(InputEventMouseButton,"button_index":4)]
+}
+debug_gold={
+"deadzone": 0.2,
+"events": [Object(InputEventKey,"physical_keycode":4194332)]
+}
+debug_skip_day={
+"deadzone": 0.2,
+"events": [Object(InputEventKey,"physical_keycode":4194333)]
+}
+debug_teleport={
+"deadzone": 0.2,
+"events": [Object(InputEventKey,"physical_keycode":4194334)]
+}
+debug_refill={
+"deadzone": 0.2,
+"events": [Object(InputEventKey,"physical_keycode":4194335)]
+}
+
+[rendering]
+
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
+textures/canvas_textures/default_texture_filter=0
