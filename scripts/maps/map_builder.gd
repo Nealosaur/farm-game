@@ -38,6 +38,9 @@ static func build_tileset() -> Dictionary:
 		var src := TileSetAtlasSource.new()
 		src.texture = load(TILE_TEXTURES[tile_name])
 		src.texture_region_size = Vector2i(TILE, TILE)
+		# ORDER MATTERS: the source must be added to the TileSet BEFORE
+		# create_tile(), or TileData won't see the physics layer and
+		# add_collision_polygon errors with "physics.size() = 0" (Godot 4.6).
 		ids[tile_name] = ts.add_source(src)
 		src.create_tile(Vector2i.ZERO)
 		if tile_name in SOLID:
