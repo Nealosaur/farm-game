@@ -125,6 +125,7 @@ Clock="*res://scripts/autoload/clock.gd"
 GameState="*res://scripts/autoload/game_state.gd"
 ItemDB="*res://scripts/autoload/item_db.gd"
 Inventory="*res://scripts/autoload/inventory.gd"
+SaveManager="*res://scripts/autoload/save_manager.gd"
 
 [editor_plugins]
 

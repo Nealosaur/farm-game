@@ -1,0 +1,67 @@
+extends Node
+## Single-slot JSON save. Forward compatible: every read uses .get() defaults,
+## so old saves survive new keys. Never crashes on a bad file.
+
+const SAVE_VERSION := 1
+
+var save_path := "user://save1.json"
+var world := {}  # map-owned persistent blobs (farm grid etc.), set by scenes
+
+
+func new_game() -> void:
+	Clock.day = 1
+	Clock.minutes = Clock.DAY_START_MINUTES
+	world = {}
+	GameState.reset_new_game()
+	Inventory.reset()
+	Inventory.add_item("hoe")
+	Inventory.add_item("watering_can")
+	Inventory.add_item("wooden_sword")
+	Inventory.add_item("turnip_seeds", 5)
+
+
+func save_game() -> bool:
+	var data := {
+		"save_version": SAVE_VERSION,
+		"day": Clock.day,
+		"minutes": Clock.minutes,
+		"state": GameState.to_dict(),
+		"inventory": Inventory.to_dict(),
+		"world": world,
+	}
+	var f := FileAccess.open(save_path, FileAccess.WRITE)
+	if f == null:
+		push_error("SaveManager: cannot write " + save_path)
+		return false
+	f.store_string(JSON.stringify(data, "\t"))
+	f.close()
+	return true
+
+
+func has_save() -> bool:
+	return FileAccess.file_exists(save_path)
+
+
+func load_game() -> bool:
+	if not has_save():
+		return false
+	var json := JSON.new()
+	var parse_err := json.parse(FileAccess.get_file_as_string(save_path))
+	if parse_err != OK:
+		push_warning("SaveManager: corrupt save file")
+		return false
+	var data = json.get_data()
+	if data == null or typeof(data) != TYPE_DICTIONARY:
+		push_warning("SaveManager: corrupt save file")
+		return false
+	Clock.day = int(data.get("day", 1))
+	Clock.minutes = int(data.get("minutes", Clock.DAY_START_MINUTES))
+	GameState.from_dict(data.get("state", {}))
+	Inventory.from_dict(data.get("inventory", {}))
+	world = data.get("world", {})
+	return true
+
+
+func delete_save() -> void:
+	if has_save():
+		DirAccess.remove_absolute(save_path)
