@@ -5,7 +5,7 @@ config_version=5
 
 config/name="farm-rpg"
 config/features=PackedStringArray("4.6", "GL Compatibility")
-run/main_scene="res://scenes/maps/dev_room.tscn"
+run/main_scene="res://scenes/main/boot.tscn"
 
 [display]
 
