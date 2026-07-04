@@ -1660,5 +1660,5 @@ git commit -m "feat: SceneChanger with fade and dev room boot scene"
 
 - `"$GODOT" --headless --path . -s res://addons/gut/gut_cmdln.gd` exits 0 with ~30 assertions across 6 test files.
 - `"$GODOT" --headless --path . --quit-after 10` boots to the dev room with zero script errors.
-- Opening the project in the Godot editor shows 7 autoloads, 20 `.tres` content files under `data/`, and 46 placeholder PNGs.
+- Opening the project in the Godot editor shows 7 autoloads, 20 `.tres` content files under `data/`, and 45 placeholder PNGs.
 - Plan 2 (Farming Loop) can start: it consumes Clock/GameState/Inventory/ItemDB/SaveManager exactly as specified here.
