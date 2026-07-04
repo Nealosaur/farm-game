@@ -1,0 +1,10 @@
+[gd_scene format=3]
+
+[node name="DevRoom" type="Node2D"]
+
+[node name="Label" type="Label" parent="."]
+offset_left = 200.0
+offset_top = 170.0
+offset_right = 460.0
+offset_bottom = 190.0
+text = "farm-rpg dev room — Plan 1 foundation complete"
