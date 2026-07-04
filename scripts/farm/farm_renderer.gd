@@ -1,6 +1,9 @@
 class_name FarmRenderer
 extends Node2D
 ## Renders FarmGrid state: soil overlay tiles + one crop sprite per plot.
+## NOTE: Y-sort cascades from the parent "World" node — do NOT set
+## y_sort_enabled or a position offset here, or crops stop sorting
+## against the player.
 
 var grid: FarmGrid
 var soil_layer: TileMapLayer

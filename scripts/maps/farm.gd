@@ -81,6 +81,8 @@ func _layout() -> PackedStringArray:
 				row += "W"
 			elif y == 7 and x >= 3 and x <= 14:
 				row += "P"
+			# ~3.5% deterministic sparse dark-grass patches (decorative only;
+			# elif order keeps them off walls/path).
 			elif (x * 7 + y * 13) % 29 == 0:
 				row += "D"
 			else:
