@@ -64,7 +64,8 @@ func setup(enemy_data: EnemyData) -> void:
 	hurtbox.position = Vector2(0, -6)
 	hurtbox.collision_layer = Layers.bit(Layers.ENEMY_HURTBOX)
 	hurtbox.collision_mask = Layers.bit(Layers.PLAYER_HITBOX)
-	hurtbox.hit_taken.connect(_on_hurtbox_hit_taken)
+	if not hurtbox.hit_taken.is_connected(_on_hurtbox_hit_taken):
+		hurtbox.hit_taken.connect(_on_hurtbox_hit_taken)
 
 	(hitbox.get_node("Shape") as CollisionShape2D).shape = RectangleShape2D.new()
 	((hitbox.get_node("Shape") as CollisionShape2D).shape as RectangleShape2D).size = Vector2(12, 10)
@@ -73,7 +74,8 @@ func setup(enemy_data: EnemyData) -> void:
 	hitbox.damage = data.damage
 	hitbox.set_active(true)  # contact damage: always on while alive
 
-	health.died.connect(_on_died)
+	if not health.died.is_connected(_on_died):
+		health.died.connect(_on_died)
 
 
 func _on_hurtbox_hit_taken(damage: int, knockback: Vector2) -> void:
