@@ -32,6 +32,12 @@ func fade_from_black(duration := 0.25) -> void:
 	await t.finished
 
 
+func is_busy() -> bool:
+	## Other transition owners (e.g. DayFlow) must check this before fading,
+	## so overlapping transitions don't stomp each other's fade state.
+	return _traveling
+
+
 func travel(scene_path: String, spawn: String = "default") -> void:
 	if _traveling:
 		return
@@ -44,5 +50,6 @@ func travel(scene_path: String, spawn: String = "default") -> void:
 	await fade_to_black()
 	get_tree().change_scene_to_file(scene_path)
 	await get_tree().process_frame
-	await fade_from_black()
+	# Release before fade-in: worst-case wedge window ends at the scene swap.
 	_traveling = false
+	await fade_from_black()

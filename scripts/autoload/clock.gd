@@ -53,8 +53,7 @@ func reset_day_timers() -> void:
 func end_day() -> void:
 	day += 1
 	minutes = DAY_START_MINUTES
-	_accum = 0.0
-	_curfew_fired = false
+	reset_day_timers()
 	EventBus.day_passed.emit(day)
 
 

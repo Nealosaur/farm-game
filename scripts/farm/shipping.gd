@@ -4,6 +4,7 @@ extends RefCounted
 ## SaveManager.world["shipping_bin"] as {item_id: count} — this key is a
 ## sanctioned raw world-blob (like "farm_grid"): written by ShippingBin's
 ## interact(), drained by DayFlow at day rollover via payout() below.
+## DayFlow MUST clear the bin after paying out, or crops double-pay next day.
 
 
 static func payout(bin: Dictionary) -> int:

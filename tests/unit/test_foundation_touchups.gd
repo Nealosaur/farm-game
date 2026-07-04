@@ -52,3 +52,11 @@ func test_inventory_swap_invalid_indices_noop() -> void:
 
 func test_event_bus_has_toast_signal() -> void:
 	assert_true(EventBus.has_signal("toast_requested"))
+
+
+func test_inventory_swap_same_index_noop() -> void:
+	Inventory.reset()
+	Inventory.add_item("turnip", 10)
+	Inventory.swap(0, 0)
+	assert_eq(Inventory.slots[0].id, "turnip")
+	assert_eq(Inventory.slots[0].count, 10)

@@ -106,3 +106,17 @@ func test_grows_on_day_passed_signal() -> void:
 	grid.water(c)
 	EventBus.day_passed.emit(2)
 	assert_eq(grid.plots[c].stage, 1)
+
+
+func test_ripe_crop_stops_counting_days() -> void:
+	var c := Vector2i(8, 8)
+	grid.till(c)
+	grid.plant(c, "turnip")
+	for day in 3:
+		grid.water(c)
+		grid.advance_day()
+	assert_true(grid.is_ripe(c))
+	grid.water(c)
+	grid.advance_day()
+	assert_eq(grid.plots[c].stage, 3)
+	assert_eq(grid.plots[c].days_in_stage, 0)
