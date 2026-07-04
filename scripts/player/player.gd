@@ -1,6 +1,7 @@
 class_name Player
 extends CharacterBody2D
-## Farm player. Origin = feet. States: Idle, Move, UseTool (combat in Plan 3).
+## Farm player. Origin = feet. States: Idle, Move, UseTool, Swing, Dodge, Hurt.
+## Player has no HealthComponent — GameState owns player HP.
 
 const SPEED := 80.0
 const ANIM_NAMES := [
@@ -14,6 +15,8 @@ var facing := Vector2i.DOWN
 @onready var sprite: AnimatedSprite2D = $Sprite
 @onready var machine: StateMachine = $StateMachine
 @onready var interact_zone: Area2D = $InteractZone
+@onready var hurtbox: HurtboxComponent = $Hurtbox
+@onready var sword_hitbox: HitboxComponent = $SwordHitbox
 
 
 func _ready() -> void:
@@ -28,6 +31,39 @@ func _ready() -> void:
 	zone_shape.radius = 10.0
 	($InteractZone/ZoneShape as CollisionShape2D).shape = zone_shape
 	interact_zone.position = Vector2(facing) * 12.0
+
+	collision_layer = Layers.bit(Layers.PLAYER_BODY)
+	collision_mask = Layers.bit(Layers.WORLD) | Layers.bit(Layers.ENEMY_BODY)
+
+	(hurtbox.get_node("Shape") as CollisionShape2D).shape = RectangleShape2D.new()
+	((hurtbox.get_node("Shape") as CollisionShape2D).shape as RectangleShape2D).size = Vector2(12, 10)
+	hurtbox.position = Vector2(0, -6)
+	hurtbox.collision_layer = Layers.bit(Layers.PLAYER_HURTBOX)
+	hurtbox.collision_mask = 0
+	hurtbox.hit_taken.connect(_on_hurtbox_hit_taken)
+
+	(sword_hitbox.get_node("Shape") as CollisionShape2D).shape = RectangleShape2D.new()
+	((sword_hitbox.get_node("Shape") as CollisionShape2D).shape as RectangleShape2D).size = Vector2(16, 16)
+	sword_hitbox.collision_layer = Layers.bit(Layers.PLAYER_HITBOX)
+	sword_hitbox.collision_mask = Layers.bit(Layers.ENEMY_HURTBOX)
+	sword_hitbox.set_active(false)
+
+
+func _on_hurtbox_hit_taken(damage: int, knockback: Vector2) -> void:
+	GameState.take_damage(damage)
+	var hurt := machine.get_node_or_null("Hurt") as PlayerHurt
+	if hurt != null:
+		hurt.incoming_knockback = knockback
+	machine.transition("Hurt")
+
+
+func try_dodge() -> void:
+	var dodge := machine.get_node_or_null("Dodge") as PlayerDodge
+	if dodge == null:
+		return
+	if not GameState.try_spend_rp(PlayerDodge.RP_COST):
+		return  # try_spend_rp fails silently (no cost) when RP is fully empty
+	machine.transition("Dodge")
 
 
 static func facing_from(dir: Vector2) -> Vector2i:
@@ -100,9 +136,15 @@ func _use_tool(tool_data: ToolData) -> void:
 				GameState.spend_rp(tool_data.rp_cost)
 				machine.transition("UseTool")
 		ToolData.ToolType.SWORD:
-			# Plan 2: swing costs RP and animates; hitboxes land in Plan 3.
-			GameState.spend_rp(tool_data.rp_cost)
-			machine.transition("UseTool")
+			var swing := machine.get_node_or_null("Swing") as PlayerSwing
+			if swing == null:
+				return
+			if machine.current == swing:
+				swing.buffer_next()
+			else:
+				GameState.spend_rp(tool_data.rp_cost)
+				swing.begin_swing(tool_data)
+				machine.transition("Swing")
 
 
 func _plant(seed_data: SeedData) -> void:

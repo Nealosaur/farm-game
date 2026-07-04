@@ -19,7 +19,9 @@ func physics_update(_delta: float) -> void:
 
 
 func update(_delta: float) -> void:
-	if Input.is_action_just_pressed("use_item"):
+	if Input.is_action_just_pressed("dodge"):
+		player.try_dodge()
+	elif Input.is_action_just_pressed("use_item"):
 		player.try_use_selected()
 	elif Input.is_action_just_pressed("interact"):
 		player.try_interact()
