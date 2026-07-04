@@ -50,6 +50,10 @@ func _ready() -> void:
 	player.global_position = MapBuilder.cell_center(SPAWN_CELL)
 	world.add_child(player)
 
+	# TEMP: test spawns until dungeon (next stride)
+	Enemy.spawn_enemy("slime", Vector2i(26, 12), world)
+	Enemy.spawn_enemy("slime", Vector2i(30, 15), world)
+
 	var cam := Camera2D.new()
 	cam.limit_left = 0
 	cam.limit_top = 0
