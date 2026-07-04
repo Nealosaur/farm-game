@@ -72,8 +72,8 @@ func play_anim(prefix: String) -> void:
 	sprite.play(prefix + "_" + facing_name())
 
 
-func _farm_grid() -> Node:
-	return get_tree().get_first_node_in_group("farm_grid")
+func _farm_grid() -> FarmGrid:
+	return get_tree().get_first_node_in_group("farm_grid") as FarmGrid
 
 
 func try_use_selected() -> void:
