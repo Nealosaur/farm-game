@@ -12,6 +12,8 @@ func _ready() -> void:
 		if child is State:
 			child.machine = self
 	if initial_state != null:
+		if owner != null and not owner.is_node_ready():
+			await owner.ready
 		current = initial_state
 		current.enter()
 
