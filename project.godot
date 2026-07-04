@@ -118,6 +118,11 @@ debug_refill={
 "events": [Object(InputEventKey,"physical_keycode":4194335)]
 }
 
+[autoload]
+
+EventBus="*res://scripts/autoload/event_bus.gd"
+Clock="*res://scripts/autoload/clock.gd"
+
 [editor_plugins]
 
 enabled=PackedStringArray("res://addons/gut/plugin.cfg")
