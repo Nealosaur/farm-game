@@ -1,0 +1,9 @@
+# Normalize all text files to LF in the repo (Godot is LF-native, works fine on Windows).
+* text=auto eol=lf
+
+# Binary assets — never normalize.
+*.png binary
+*.ttf binary
+*.ico binary
+*.wav binary
+*.ogg binary
