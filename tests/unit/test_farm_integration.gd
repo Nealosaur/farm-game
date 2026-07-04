@@ -11,7 +11,7 @@ func before_each() -> void:
 	SaveManager.new_game()
 	farm = (load("res://scenes/maps/farm.tscn") as PackedScene).instantiate()
 	add_child_autofree(farm)
-	await wait_frames(2)
+	await wait_process_frames(2)
 	player = farm.player
 	grid = farm.grid
 
