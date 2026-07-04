@@ -14,3 +14,4 @@ signal item_shipped(item_id, count)
 signal inventory_changed
 signal hotbar_selection_changed(index)
 signal boss_defeated
+signal toast_requested(message)

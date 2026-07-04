@@ -42,6 +42,14 @@ func minute() -> int:
 	return minutes % 60
 
 
+func reset_day_timers() -> void:
+	## Clears sub-day state that end_day() normally clears. Called by
+	## SaveManager.new_game()/load_game() so a fresh/loaded game can't
+	## inherit a fired curfew latch from the previous session.
+	_accum = 0.0
+	_curfew_fired = false
+
+
 func end_day() -> void:
 	day += 1
 	minutes = DAY_START_MINUTES

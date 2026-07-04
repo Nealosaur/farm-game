@@ -15,6 +15,7 @@ var world := {}  # map-owned persistent blobs (farm grid etc.), set by scenes
 func new_game() -> void:
 	Clock.day = 1
 	Clock.minutes = Clock.DAY_START_MINUTES
+	Clock.reset_day_timers()
 	world = {}
 	GameState.reset_new_game()
 	Inventory.reset()
@@ -63,6 +64,7 @@ func load_game() -> bool:
 		push_warning("SaveManager: save version %d != expected %d — loading with defaults for missing fields" % [version, SAVE_VERSION])
 	Clock.day = int(data.get("day", 1))
 	Clock.minutes = int(data.get("minutes", Clock.DAY_START_MINUTES))
+	Clock.reset_day_timers()
 	GameState.from_dict(data.get("state", {}))
 	Inventory.from_dict(data.get("inventory", {}))
 	world = data.get("world", {})

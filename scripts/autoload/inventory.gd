@@ -73,6 +73,15 @@ func count_of(id: String) -> int:
 	return total
 
 
+func swap(a: int, b: int) -> void:
+	if a == b or a < 0 or b < 0 or a >= SIZE or b >= SIZE:
+		return
+	var t = slots[a]
+	slots[a] = slots[b]
+	slots[b] = t
+	EventBus.inventory_changed.emit()
+
+
 func select_hotbar(index: int) -> void:
 	selected = clampi(index, 0, HOTBAR - 1)
 	EventBus.hotbar_selection_changed.emit(selected)
