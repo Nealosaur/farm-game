@@ -48,6 +48,55 @@ func test_player_died_signal_at_zero_hp() -> void:
 	assert_signal_emitted(EventBus, "player_died")
 
 
+func test_player_died_emits_once_when_already_dead() -> void:
+	watch_signals(EventBus)
+	GameState.take_damage(GameState.max_hp)
+	GameState.take_damage(10)
+	assert_signal_emit_count(EventBus, "player_died", 1)
+
+
+func test_try_spend_rp_fails_when_empty() -> void:
+	GameState.rp = 0
+	assert_false(GameState.try_spend_rp(10))
+	assert_eq(GameState.hp, GameState.max_hp)
+
+
+func test_try_spend_rp_shortfall_drains_hp() -> void:
+	GameState.rp = 5
+	assert_true(GameState.try_spend_rp(30))
+	assert_eq(GameState.rp, 0)
+	assert_eq(GameState.hp, GameState.max_hp - 25)
+
+
+func test_multi_level_up_single_call() -> void:
+	GameState.add_xp(70)
+	assert_eq(GameState.level, 3)
+	assert_eq(GameState.xp, 15)
+
+
+func test_heal_clamps_to_max_hp() -> void:
+	GameState.hp = 1
+	GameState.heal(9999)
+	assert_eq(GameState.hp, GameState.max_hp)
+
+
+func test_restore_rp_clamps_to_max_rp() -> void:
+	GameState.rp = 0
+	GameState.restore_rp(9999)
+	assert_eq(GameState.rp, GameState.max_rp)
+
+
+func test_flags_are_copied_not_aliased() -> void:
+	GameState.flags["met_mayor"] = true
+	var d := GameState.to_dict()
+	GameState.flags["extra"] = true
+	assert_false(d["flags"].has("extra"))
+	var src := {"flags": {"a": 1}}
+	GameState.from_dict(src)
+	src["flags"]["b"] = 2
+	assert_false(GameState.flags.has("b"))
+
+
 func test_sleep_restore_normal_vs_collapse() -> void:
 	GameState.hp = 1
 	GameState.rp = 0

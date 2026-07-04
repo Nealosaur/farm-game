@@ -40,6 +40,7 @@ func xp_to_next() -> int:
 
 
 func add_xp(amount: int) -> void:
+	assert(amount >= 0, "add_xp expects non-negative amount")
 	xp += amount
 	while xp >= xp_to_next():
 		xp -= xp_to_next()
@@ -65,10 +66,20 @@ func spend_rp(cost: int) -> void:
 		take_damage(hp_cost)
 
 
+func try_spend_rp(cost: int) -> bool:
+	## Hard-gated variant: fails (no cost) when RP is fully empty.
+	## Shortfall beyond available RP still drains HP, like spend_rp.
+	if rp <= 0:
+		return false
+	spend_rp(cost)
+	return true
+
+
 func take_damage(amount: int) -> void:
+	var was_alive := hp > 0
 	hp = maxi(0, hp - amount)
 	EventBus.stats_changed.emit()
-	if hp == 0:
+	if was_alive and hp == 0:
 		EventBus.player_died.emit()
 
 
@@ -105,7 +116,7 @@ func to_dict() -> Dictionary:
 	return {
 		"level": level, "xp": xp, "gold": gold,
 		"max_hp": max_hp, "hp": hp, "max_rp": max_rp, "rp": rp,
-		"attack": attack, "flags": flags,
+		"attack": attack, "flags": flags.duplicate(true),
 	}
 
 
@@ -118,6 +129,6 @@ func from_dict(d: Dictionary) -> void:
 	max_rp = int(d.get("max_rp", BASE_MAX_RP))
 	rp = int(d.get("rp", max_rp))
 	attack = int(d.get("attack", BASE_ATTACK))
-	flags = d.get("flags", {})
+	flags = d.get("flags", {}).duplicate(true)
 	EventBus.stats_changed.emit()
 	EventBus.money_changed.emit(gold)
