@@ -5,6 +5,7 @@ extends Node
 const SIZE := 30
 const HOTBAR := 10
 
+# Slot dicts are mutated in place — copy with .duplicate() before reassigning between slots.
 var slots: Array = []
 var selected := 0
 
@@ -81,8 +82,14 @@ func get_selected() -> Variant:
 	return slots[selected]
 
 
+func get_selected_item_data() -> ItemData:
+	## Convenience: ItemData of the selected hotbar slot, or null if empty.
+	var s = slots[selected]
+	return null if s == null else ItemDB.get_item(s.id)
+
+
 func to_dict() -> Dictionary:
-	return {"selected": selected, "slots": slots}
+	return {"selected": selected, "slots": slots.duplicate(true)}
 
 
 func from_dict(d: Dictionary) -> void:
@@ -91,6 +98,6 @@ func from_dict(d: Dictionary) -> void:
 	var raw: Array = d.get("slots", [])
 	for i in mini(raw.size(), SIZE):
 		var s = raw[i]
-		if s is Dictionary and s.has("id"):
+		if s is Dictionary and s.has("id") and s.has("count"):
 			slots[i] = {"id": String(s.id), "count": int(s.count)}
 	EventBus.inventory_changed.emit()
