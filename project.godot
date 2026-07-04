@@ -122,6 +122,7 @@ debug_refill={
 
 EventBus="*res://scripts/autoload/event_bus.gd"
 Clock="*res://scripts/autoload/clock.gd"
+GameState="*res://scripts/autoload/game_state.gd"
 
 [editor_plugins]
 
