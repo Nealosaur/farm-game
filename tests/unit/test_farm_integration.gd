@@ -82,3 +82,24 @@ func test_eating_restores_rp() -> void:
 	player.try_use_selected()
 	assert_eq(GameState.rp, 40)   # +30 from turnip
 	assert_eq(Inventory.count_of("turnip"), 0)
+
+
+func test_day_flow_rollover_pays_shipping_and_saves() -> void:
+	var flow = farm.get_tree().get_first_node_in_group("day_flow")
+	assert_not_null(flow, "DayFlow should be in the farm scene")
+	SaveManager.world["shipping_bin"] = {"turnip": 2}   # 2*45 = 90g
+	var gold_before := GameState.gold
+	var day_before := Clock.day
+	GameState.rp = 5
+	await flow.end_day(false)
+	assert_eq(GameState.gold, gold_before + 90)
+	assert_eq(Clock.day, day_before + 1)
+	assert_eq(GameState.rp, GameState.max_rp)           # normal sleep = full RP
+	assert_true(SaveManager.world["shipping_bin"].is_empty(), "bin must be cleared after payout")
+	assert_true(SaveManager.has_save())                 # autosaved
+
+
+func test_collapse_halves_rp() -> void:
+	var flow = farm.get_tree().get_first_node_in_group("day_flow")
+	await flow.end_day(true)
+	assert_eq(GameState.rp, roundi(GameState.max_rp / 2.0))
