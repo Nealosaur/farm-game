@@ -4,6 +4,7 @@ extends Node
 
 signal time_ticked(hour, minute)
 signal day_passed(day)
+signal weather_changed(weather)
 signal curfew_reached
 signal money_changed(gold)
 signal stats_changed

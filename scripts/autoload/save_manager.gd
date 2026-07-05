@@ -15,6 +15,11 @@ var save_path := "user://save1.json"
 ##   "dungeon_state" — {"day": int, "killed": {floor_key: [spawn_index, ...]}}
 ##                     daily dungeon respawn ledger; shape + rules live in
 ##                     DungeonState (scripts/util/dungeon_state.gd)
+##   "calendar"      — {"weather": "clear"|"rain", "rolled_day": int}
+##                     today's weather, written by Clock.roll_weather() and
+##                     read back via Clock.restore_calendar() on load (int()
+##                     on rolled_day — JSON floats gotcha). Season/day-of-
+##                     season/year are NOT stored: derived from Clock.day.
 var world := {}  # map-owned persistent blobs (farm grid etc.), set by scenes
 
 
@@ -23,6 +28,9 @@ func new_game() -> void:
 	Clock.minutes = Clock.DAY_START_MINUTES
 	Clock.reset_day_timers()
 	world = {}
+	# Day 1 needs weather before the farm builds (rain tint/auto-water read it).
+	# Must come after world = {} — the roll writes world["calendar"].
+	Clock.roll_weather()
 	GameState.reset_new_game()
 	Inventory.reset()
 	Inventory.add_item("hoe")
@@ -74,6 +82,7 @@ func load_game() -> bool:
 	GameState.from_dict(data.get("state", {}))
 	Inventory.from_dict(data.get("inventory", {}))
 	world = data.get("world", {})
+	Clock.restore_calendar()  # weather back from world["calendar"] (or defaults)
 	return true
 
 
