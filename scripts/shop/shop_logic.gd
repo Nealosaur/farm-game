@@ -58,13 +58,21 @@ static func buyable_items() -> Array[ItemData]:
 	## Every ItemDB item with buy_price > 0, sorted by id for a stable list
 	## (dictionary iteration order isn't guaranteed stable across Godot
 	## versions, and the UI must not jitter row order on refresh).
+	## Season filter (World Stride A): Marta stocks IN-SEASON seeds only — a
+	## seed whose crop can't be planted this season is skipped. Non-seed
+	## stock (tools, the iron sword) is season-blind.
 	var out: Array[ItemData] = []
 	var ids := ItemDB.items.keys()
 	ids.sort()
 	for id: String in ids:
 		var item: ItemData = ItemDB.items[id]
-		if item.buy_price > 0:
-			out.append(item)
+		if item.buy_price <= 0:
+			continue
+		if item is SeedData:
+			var crop := ItemDB.get_crop((item as SeedData).crop_id)
+			if crop != null and not (Clock.season() in crop.seasons):
+				continue
+		out.append(item)
 	return out
 
 
