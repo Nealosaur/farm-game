@@ -50,7 +50,7 @@ func _ready() -> void:
 		MapSceneHelper.spawn_cell(_spawns(), "entrance"))
 	world.add_child(player)
 
-	var cam := Camera2D.new()
+	var cam := CameraShake.new()
 	cam.limit_left = 0
 	cam.limit_top = 0
 	cam.limit_right = width * MapBuilder.TILE

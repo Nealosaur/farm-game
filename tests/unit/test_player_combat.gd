@@ -65,6 +65,12 @@ func test_combo_buffer_chains_up_to_three_swings() -> void:
 	assert_true(swing._buffered)
 
 
+func test_taking_damage_emits_camera_shake() -> void:
+	watch_signals(EventBus)
+	player._on_hurtbox_hit_taken(5, Vector2(10, 0))
+	assert_signal_emitted(EventBus, "camera_shake")
+
+
 func test_third_swing_gets_boosted_knockback() -> void:
 	var swing := player.machine.get_node("Swing") as PlayerSwing
 	var tool_data: ToolData = ItemDB.get_item("wooden_sword")

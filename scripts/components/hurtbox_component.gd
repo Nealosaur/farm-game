@@ -3,15 +3,20 @@ extends Area2D
 ## "This thing gets hurt." Detects HitboxComponent overlaps and turns them into
 ## a single hit_taken signal, with i-frames so one swing/contact doesn't hit
 ## multiple times. Owner (a CanvasItem, e.g. the sprite root) blinks via
-## modulate while invincible.
+## modulate while invincible, AND flashes solid white for one short beat on
+## the exact impact frame (punchier read than the blink alone — the blink
+## communicates "still invincible", the flash communicates "you got hit").
 
 signal hit_taken(damage: int, knockback: Vector2)
 
 @export var iframe_duration: float = 0.4
+const FLASH_DURATION := 0.08
+const FLASH_COLOR := Color(4.0, 4.0, 4.0)  # >1 channel values blow out to white under normal modulate math
 
 var _invincible := false
 var _iframe_timer: SceneTreeTimer
 var _blink_tween: Tween
+var _flash_tween: Tween
 
 
 func _ready() -> void:
@@ -51,6 +56,7 @@ func _register_hit(hitbox: HitboxComponent) -> void:
 			knockback = dir.normalized() * hitbox.knockback_force
 	hit_taken.emit(hitbox.damage, knockback)
 	trigger_iframes(iframe_duration)
+	_flash_white()
 
 
 func is_invincible() -> bool:
@@ -92,3 +98,19 @@ func _stop_blink() -> void:
 	var target := _blink_target()
 	if target != null:
 		target.modulate.a = 1.0
+
+
+func _flash_white() -> void:
+	## Pure punch: spike modulate to a blown-out white for one frame's worth
+	## of time, then settle back to opaque white. Independent of the blink
+	## tween (which only ever touches modulate:a) so the two don't fight —
+	## this one sets the full modulate Color and always resolves to
+	## Color(1,1,1,1) at the end, matching the blink's resting alpha.
+	var target := _blink_target()
+	if target == null:
+		return
+	if _flash_tween != null and _flash_tween.is_valid():
+		_flash_tween.kill()
+	target.modulate = FLASH_COLOR
+	_flash_tween = target.create_tween()
+	_flash_tween.tween_property(target, "modulate", Color.WHITE, FLASH_DURATION)

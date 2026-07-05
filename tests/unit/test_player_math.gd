@@ -30,3 +30,27 @@ func test_player_scene_targets_cell_in_front() -> void:
 	assert_eq(player.target_cell(), Vector2i(3, 2))
 	player.facing = Vector2i.UP
 	assert_eq(player.target_cell(), Vector2i(2, 1))
+
+
+func test_facing_indicator_repositions_to_the_facing_edge() -> void:
+	var player: Player = load("res://scenes/player/player.tscn").instantiate()
+	add_child_autofree(player)
+
+	player.update_facing(Vector2.DOWN)
+	var down_pos: Vector2 = player._facing_indicator.position
+	player.update_facing(Vector2.UP)
+	var up_pos: Vector2 = player._facing_indicator.position
+	player.update_facing(Vector2.LEFT)
+	var left_pos: Vector2 = player._facing_indicator.position
+	player.update_facing(Vector2.RIGHT)
+	var right_pos: Vector2 = player._facing_indicator.position
+
+	assert_true(down_pos.y > up_pos.y, "down-facing indicator should sit lower than up-facing")
+	assert_true(right_pos.x > left_pos.x, "right-facing indicator should sit further right than left-facing")
+
+
+func test_facing_indicator_defaults_to_down_on_ready() -> void:
+	var player: Player = load("res://scenes/player/player.tscn").instantiate()
+	add_child_autofree(player)
+	assert_eq(player.facing, Vector2i.DOWN)
+	assert_almost_eq(player._facing_indicator.position.y, Player.SPRITE_BOTTOM - Player.FACING_INDICATOR_INSET - Player.FACING_INDICATOR_SIZE.y / 2.0, 0.01)

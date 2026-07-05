@@ -26,6 +26,7 @@ func enter() -> void:
 	GameState.add_xp(data.xp)
 	EventBus.toast_requested.emit("+%d XP  +%dg" % [data.xp, gold])
 	EventBus.enemy_died.emit(data, enemy.global_position)
+	EventBus.camera_shake.emit(CameraShake.DEFAULT_STRENGTH)
 
 	if data.drop_item_id != "" and enemy.rng.randf() < data.drop_chance:
 		_spawn_pickup(data.drop_item_id)

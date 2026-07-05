@@ -52,6 +52,13 @@ func test_death_transitions_to_dead_state_and_disables_hitbox() -> void:
 	assert_eq(enemy.collision_layer, 0)
 
 
+func test_death_emits_camera_shake() -> void:
+	enemy = _make_enemy("slime")
+	watch_signals(EventBus)
+	enemy.health.take_damage(9999)
+	assert_signal_emitted(EventBus, "camera_shake")
+
+
 func test_hurtbox_hit_applies_damage_without_killing() -> void:
 	enemy = _make_enemy("slime")
 	var hp_before := enemy.health.hp

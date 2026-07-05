@@ -67,6 +67,7 @@ func physics_update(delta: float) -> void:
 
 
 func _spawn_slam_hitbox() -> void:
+	EventBus.camera_shake.emit(CameraShake.DEFAULT_STRENGTH * 1.5)
 	_slam_hitbox = HitboxComponent.new()
 	_slam_hitbox.damage = boss.data.damage
 	_slam_hitbox.knockback_force = KNOCKBACK

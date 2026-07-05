@@ -57,7 +57,7 @@ func _ready() -> void:
 
 	_add_farm_portal(world)
 
-	var cam := Camera2D.new()
+	var cam := CameraShake.new()
 	cam.limit_left = 0
 	cam.limit_top = 0
 	cam.limit_right = WIDTH * MapBuilder.TILE

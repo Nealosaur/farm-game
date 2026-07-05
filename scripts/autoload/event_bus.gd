@@ -15,3 +15,4 @@ signal inventory_changed
 signal hotbar_selection_changed(index)
 signal boss_defeated
 signal toast_requested(message)
+signal camera_shake(strength)

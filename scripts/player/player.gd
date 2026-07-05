@@ -10,6 +10,18 @@ const ANIM_NAMES := [
 	"use_down", "use_up", "use_left", "use_right",
 ]
 
+## Facing indicator: a small darker rect that hugs whichever edge of the
+## sprite's bounding box faces the player's current direction — the cheapest
+## legible "which way am I facing" read without new art. Sprite bounding box
+## in Player-local space: offset (0, -12), size (16, 32) -> x in [-8, 8],
+## y in [-28, 4]. Repositioned (not re-parented/rotated) in update_facing().
+const FACING_INDICATOR_SIZE := Vector2(4, 3)
+const FACING_INDICATOR_INSET := 2.0  # pulled in from the sprite edge, not flush
+const SPRITE_HALF_WIDTH := 8.0
+const SPRITE_TOP := -28.0
+const SPRITE_BOTTOM := 4.0
+const SPRITE_CENTER_Y := -12.0
+
 var facing := Vector2i.DOWN
 
 @onready var sprite: AnimatedSprite2D = $Sprite
@@ -17,6 +29,8 @@ var facing := Vector2i.DOWN
 @onready var interact_zone: Area2D = $InteractZone
 @onready var hurtbox: HurtboxComponent = $Hurtbox
 @onready var sword_hitbox: HitboxComponent = $SwordHitbox
+
+var _facing_indicator: ColorRect
 
 
 func _ready() -> void:
@@ -48,9 +62,17 @@ func _ready() -> void:
 	sword_hitbox.collision_mask = Layers.bit(Layers.ENEMY_HURTBOX)
 	sword_hitbox.set_active(false)
 
+	_facing_indicator = ColorRect.new()
+	_facing_indicator.color = Color("b08050").darkened(0.4)
+	_facing_indicator.size = FACING_INDICATOR_SIZE
+	_facing_indicator.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_facing_indicator)
+	_position_facing_indicator()
+
 
 func _on_hurtbox_hit_taken(damage: int, knockback: Vector2) -> void:
 	GameState.take_damage(damage)
+	EventBus.camera_shake.emit(CameraShake.DEFAULT_STRENGTH)
 	var hurt := machine.get_node_or_null("Hurt") as PlayerHurt
 	if hurt != null:
 		hurt.incoming_knockback = knockback
@@ -92,6 +114,24 @@ func update_facing(dir: Vector2) -> void:
 	if dir != Vector2.ZERO:
 		facing = facing_from(dir)
 		interact_zone.position = Vector2(facing) * 12.0
+		_position_facing_indicator()
+
+
+func _position_facing_indicator() -> void:
+	if _facing_indicator == null:
+		return
+	var half := FACING_INDICATOR_SIZE / 2.0
+	var center := Vector2.ZERO
+	match facing:
+		Vector2i.UP:
+			center = Vector2(0, SPRITE_TOP + FACING_INDICATOR_INSET)
+		Vector2i.DOWN:
+			center = Vector2(0, SPRITE_BOTTOM - FACING_INDICATOR_INSET)
+		Vector2i.LEFT:
+			center = Vector2(-SPRITE_HALF_WIDTH + FACING_INDICATOR_INSET, SPRITE_CENTER_Y)
+		Vector2i.RIGHT:
+			center = Vector2(SPRITE_HALF_WIDTH - FACING_INDICATOR_INSET, SPRITE_CENTER_Y)
+	_facing_indicator.position = center - half
 
 
 func cell() -> Vector2i:

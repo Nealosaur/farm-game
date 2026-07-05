@@ -73,3 +73,17 @@ func test_non_hitbox_area_is_ignored() -> void:
 	add_child_autofree(plain_area)
 	hurtbox._on_area_entered(plain_area)
 	assert_signal_not_emitted(hurtbox, "hit_taken")
+
+
+func test_hit_flashes_owner_modulate_white_on_impact() -> void:
+	owner_node.modulate = Color.WHITE
+	hurtbox._on_area_entered(hitbox)
+	# Impact frame: modulate spiked above 1.0 (blown-out white), not the resting color.
+	assert_true(owner_node.modulate.r > 1.0, "modulate should spike above 1.0 on the impact frame")
+
+
+func test_flash_settles_back_to_opaque_white() -> void:
+	owner_node.modulate = Color.WHITE
+	hurtbox._on_area_entered(hitbox)
+	await wait_seconds(HurtboxComponent.FLASH_DURATION + 0.05)
+	assert_almost_eq(owner_node.modulate.r, 1.0, 0.01)
