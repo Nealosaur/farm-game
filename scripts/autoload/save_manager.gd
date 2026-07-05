@@ -20,6 +20,13 @@ var save_path := "user://save1.json"
 ##                     read back via Clock.restore_calendar() on load (int()
 ##                     on rolled_day — JSON floats gotcha). Season/day-of-
 ##                     season/year are NOT stored: derived from Clock.day.
+##   "relationships" — npc_id -> {points:int, talked_day:int, gifted_day:int,
+##                     events_seen:[String], perks_given:[String],
+##                     shown_lines:{tier_name:[int]}}. Owned by the
+##                     Relationships autoload; call Relationships.restore()
+##                     after new_game()/load_game() (no signal fires on load —
+##                     same sequencing rule as Clock.restore_calendar()). All
+##                     ints/arrays are coerced on read (JSON floats gotcha).
 var world := {}  # map-owned persistent blobs (farm grid etc.), set by scenes
 
 
@@ -37,6 +44,7 @@ func new_game() -> void:
 	Inventory.add_item("watering_can")
 	Inventory.add_item("wooden_sword")
 	Inventory.add_item("turnip_seeds", 5)
+	Relationships.restore()  # empty world["relationships"] -> fresh state for every NPC
 
 
 func save_game() -> bool:
@@ -83,6 +91,7 @@ func load_game() -> bool:
 	Inventory.from_dict(data.get("inventory", {}))
 	world = data.get("world", {})
 	Clock.restore_calendar()  # weather back from world["calendar"] (or defaults)
+	Relationships.restore()  # bond state back from world["relationships"] (or defaults)
 	return true
 
 
