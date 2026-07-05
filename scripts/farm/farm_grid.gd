@@ -119,3 +119,22 @@ func store() -> void:
 
 func restore() -> void:
 	from_dict(SaveManager.world.get("farm_grid", {}))
+
+
+func _exit_tree() -> void:
+	# World-data contract: scenes write their blob on scene exit. Mattered
+	# only theoretically until portals arrived — now leaving the farm for the
+	# dungeon must not discard the morning's tilling/planting/watering.
+	store()
+
+
+static func advance_stored_day() -> void:
+	## One night of crop growth applied straight to the saved blob. Used by
+	## DayFlow when the day rolls over while the farm scene isn't loaded
+	## (slept/collapsed in the dungeon) — day_passed has no live FarmGrid
+	## listener then, and crops must never miss a growth night.
+	var tmp := FarmGrid.new()
+	tmp.from_dict(SaveManager.world.get("farm_grid", {}))
+	tmp.advance_day()
+	SaveManager.world["farm_grid"] = tmp.to_dict()
+	tmp.free()

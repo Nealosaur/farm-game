@@ -53,3 +53,27 @@ func travel(scene_path: String, spawn: String = "default") -> void:
 	# Release before fade-in: worst-case wedge window ends at the scene swap.
 	_traveling = false
 	await fade_from_black()
+
+
+func swap_scene_while_black(scene_path: String, spawn: String, toasts: PackedStringArray = PackedStringArray()) -> void:
+	## For flows that have ALREADY faded the screen to black themselves and
+	## must swap scenes before fading back — DayFlow's sleep/collapse away
+	## from the farm. Mirrors travel() minus the fade_to_black, and without
+	## double-guarding against the caller (the caller owns the blackout and
+	## checked is_busy before starting its sequence).
+	## Deliberately a coroutine on this autoload: the caller (DayFlow) is a
+	## child of the outgoing scene and is freed at the swap — anything IT
+	## awaited after change_scene_to_file would silently never resume. The
+	## caller finishes all its own state changes first, then invokes this
+	## fire-and-forget. Toasts are emitted after the swap + one frame so the
+	## incoming scene's HUD exists to display them.
+	if _traveling:
+		return
+	_traveling = true
+	spawn_name = spawn
+	get_tree().change_scene_to_file(scene_path)
+	await get_tree().process_frame
+	_traveling = false
+	for msg in toasts:
+		EventBus.toast_requested.emit(msg)
+	await fade_from_black()

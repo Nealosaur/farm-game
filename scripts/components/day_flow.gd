@@ -5,6 +5,29 @@ extends Node
 ## curfew (2 AM), or player death (RP drain in Plan 2).
 ## ACCEPTED TRADEOFF: the game saves ONLY here (sleep/collapse) — quitting
 ## mid-day loses that day's progress, genre-standard for Stardew-likes.
+##
+## WORKS FROM ANY SCENE (dungeon floors included) since the portal stride:
+## the whole rollover happens while the screen is dark, and only then do we
+## decide how to come back up:
+##  - On the farm (FarmGrid present): reposition the player at the farm's
+##    "wake" spawn and fade back in — the original flow.
+##  - Anywhere else: this node is a child of the current scene and dies at a
+##    scene swap, so any code we awaited after the swap would never resume.
+##    We therefore finish ALL our own state changes (including unpausing the
+##    Clock — it starts ~a fade-length early, under one game minute at 0.7s
+##    per minute, accepted), then hand the tail (swap to farm at "wake",
+##    toasts, fade-in) to SceneChanger.swap_scene_while_black(), which runs
+##    on the autoload and survives the swap. No double-fade: swap_* skips
+##    fade_to_black because we already own the blackout.
+## Crop continuity away from the farm: Clock.end_day() emits day_passed, but
+## if no FarmGrid is alive nothing advances the crops — so we advance the
+## stored blob directly via FarmGrid.advance_stored_day() before saving.
+
+const FARM_SCENE := "res://scenes/maps/farm.tscn"
+
+## Farm wake cell comes from the farm's own SPAWNS table instead of the old
+## hardcoded (8, 8) — same cell today, but now single-sourced.
+const FarmScript := preload("res://scripts/maps/farm.gd")
 
 var _busy := false
 
@@ -47,18 +70,34 @@ func end_day(collapsed: bool) -> void:
 	var grid := get_tree().get_first_node_in_group("farm_grid") as FarmGrid
 	if grid != null:
 		grid.store()
+	else:
+		# Farm scene not loaded (slept/collapsed elsewhere): the day_passed
+		# from Clock.end_day() had no live FarmGrid listener, so advance the
+		# saved blob directly — crops must never miss a growth night.
+		FarmGrid.advance_stored_day()
 	SaveManager.save_game()
 
-	var player := get_tree().get_first_node_in_group("player") as Player
-	if player != null:
-		player.global_position = MapBuilder.cell_center(Vector2i(8, 8))
-
-	await SceneChanger.fade_from_black()
+	var toasts := PackedStringArray()
 	if collapsed:
-		EventBus.toast_requested.emit("You collapsed... Day %d" % Clock.day)
+		toasts.append("You collapsed... Day %d" % Clock.day)
 	else:
-		EventBus.toast_requested.emit("Day %d" % Clock.day)
+		toasts.append("Day %d" % Clock.day)
 	if earned > 0:
-		EventBus.toast_requested.emit("Shipped goods: +%dg" % earned)
-	Clock.paused = false
-	_busy = false
+		toasts.append("Shipped goods: +%dg" % earned)
+
+	if grid != null:
+		# Original on-farm flow: reposition, fade in, toast, unpause.
+		var player := get_tree().get_first_node_in_group("player") as Player
+		if player != null:
+			player.global_position = MapBuilder.cell_center(FarmScript.SPAWNS["wake"])
+		await SceneChanger.fade_from_black()
+		for msg in toasts:
+			EventBus.toast_requested.emit(msg)
+		Clock.paused = false
+		_busy = false
+	else:
+		# Away from the farm: finish our own state, then hand off the swap
+		# (see class doc — we die at the swap, so no awaits after this).
+		Clock.paused = false
+		_busy = false
+		SceneChanger.swap_scene_while_black(FARM_SCENE, "wake", toasts)
