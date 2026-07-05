@@ -6,11 +6,13 @@ extends RefCounted
 ## it isn't required by this stride), but every dungeon floor calls this.
 
 const AUTO_INSTANCE_SCRIPTS := [
+	"res://scripts/components/day_tint.gd",
 	"res://scripts/ui/hud.gd",
 	"res://scripts/ui/inventory_screen.gd",
 	"res://scripts/ui/dialog_box.gd",
 	"res://scripts/ui/shop_screen.gd",
 	"res://scripts/components/day_flow.gd",
+	"res://scripts/ui/pause_menu.gd",
 	"res://scripts/util/debug_keys.gd",
 ]
 

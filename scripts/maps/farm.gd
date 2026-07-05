@@ -71,7 +71,7 @@ func _ready() -> void:
 	_add_dungeon_portal(world)
 	_add_town_portal(world)
 
-	var cam := Camera2D.new()
+	var cam := CameraShake.new()
 	cam.limit_left = 0
 	cam.limit_top = 0
 	cam.limit_right = WIDTH * MapBuilder.TILE
@@ -83,11 +83,13 @@ func _ready() -> void:
 	# UI + flow layers land in Tasks 9-11; instance them if the scripts exist
 	# so this file needs no edits later.
 	for extra in [
+		"res://scripts/components/day_tint.gd",
 		"res://scripts/ui/hud.gd",
 		"res://scripts/ui/inventory_screen.gd",
 		"res://scripts/ui/dialog_box.gd",
 		"res://scripts/ui/shop_screen.gd",
 		"res://scripts/components/day_flow.gd",
+		"res://scripts/ui/pause_menu.gd",
 		"res://scripts/util/debug_keys.gd",
 	]:
 		if ResourceLoader.exists(extra):
