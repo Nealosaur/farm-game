@@ -8,6 +8,12 @@ func before_each() -> void:
 	Inventory.reset()
 
 
+func after_each() -> void:
+	# Two tests below force Clock.day for season-filter coverage — restore
+	# the default so later test files see day 1 as they always have.
+	Clock.day = 1
+
+
 # ---- is_open (store-hours gate) ----
 
 func test_is_open_true_within_9_to_5() -> void:
@@ -135,16 +141,49 @@ func test_sell_unknown_item_rejected() -> void:
 # ---- listing helpers ----
 
 func test_buyable_items_includes_seeds_and_iron_sword_only() -> void:
+	# World Stride A: buyable_items() now also filters seeds by season (Marta
+	# only stocks in-season seeds) — force Spring (day 1) so this test's
+	# expectations are stable regardless of which day the suite runs on.
+	Clock.day = 1  # Spring, day_of_season 1
 	var ids: Array[String] = []
 	for item: ItemData in ShopLogic.buyable_items():
 		ids.append(item.id)
 	assert_true(ids.has("turnip_seeds"))
 	assert_true(ids.has("carrot_seeds"))
-	assert_true(ids.has("pumpkin_seeds"))
+	assert_true(ids.has("strawberry_seeds"), "strawberry is a spring crop")
 	assert_true(ids.has("iron_sword"))
-	assert_eq(ids.size(), 4, "exactly the 3 seeds + iron sword have buy_price > 0 today")
+	assert_eq(ids.size(), 4, "3 spring seeds + iron sword are buyable in Spring")
+	assert_false(ids.has("pumpkin_seeds"), "pumpkin is fall-only, excluded in spring")
+	assert_false(ids.has("tomato_seeds"), "tomato is summer-only, excluded in spring")
 	assert_false(ids.has("wooden_sword"), "wooden_sword has no buy_price")
 	assert_false(ids.has("hoe"), "hoe has no buy_price")
+
+
+func test_buyable_items_stocks_pumpkin_again_in_fall() -> void:
+	# Pumpkin MOVED to fall (World Stride A) — it must leave the spring shelf
+	# (asserted above) and come back when its season arrives, with the other
+	# fall seeds, while spring/summer seeds rotate out.
+	Clock.day = 57  # Fall 1
+	var ids: Array[String] = []
+	for item: ItemData in ShopLogic.buyable_items():
+		ids.append(item.id)
+	assert_true(ids.has("pumpkin_seeds"))
+	assert_true(ids.has("eggplant_seeds"))
+	assert_true(ids.has("amberleaf_seeds"))
+	assert_false(ids.has("turnip_seeds"))
+	assert_false(ids.has("melon_seeds"))
+	assert_true(ids.has("iron_sword"), "non-seed stock is season-blind")
+
+
+func test_buyable_items_excludes_all_seeds_in_winter() -> void:
+	# Winter day: e.g. day 85 = Winter day_of_season 1 (season index 3).
+	Clock.day = 85
+	assert_eq(Clock.season(), 3, "sanity: day 85 is Winter")
+	var ids: Array[String] = []
+	for item: ItemData in ShopLogic.buyable_items():
+		ids.append(item.id)
+	assert_true(ids.has("iron_sword"), "tools are season-blind")
+	assert_eq(ids.size(), 1, "no seeds are plantable in winter — only the iron sword")
 
 
 func test_sellable_stacks_merges_across_slots_and_sorts() -> void:

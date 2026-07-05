@@ -5,6 +5,11 @@ var grid: FarmGrid
 
 func before_each() -> void:
 	Clock.paused = true
+	# World Stride A: pin a mid-spring day so planting/advance_day tests below
+	# never land on a season-rollover day by accident (leaked Clock.day from
+	# another test file could otherwise wilt a freshly-planted spring crop
+	# mid-test — turnip/carrot are spring-only).
+	Clock.day = 10
 	grid = FarmGrid.new()
 	grid.tillable = Rect2i(0, 0, 10, 10)
 	add_child_autofree(grid)
@@ -85,8 +90,16 @@ func test_harvest_cycle() -> void:
 
 
 func test_serialization_round_trip() -> void:
+	# Uses strawberry, not pumpkin (World Stride A moved pumpkin to fall-only)
+	# — this test's intent is proving crop_id/days_in_stage/watered round-trip
+	# correctly, which strawberry demonstrates equally well without needing to
+	# drive Clock.day into fall (and risk an unrelated season-wilt tick).
+	# Strawberry's stage_days [2,2,3] (like pumpkin's old [2,3,3]) has a
+	# stage-0 threshold > 1, so one watered day leaves it mid-stage-0
+	# (days_in_stage 1) rather than immediately advancing to stage 1 — carrot
+	# and turnip both have a 1-day stage 0, which would advance same-day.
 	grid.till(Vector2i(1, 1))
-	grid.plant(Vector2i(1, 1), "pumpkin")
+	grid.plant(Vector2i(1, 1), "strawberry")
 	grid.water(Vector2i(1, 1))
 	grid.advance_day()
 	var data := grid.to_dict()
@@ -94,7 +107,7 @@ func test_serialization_round_trip() -> void:
 	grid2.tillable = grid.tillable
 	add_child_autofree(grid2)
 	grid2.from_dict(data)
-	assert_eq(grid2.plots[Vector2i(1, 1)].crop_id, "pumpkin")
+	assert_eq(grid2.plots[Vector2i(1, 1)].crop_id, "strawberry")
 	assert_eq(grid2.plots[Vector2i(1, 1)].days_in_stage, 1)
 	assert_false(grid2.plots[Vector2i(1, 1)].watered)
 
@@ -152,3 +165,9 @@ func test_exit_tree_stores_blob_per_world_contract() -> void:
 	var blob: Dictionary = SaveManager.world.get("farm_grid", {})
 	assert_true(blob.has("2,2"), "grid stored its plots on scene exit")
 	SaveManager.world.erase("farm_grid")
+
+# World Stride A: season-gated planting, wilt, regrow, and water_all coverage
+# lives in tests/unit/test_seasons_farm.gd (a dedicated file, matching this
+# project's convention of splitting out a stride's new behavior rather than
+# growing this file further — see test_day_tint.gd vs test_auto_instance_scenes.gd
+# for the same pattern).

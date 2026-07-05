@@ -46,6 +46,9 @@ func test_each_map_boots_with_day_tint_and_pause_menu() -> void:
 
 func test_day_tint_matches_current_clock_minutes_on_boot() -> void:
 	Clock.minutes = 22 * 60  # night
+	# World Stride A: new_game() rolls real weather; force clear so this test
+	# verifies the night-tint curve alone, not multiplied by RAIN_TINT.
+	Clock.weather = "clear"
 	var scene: Node = (load("res://scenes/maps/farm.tscn") as PackedScene).instantiate()
 	add_child_autofree(scene)
 	await wait_process_frames(2)

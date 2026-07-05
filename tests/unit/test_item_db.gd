@@ -2,8 +2,12 @@ extends GutTest
 
 
 func test_content_loaded() -> void:
-	assert_eq(ItemDB.items.size(), 13)
-	assert_eq(ItemDB.crops.size(), 3)
+	# World Stride A: 6 new crops (strawberry/tomato/corn/melon/eggplant/
+	# amberleaf -> 6 produce + 6 seeds = 12 items) + 5 forage items (wildroot,
+	# emberberry, frostcap, tideshell, driftglass) = 13 + 17 = 30 items;
+	# 3 + 6 = 9 crops. Enemies untouched.
+	assert_eq(ItemDB.items.size(), 30)
+	assert_eq(ItemDB.crops.size(), 9)
 	assert_eq(ItemDB.enemies.size(), 4)
 
 
