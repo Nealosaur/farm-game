@@ -237,6 +237,12 @@ func _on_day_passed(_day: int) -> void:
 
 
 func _decay_one(npc_id: String) -> void:
+	## Writes state["points"] directly rather than going through _add_points
+	## on purpose: decay is passive background bookkeeping, not a player
+	## action, so it deliberately does NOT emit relationship_changed (which
+	## would fire once per registered NPC every single day-rollover — noisy
+	## for zero player-visible benefit; the Journal's SOCIAL tab reads fresh
+	## values whenever it's opened anyway).
 	if has_talked_today(npc_id):
 		return  # talked_day was just set to the new day by a same-tick talk() — not decayed
 	var state: Dictionary = _state[npc_id]

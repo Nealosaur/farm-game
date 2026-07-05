@@ -14,12 +14,14 @@ const TOWN_SCENE := "res://scenes/maps/town.tscn"
 
 func before_each() -> void:
 	Clock.paused = true
+	SaveManager.world.erase("relationships")
+	SaveManager.save_path = "user://test_town_npc.json"
+	SaveManager.new_game()  # rolls REAL weather (Spring day 1 is 30% rain) — force clear right after
+	Clock.weather = "clear"  # Marta's schedule has a documented rain override; force clear so
+	                         # block-placement assertions below test the NORMAL schedule, not rain's.
 	Clock.day = 1
 	Clock.minutes = 10 * 60  # 10 AM: store-counter block (9-12)
 	Relationships._state = {}
-	SaveManager.world.erase("relationships")
-	SaveManager.save_path = "user://test_town_npc.json"
-	SaveManager.new_game()
 	SceneChanger.spawn_name = "default"
 
 
@@ -27,6 +29,7 @@ func after_each() -> void:
 	Clock.paused = false
 	Clock.minutes = Clock.DAY_START_MINUTES
 	Clock.day = 1
+	Clock.weather = "clear"
 	Relationships._state = {}
 	SaveManager.world.erase("relationships")
 	SceneChanger.spawn_name = "default"
@@ -55,6 +58,19 @@ func test_marta_moves_to_plaza_bench_at_block_change() -> void:
 	Clock.minutes = 18 * 60  # 17-20 block: plaza bench
 	EventBus.time_ticked.emit(Clock.hour(), Clock.minute())
 	assert_eq(town.marta.position, MapBuilder.cell_center(MartaData.CELL_PLAZA_BENCH))
+
+
+func test_marta_stays_at_counter_all_day_when_raining() -> void:
+	# Bible: Marta's rain override is "all blocks store" (except she still
+	# goes home for the night). Force rain and confirm the 17-20 block
+	# does NOT move her to the plaza bench like it does on a clear day.
+	var town: Node2D = _make_town()
+	add_child_autofree(town)
+	await wait_process_frames(2)
+	Clock.weather = "rain"
+	Clock.minutes = 18 * 60  # 17-20 block
+	EventBus.time_ticked.emit(Clock.hour(), Clock.minute())
+	assert_eq(town.marta.position, MapBuilder.cell_center(MartaData.CELL_COUNTER))
 
 
 func test_marta_moves_home_at_night_block() -> void:
