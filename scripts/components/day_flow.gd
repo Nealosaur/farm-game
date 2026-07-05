@@ -64,26 +64,38 @@ func end_day(collapsed: bool) -> void:
 		GameState.add_gold(earned)
 	SaveManager.world["shipping_bin"] = {}
 
-	Clock.end_day()
+	Clock.end_day()  # increments day, rolls the new day's weather, emits day_passed
 	GameState.sleep_restore(collapsed)
 
 	var grid := get_tree().get_first_node_in_group("farm_grid") as FarmGrid
+	var wilted := 0
 	if grid != null:
+		# day_passed already grew + season-wilted the live grid; read the tally.
+		wilted = grid.last_wilt_count
+		if Clock.is_raining():
+			grid.water_all()  # rain day: wake to a fully watered field
 		grid.store()
 	else:
 		# Farm scene not loaded (slept/collapsed elsewhere): the day_passed
 		# from Clock.end_day() had no live FarmGrid listener, so advance the
-		# saved blob directly — crops must never miss a growth night.
-		FarmGrid.advance_stored_day()
+		# saved blob directly — crops must never miss a growth night (nor a
+		# season-boundary wilt, nor an overnight rain watering).
+		wilted = FarmGrid.advance_stored_day()
+		if Clock.is_raining():
+			FarmGrid.water_all_stored()
 	SaveManager.save_game()
 
 	var toasts := PackedStringArray()
 	if collapsed:
-		toasts.append("You collapsed... Day %d" % Clock.day)
+		toasts.append("You collapsed... %s" % Clock.date_string())
 	else:
-		toasts.append("Day %d" % Clock.day)
+		toasts.append(Clock.date_string())
 	if earned > 0:
 		toasts.append("Shipped goods: +%dg" % earned)
+	if wilted > 0:
+		toasts.append("The season turned — %d crops wilted." % wilted)
+	if Clock.is_raining():
+		toasts.append("Rain overnight — the field is watered.")
 
 	if grid != null:
 		# Original on-farm flow: reposition, fade in, toast, unpause.

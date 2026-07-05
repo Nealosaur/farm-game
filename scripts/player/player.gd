@@ -209,7 +209,10 @@ func try_interact() -> void:
 		var product: String = grid.peek_harvest(target_cell())
 		if product != "":
 			if Inventory.add_item(product) == 0:
-				grid.clear_crop(target_cell())
+				# FarmGrid owns the clear-vs-regrow decision (World Stride A);
+				# harvest() only commits AFTER the item fit in the inventory,
+				# so a full inventory leaves the crop ripe and untouched.
+				grid.harvest(target_cell())
 				EventBus.toast_requested.emit("+1 " + ItemDB.get_item(product).display_name)
 			else:
 				EventBus.toast_requested.emit("Inventory full!")
