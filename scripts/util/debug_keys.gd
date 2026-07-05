@@ -1,5 +1,5 @@
 extends Node
-## Dev-build-only debug hotkeys (spec §14). F3 teleport lands in Plan 3.
+## Dev-build-only debug hotkeys (spec §14).
 
 
 func _ready() -> void:
@@ -20,4 +20,4 @@ func _unhandled_input(event: InputEvent) -> void:
 		GameState.restore_rp(GameState.max_rp)
 		EventBus.toast_requested.emit("HP/RP refilled (debug)")
 	elif event.is_action_pressed("debug_teleport"):
-		EventBus.toast_requested.emit("Dungeon arrives in Plan 3")
+		SceneChanger.travel("res://scenes/maps/dungeon_1.tscn", "entrance")

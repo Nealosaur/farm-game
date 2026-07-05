@@ -7,7 +7,19 @@ const TILLABLE := Rect2i(24, 10, 14, 10)
 const BED_CELL := Vector2i(8, 6)
 const BIN_CELL := Vector2i(11, 7)
 const HOUSE_CELL := Vector2i(4, 4)      # top-left cell of 3x3 house footprint
-const SPAWN_CELL := Vector2i(9, 9)
+const SPAWN_CELL := Vector2i(9, 9)      # legacy default, kept as SPAWNS["default"]
+
+## Named spawn support (Plan: dungeon+portal system). SceneChanger.spawn_name
+## is looked up here after the world is built; unknown/missing names fall back
+## to "default". "from_dungeon" sits just off the dungeon portal cell (41, 12)
+## so returning players don't land back on its trigger area.
+const SPAWNS := {
+	"default": Vector2i(9, 9),
+	"wake": Vector2i(8, 8),
+	"from_dungeon": Vector2i(39, 12),
+}
+
+const DUNGEON_PORTAL_CELL := Vector2i(41, 12)
 
 var grid: FarmGrid
 var player: Player
@@ -47,12 +59,13 @@ func _ready() -> void:
 	_add_props(world)
 
 	player = (load("res://scenes/player/player.tscn") as PackedScene).instantiate()
-	player.global_position = MapBuilder.cell_center(SPAWN_CELL)
+	player.global_position = MapBuilder.cell_center(
+		MapSceneHelper.spawn_cell(SPAWNS, "default"))
 	world.add_child(player)
+	# (Plan 1's TEMP farm slimes are gone — combat lives in the dungeon now,
+	# entered via the east stairs below.)
 
-	# TEMP: test spawns until dungeon (next stride)
-	Enemy.spawn_enemy("slime", Vector2i(26, 12), world)
-	Enemy.spawn_enemy("slime", Vector2i(30, 15), world)
+	_add_dungeon_portal(world)
 
 	var cam := Camera2D.new()
 	cam.limit_left = 0
@@ -93,6 +106,20 @@ func _layout() -> PackedStringArray:
 				row += "G"
 		rows.append(row)
 	return rows
+
+
+func _add_dungeon_portal(world: Node2D) -> void:
+	## East-edge stairs down to dungeon floor 1. Portal's own arm-delay plus
+	## the offset "from_dungeon" spawn (see SPAWNS) prevent bounce-back loops.
+	var portal := Portal.make({
+		"cell": DUNGEON_PORTAL_CELL,
+		"target_scene": "res://scenes/maps/dungeon_1.tscn",
+		"target_spawn": "entrance",
+		"sprite": "res://assets/placeholder/prop_stairs_down.png",
+		"label": "Dungeon — Floor 1",
+	})
+	portal.name = "DungeonPortal"
+	world.add_child(portal)
 
 
 func _add_props(world: Node2D) -> void:

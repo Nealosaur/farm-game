@@ -9,6 +9,12 @@ var save_path := "user://save1.json"
 ## save_game() fires (and on scene exit); scenes READ world.get(key, default) in
 ## _ready(). No signal is emitted on load — callers must sequence scene loads
 ## AFTER load_game()/new_game() completes.
+## Sanctioned keys:
+##   "farm_grid"     — FarmGrid.to_dict() (cell "x,y" -> plot dict)
+##   "shipping_bin"  — item_id -> count, cleared at each day rollover
+##   "dungeon_state" — {"day": int, "killed": {floor_key: [spawn_index, ...]}}
+##                     daily dungeon respawn ledger; shape + rules live in
+##                     DungeonState (scripts/util/dungeon_state.gd)
 var world := {}  # map-owned persistent blobs (farm grid etc.), set by scenes
 
 
