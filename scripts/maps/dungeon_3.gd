@@ -99,24 +99,26 @@ func _ready() -> void:
 
 	var world := get_node("World") as Node2D
 
-	_arena_gate = ArenaGate.new()
-	_arena_gate.name = "ArenaGate"
-	var shape := CollisionShape2D.new()
-	var rect := RectangleShape2D.new()
-	# Trigger area in pixels: top-left of the tile rect to bottom-right,
-	# positioned at its center (Area2D/CollisionShape2D convention).
-	var top_left := Vector2(ARENA_TRIGGER_RECT.position) * MapBuilder.TILE
-	var size_px := Vector2(ARENA_TRIGGER_RECT.size) * MapBuilder.TILE
-	rect.size = size_px
-	shape.shape = rect
-	shape.position = top_left + size_px / 2.0
-	_arena_gate.add_child(shape)
-	world.add_child(_arena_gate)
-	_arena_gate.setup(ARENA_GATE_CELLS)
-
 	EventBus.player_died.connect(_on_player_died)
 
 	if not GameState.flags.get("boss_defeated", false):
+		# Gate only exists while the boss lives — a beaten arena never
+		# re-seals (post-victory re-entry softlock, milestone review fix).
+		_arena_gate = ArenaGate.new()
+		_arena_gate.name = "ArenaGate"
+		var shape := CollisionShape2D.new()
+		var rect := RectangleShape2D.new()
+		# Trigger area in pixels: top-left of the tile rect to bottom-right,
+		# positioned at its center (Area2D/CollisionShape2D convention).
+		var top_left := Vector2(ARENA_TRIGGER_RECT.position) * MapBuilder.TILE
+		var size_px := Vector2(ARENA_TRIGGER_RECT.size) * MapBuilder.TILE
+		rect.size = size_px
+		shape.shape = rect
+		shape.position = top_left + size_px / 2.0
+		_arena_gate.add_child(shape)
+		world.add_child(_arena_gate)
+		_arena_gate.setup(ARENA_GATE_CELLS)
+
 		_boss = SlimeKing.spawn_boss(BOSS_CELL, world)
 		_health_bar = BossHealthBar.new()
 		add_child(_health_bar)

@@ -55,6 +55,8 @@ func test_boss_does_not_spawn_when_flag_set() -> void:
 	add_child_autofree(f)
 	await wait_process_frames(2)
 	assert_null(_find_boss(f), "boss must not respawn once defeated")
+	assert_null(f.get_node_or_null("World/ArenaGate"),
+		"a beaten arena must never re-seal (post-victory softlock regression)")
 
 
 func test_boss_health_bar_tracks_boss_and_hides_on_death() -> void:
