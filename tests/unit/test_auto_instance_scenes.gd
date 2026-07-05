@@ -42,6 +42,7 @@ func test_each_map_boots_with_day_tint_and_pause_menu() -> void:
 		assert_true(_has_child_of_type(scene, DayTint), scene_path + " should have a DayTint child")
 		assert_true(_has_child_of_type(scene, PauseMenu), scene_path + " should have a PauseMenu child")
 		assert_true(_has_child_of_type(scene, Hud), scene_path + " should still have its HUD child")
+		assert_true(_has_child_of_type(scene, Journal), scene_path + " should have a Journal child (World Stride B)")
 
 
 func test_day_tint_matches_current_clock_minutes_on_boot() -> void:
