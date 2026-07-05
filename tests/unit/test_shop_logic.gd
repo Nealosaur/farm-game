@@ -1,0 +1,170 @@
+extends GutTest
+## Covers ShopLogic's buy/sell rules and the store-hours gate. UI (ShopScreen)
+## stays a thin shell over this, mirroring Shipping/test_shipping.gd.
+
+
+func before_each() -> void:
+	GameState.reset_new_game()
+	Inventory.reset()
+
+
+# ---- is_open (store-hours gate) ----
+
+func test_is_open_true_within_9_to_5() -> void:
+	assert_true(ShopLogic.is_open(9))
+	assert_true(ShopLogic.is_open(12))
+	assert_true(ShopLogic.is_open(16))
+
+
+func test_is_open_false_outside_9_to_5() -> void:
+	assert_false(ShopLogic.is_open(8))
+	assert_false(ShopLogic.is_open(17))
+	assert_false(ShopLogic.is_open(0))
+	assert_false(ShopLogic.is_open(23))
+
+
+# ---- buy() ----
+
+func test_buy_success_decrements_gold_and_adds_item() -> void:
+	var gold_before := GameState.gold
+	var result := ShopLogic.buy("turnip_seeds")
+	assert_eq(result, ShopLogic.Result.OK)
+	assert_eq(GameState.gold, gold_before - 20)
+	assert_eq(Inventory.count_of("turnip_seeds"), 1)
+
+
+func test_buy_multiple_count() -> void:
+	var gold_before := GameState.gold
+	var result := ShopLogic.buy("turnip_seeds", 3)
+	assert_eq(result, ShopLogic.Result.OK)
+	assert_eq(GameState.gold, gold_before - 60)
+	assert_eq(Inventory.count_of("turnip_seeds"), 3)
+
+
+func test_buy_insufficient_gold_is_noop() -> void:
+	GameState.gold = 10
+	var result := ShopLogic.buy("iron_sword")
+	assert_eq(result, ShopLogic.Result.INSUFFICIENT_GOLD)
+	assert_eq(GameState.gold, 10)
+	assert_eq(Inventory.count_of("iron_sword"), 0)
+
+
+func test_buy_not_for_sale_item_rejected() -> void:
+	var gold_before := GameState.gold
+	var result := ShopLogic.buy("turnip")  # sell_price only, no buy_price
+	assert_eq(result, ShopLogic.Result.NOT_FOR_SALE)
+	assert_eq(GameState.gold, gold_before)
+
+
+func test_buy_unknown_item_rejected() -> void:
+	var result := ShopLogic.buy("nonsense")
+	assert_eq(result, ShopLogic.Result.NOT_FOR_SALE)
+
+
+func test_buy_inventory_full_refunds_gold() -> void:
+	# Fill every slot with a full stack of turnip (max_stack 99) so there is
+	# no room left for the purchased seed stack.
+	for i in Inventory.SIZE:
+		Inventory.slots[i] = {"id": "turnip", "count": 99}
+	var gold_before := GameState.gold
+	var result := ShopLogic.buy("turnip_seeds")
+	assert_eq(result, ShopLogic.Result.INVENTORY_FULL)
+	assert_eq(GameState.gold, gold_before, "gold must be refunded in full")
+	assert_eq(Inventory.count_of("turnip_seeds"), 0)
+
+
+func test_buy_iron_sword_is_purchasable_and_equippable_data() -> void:
+	GameState.gold = 5000
+	var result := ShopLogic.buy("iron_sword")
+	assert_eq(result, ShopLogic.Result.OK)
+	assert_eq(Inventory.count_of("iron_sword"), 1)
+	var data := Inventory.get_selected_item_data()
+	# iron_sword occupies slot 0 in a freshly reset inventory (hotbar slot),
+	# so it's immediately selectable/equippable like any tool.
+	var found := false
+	for s in Inventory.slots:
+		if s != null and s.id == "iron_sword":
+			found = true
+	assert_true(found)
+	assert_true(ItemDB.get_item("iron_sword") is ToolData)
+	assert_eq((ItemDB.get_item("iron_sword") as ToolData).tool_type, ToolData.ToolType.SWORD)
+
+
+# ---- sell() ----
+
+func test_sell_removes_item_and_pays_gold() -> void:
+	Inventory.add_item("turnip", 5)
+	var gold_before := GameState.gold
+	var result := ShopLogic.sell("turnip", 5)
+	assert_eq(result, ShopLogic.Result.OK)
+	assert_eq(Inventory.count_of("turnip"), 0)
+	assert_eq(GameState.gold, gold_before + 5 * 45)
+
+
+func test_sell_default_count_is_one() -> void:
+	Inventory.add_item("turnip", 5)
+	var gold_before := GameState.gold
+	ShopLogic.sell("turnip")
+	assert_eq(Inventory.count_of("turnip"), 4)
+	assert_eq(GameState.gold, gold_before + 45)
+
+
+func test_sell_unsellable_item_rejected() -> void:
+	Inventory.add_item("hoe")
+	var gold_before := GameState.gold
+	var result := ShopLogic.sell("hoe")
+	assert_eq(result, ShopLogic.Result.UNSELLABLE)
+	assert_eq(GameState.gold, gold_before)
+	assert_eq(Inventory.count_of("hoe"), 1)
+
+
+func test_sell_more_than_owned_rejected() -> void:
+	Inventory.add_item("turnip", 2)
+	var gold_before := GameState.gold
+	var result := ShopLogic.sell("turnip", 5)
+	assert_eq(result, ShopLogic.Result.NOTHING_TO_SELL)
+	assert_eq(GameState.gold, gold_before)
+	assert_eq(Inventory.count_of("turnip"), 2)
+
+
+func test_sell_unknown_item_rejected() -> void:
+	var result := ShopLogic.sell("nonsense")
+	assert_eq(result, ShopLogic.Result.UNSELLABLE)
+
+
+# ---- listing helpers ----
+
+func test_buyable_items_includes_seeds_and_iron_sword_only() -> void:
+	var ids: Array[String] = []
+	for item: ItemData in ShopLogic.buyable_items():
+		ids.append(item.id)
+	assert_true(ids.has("turnip_seeds"))
+	assert_true(ids.has("carrot_seeds"))
+	assert_true(ids.has("pumpkin_seeds"))
+	assert_true(ids.has("iron_sword"))
+	assert_eq(ids.size(), 4, "exactly the 3 seeds + iron sword have buy_price > 0 today")
+	assert_false(ids.has("wooden_sword"), "wooden_sword has no buy_price")
+	assert_false(ids.has("hoe"), "hoe has no buy_price")
+
+
+func test_sellable_stacks_merges_across_slots_and_sorts() -> void:
+	Inventory.add_item("turnip", 50)
+	Inventory.add_item("turnip", 50)   # spills to a 2nd slot; must merge in the total
+	Inventory.add_item("carrot", 1)
+	var stacks := ShopLogic.sellable_stacks()
+	var by_id := {}
+	for s: Dictionary in stacks:
+		by_id[s["id"]] = s["count"]
+	assert_eq(by_id["turnip"], 100)
+	assert_eq(by_id["carrot"], 1)
+
+
+func test_sellable_stacks_excludes_unsellable_items() -> void:
+	Inventory.add_item("hoe")
+	Inventory.add_item("turnip", 2)
+	var stacks := ShopLogic.sellable_stacks()
+	var ids: Array[String] = []
+	for s: Dictionary in stacks:
+		ids.append(s["id"])
+	assert_false(ids.has("hoe"), "hoe has no sell_price and must be excluded")
+	assert_true(ids.has("turnip"))
