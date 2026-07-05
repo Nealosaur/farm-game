@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="FoodData" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/placeholder/item_melon.png" id="1_5scql"]
+[ext_resource type="Script" path="res://scripts/resources/food_data.gd" id="2_ft4eb"]
+
+[resource]
+script = ExtResource("2_ft4eb")
+rp_restore = 90
+hp_restore = 15
+id = "melon"
+display_name = "Melon"
+icon = ExtResource("1_5scql")
+sell_price = 320

@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="CropData" format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/crop_data.gd" id="1_jijij"]
+
+[resource]
+script = ExtResource("1_jijij")
+id = "corn"
+stage_days = Array[int]([2, 3, 3])
+product_id = "corn"
+seasons = Array[int]([1])
+regrow_days = 4

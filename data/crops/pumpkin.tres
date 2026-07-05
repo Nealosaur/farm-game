@@ -7,3 +7,4 @@ script = ExtResource("1_xstun")
 id = "pumpkin"
 stage_days = Array[int]([2, 3, 3])
 product_id = "pumpkin"
+seasons = Array[int]([2])

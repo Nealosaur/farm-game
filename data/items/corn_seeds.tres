@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="SeedData" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/placeholder/item_corn_seeds.png" id="1_vdpfq"]
+[ext_resource type="Script" path="res://scripts/resources/seed_data.gd" id="2_b0s2s"]
+
+[resource]
+script = ExtResource("2_b0s2s")
+crop_id = "corn"
+id = "corn_seeds"
+display_name = "Corn Seeds"
+icon = ExtResource("1_vdpfq")
+buy_price = 80
+sell_price = 40

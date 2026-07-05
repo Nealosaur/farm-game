@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/placeholder/item_driftglass.png" id="1_dswxr"]
+[ext_resource type="Script" path="res://scripts/resources/item_data.gd" id="2_abmko"]
+
+[resource]
+script = ExtResource("2_abmko")
+id = "driftglass"
+display_name = "Driftglass"
+icon = ExtResource("1_dswxr")
+sell_price = 80

@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="FoodData" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/placeholder/item_amberleaf.png" id="1_pcrvd"]
+[ext_resource type="Script" path="res://scripts/resources/food_data.gd" id="2_ute40"]
+
+[resource]
+script = ExtResource("2_ute40")
+rp_restore = 70
+id = "amberleaf"
+display_name = "Amberleaf"
+icon = ExtResource("1_pcrvd")
+sell_price = 260

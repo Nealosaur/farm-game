@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="CropData" format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/crop_data.gd" id="1_qgopa"]
+
+[resource]
+script = ExtResource("1_qgopa")
+id = "melon"
+stage_days = Array[int]([3, 3, 4])
+product_id = "melon"
+seasons = Array[int]([1])

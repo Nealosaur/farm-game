@@ -124,7 +124,7 @@ func _refresh_stats() -> void:
 
 func _refresh_clock() -> void:
 	clock_label.text = Clock.time_string()
-	day_label.text = "Day %d" % Clock.day
+	day_label.text = Clock.date_string()  # "Spring 12, Yr 1" (World Stride A)
 
 
 func _refresh_hotbar() -> void:

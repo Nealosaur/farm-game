@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="FoodData" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/placeholder/item_strawberry.png" id="1_3x2uh"]
+[ext_resource type="Script" path="res://scripts/resources/food_data.gd" id="2_3wwqv"]
+
+[resource]
+script = ExtResource("2_3wwqv")
+rp_restore = 45
+id = "strawberry"
+display_name = "Strawberry"
+icon = ExtResource("1_3x2uh")
+sell_price = 130

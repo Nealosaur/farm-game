@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="SeedData" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/placeholder/item_amberleaf_seeds.png" id="1_7rk68"]
+[ext_resource type="Script" path="res://scripts/resources/seed_data.gd" id="2_0tc1r"]
+
+[resource]
+script = ExtResource("2_0tc1r")
+crop_id = "amberleaf"
+id = "amberleaf_seeds"
+display_name = "Amberleaf Seeds"
+icon = ExtResource("1_7rk68")
+buy_price = 100
+sell_price = 50

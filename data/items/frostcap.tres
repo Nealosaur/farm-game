@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="FoodData" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/placeholder/item_frostcap.png" id="1_oenlu"]
+[ext_resource type="Script" path="res://scripts/resources/food_data.gd" id="2_h2pyk"]
+
+[resource]
+script = ExtResource("2_h2pyk")
+rp_restore = 50
+id = "frostcap"
+display_name = "Frostcap"
+icon = ExtResource("1_oenlu")
+sell_price = 75
