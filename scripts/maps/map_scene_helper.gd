@@ -27,6 +27,19 @@ static func instance_ui_and_flow_layer(host: Node) -> void:
 			host.add_child(node)
 
 
+static func attach_season_palette(host: Node, ground: TileMapLayer) -> void:
+	## World Stride A: outdoor maps call this right after building their
+	## Ground layer — the SeasonPalette node recolors it per season (and
+	## re-applies on day_passed). Dungeon floors deliberately DON'T call
+	## this: underground is exempt from seasonal + rain visuals (see
+	## dungeon_floor.gd / day_tint.gd). Lives in the host scene so it dies
+	## (and auto-disconnects) with it.
+	var palette := SeasonPalette.new()
+	palette.name = "SeasonPalette"
+	host.add_child(palette)
+	palette.setup(ground)
+
+
 static func spawn_cell(spawns: Dictionary, default_key: String) -> Vector2i:
 	## Resolves SceneChanger.spawn_name against a map's SPAWNS dict, falling
 	## back to default_key (and to Vector2i.ZERO if even that is missing).

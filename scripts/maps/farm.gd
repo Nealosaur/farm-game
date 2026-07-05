@@ -37,6 +37,7 @@ func _ready() -> void:
 	ground.tile_set = built.tileset
 	add_child(ground)
 	MapBuilder.fill_layer(ground, _layout(), ids)
+	MapSceneHelper.attach_season_palette(self, ground)  # outdoor: seasonal recolor
 
 	var soil := TileMapLayer.new()
 	soil.name = "Soil"

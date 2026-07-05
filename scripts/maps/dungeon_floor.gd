@@ -25,6 +25,11 @@ extends Node2D
 
 
 func _ready() -> void:
+	# World Stride A: dungeon floors are "indoors" — the dungeon_map group
+	# tells DayTint to skip the rain tint, and no SeasonPalette is attached
+	# here so seasonal ground recolor never applies underground. Group must
+	# be set BEFORE instance_ui_and_flow_layer() so DayTint._ready() sees it.
+	add_to_group("dungeon_map")
 	var rows := _layout()
 	var width := 0 if rows.is_empty() else rows[0].length()
 	var height := rows.size()
