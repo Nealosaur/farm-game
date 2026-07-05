@@ -54,14 +54,39 @@ const SPRITES := {
 	"item_slime_gel": [16, 16, "60d060", KIND_CIRCLE_ITEM],
 	"item_wisp_dust": [16, 16, "90d0f0", KIND_CIRCLE_ITEM],
 	"item_goblin_fang": [16, 16, "e0d0b0", KIND_CIRCLE_ITEM],
+	# World Stride A content: produce + forage circles, seed diamonds.
+	"item_strawberry": [16, 16, "e04060", KIND_CIRCLE_ITEM],
+	"item_tomato": [16, 16, "d84030", KIND_CIRCLE_ITEM],
+	"item_corn": [16, 16, "e8c840", KIND_CIRCLE_ITEM],
+	"item_melon": [16, 16, "70c880", KIND_CIRCLE_ITEM],
+	"item_eggplant": [16, 16, "7048a8", KIND_CIRCLE_ITEM],
+	"item_amberleaf": [16, 16, "d89838", KIND_CIRCLE_ITEM],
+	"item_strawberry_seeds": [16, 16, "d0a0a8", KIND_DIAMOND],
+	"item_tomato_seeds": [16, 16, "c89078", KIND_DIAMOND],
+	"item_corn_seeds": [16, 16, "d8c890", KIND_DIAMOND],
+	"item_melon_seeds": [16, 16, "98c0a0", KIND_DIAMOND],
+	"item_eggplant_seeds": [16, 16, "9880b0", KIND_DIAMOND],
+	"item_amberleaf_seeds": [16, 16, "c8a878", KIND_DIAMOND],
+	"item_wildroot": [16, 16, "a87848", KIND_CIRCLE_ITEM],
+	"item_emberberry": [16, 16, "e06828", KIND_CIRCLE_ITEM],
+	"item_frostcap": [16, 16, "a8d8e8", KIND_CIRCLE_ITEM],
+	"item_tideshell": [16, 16, "e0d0b8", KIND_CIRCLE_ITEM],
+	"item_driftglass": [16, 16, "78c8c0", KIND_CIRCLE_ITEM],
 }
 
 # 4 growth-stage sprites per crop: stage 0 (seeded, soil brown) -> 3 (ripe, final color).
 # Growing circle radius per stage instead of a full-square fill.
+# (Forage items have NO stage sprites — they're plain pickups, not plantable.)
 const CROPS := {
 	"turnip": "e8e0d0",
 	"carrot": "e07820",
 	"pumpkin": "d06010",
+	"strawberry": "e04060",
+	"tomato": "d84030",
+	"corn": "e8c840",
+	"melon": "70c880",
+	"eggplant": "7048a8",
+	"amberleaf": "d89838",
 }
 const CROP_STAGE_RADII := [2, 4, 6, 8]
 
