@@ -30,7 +30,7 @@ const KIND_CROSS := "cross"                # tools
 
 const SPRITES := {
 	"char_player": [16, 32, "e0b070", KIND_HEADBAND],
-	"char_shopkeeper": [16, 32, "c070c0", KIND_HEADBAND],
+	"char_marta": [16, 32, "c070c0", KIND_HEADBAND],
 	"char_slime": [16, 16, "50c050", KIND_CIRCLE_CHAR],
 	"char_wisp": [16, 16, "70c0e0", KIND_TRIANGLE],
 	"char_goblin": [16, 24, "a05030", KIND_HEADBAND],

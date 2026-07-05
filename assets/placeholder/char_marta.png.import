@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cs5ltte014f5h"
-path="res://.godot/imported/char_shopkeeper.png-b6c71ac37a8e7b770d6a3325b247044c.ctex"
+uid="uid://om7v6h7ytibe"
+path="res://.godot/imported/char_marta.png-ca5b7826a1d09c31e42e58e2f0f4f8ad.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/placeholder/char_shopkeeper.png"
-dest_files=["res://.godot/imported/char_shopkeeper.png-b6c71ac37a8e7b770d6a3325b247044c.ctex"]
+source_file="res://assets/placeholder/char_marta.png"
+dest_files=["res://.godot/imported/char_marta.png-ca5b7826a1d09c31e42e58e2f0f4f8ad.ctex"]
 
 [params]
 

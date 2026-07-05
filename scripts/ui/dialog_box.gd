@@ -4,24 +4,37 @@ extends CanvasLayer
 ## time; "interact"/"use_item" input or a click on the panel advances; the
 ## final advance closes the box and emits `finished`.
 ##
+## Choice-row extension (World Stride B): show_choices(lines, choices) plays
+## `lines` exactly like show_lines(), then — instead of closing on the final
+## advance — shows one button per `choices` entry (mouse-only, matches
+## ShopScreen's row-button convention). Picking a button emits
+## `choice_made(index)`, THEN closes (emits `finished`) — connect to
+## choice_made if the caller needs to know WHICH option was picked, or to
+## `finished` if it just needs to know the box closed.
+##
 ## Pause convention (matches InventoryScreen/menus): the tree pauses while a
 ## dialog is open, this node keeps processing via PROCESS_MODE_ALWAYS.
 ##
 ## Queue-safe policy (documented, not auto-obvious): while a dialog is
-## already open, a new show_lines() call is IGNORED (not queued/appended).
-## Rationale — dialogs here are short NPC greetings triggered by a single
-## interact() call; there's no scenario yet where two callers legitimately
-## queue lines back-to-back, and silently dropping avoids a caller having to
-## await a signal just to know it's safe to call again. Callers that must
-## chain dialog -> action (e.g. shopkeeper opening the shop after its lines)
-## should connect to `finished` instead of calling show_lines again anyway.
+## already open, a new show_lines()/show_choices() call is IGNORED (not
+## queued/appended). Rationale — dialogs here are short NPC greetings
+## triggered by a single interact() call; there's no scenario yet where two
+## callers legitimately queue lines back-to-back, and silently dropping
+## avoids a caller having to await a signal just to know it's safe to call
+## again. Callers that must chain dialog -> action (e.g. shopkeeper opening
+## the shop after its lines) should connect to `finished` instead of calling
+## show_lines again anyway.
 
 signal finished
+signal choice_made(index: int)
 
 var label: Label
 var hint_label: Label
+var choice_box: VBoxContainer
 var _lines: Array[String] = []
 var _index := -1
+var _choices: Array[String] = []
+var _showing_choices := false
 
 
 func _ready() -> void:
@@ -60,6 +73,11 @@ func _ready() -> void:
 	hint_label.add_theme_font_size_override("font_size", 10)
 	panel.add_child(hint_label)
 
+	choice_box = VBoxContainer.new()
+	choice_box.position = Vector2(12, 40)
+	choice_box.mouse_filter = Control.MOUSE_FILTER_PASS
+	panel.add_child(choice_box)
+
 
 func is_open() -> bool:
 	return visible
@@ -71,6 +89,20 @@ func show_lines(lines: Array[String]) -> void:
 	if lines.is_empty():
 		return
 	_lines = lines
+	_choices = []
+	_index = 0
+	visible = true
+	get_tree().paused = true
+	_refresh()
+
+
+func show_choices(lines: Array[String], choices: Array[String]) -> void:
+	if is_open():
+		return  # queue-safe policy (see class doc)
+	if lines.is_empty() or choices.is_empty():
+		return
+	_lines = lines
+	_choices = choices
 	_index = 0
 	visible = true
 	get_tree().paused = true
@@ -78,29 +110,62 @@ func show_lines(lines: Array[String]) -> void:
 
 
 func _advance() -> void:
-	if not is_open():
+	if not is_open() or _showing_choices:
 		return
 	_index += 1
 	if _index >= _lines.size():
-		_close()
+		if _choices.is_empty():
+			_close()
+		else:
+			_show_choice_buttons()
 	else:
 		_refresh()
 
 
 func _refresh() -> void:
 	label.text = _lines[_index]
+	hint_label.visible = true
+
+
+func _show_choice_buttons() -> void:
+	_showing_choices = true
+	hint_label.visible = false
+	label.text = ""
+	for i in _choices.size():
+		var btn := Button.new()
+		btn.text = _choices[i]
+		btn.pressed.connect(_on_choice_pressed.bind(i))
+		choice_box.add_child(btn)
+
+
+func _on_choice_pressed(index: int) -> void:
+	choice_made.emit(index)
+	_close()
+
+
+func _clear_choice_buttons() -> void:
+	# queue_free, NOT free: this runs from _close(), which _on_choice_pressed
+	# calls synchronously from inside a button's own `pressed` signal
+	# emission — freeing the emitting button immediately would hit Godot's
+	# "attempted to free a locked object (calling or emitting)" guard.
+	for child in choice_box.get_children():
+		choice_box.remove_child(child)
+		child.queue_free()
 
 
 func _close() -> void:
 	visible = false
 	get_tree().paused = false
+	_clear_choice_buttons()
 	_lines = []
+	_choices = []
 	_index = -1
+	_showing_choices = false
 	finished.emit()
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if not is_open():
+	if not is_open() or _showing_choices:
 		return
 	if event.is_action_pressed("interact") or event.is_action_pressed("use_item"):
 		_advance()

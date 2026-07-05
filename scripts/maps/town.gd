@@ -1,11 +1,19 @@
 extends Node2D
 ## The town map. Code-built like farm.gd/dungeon_floor.gd: a stone-path
-## plaza with a shop building (stone floor patch + counter + shopkeeper) and
-## a couple of decorative houses. West edge portal leads back to the farm.
+## plaza with a shop building (stone floor patch + counter + Marta, the
+## General Store keeper NPC) and a couple of decorative houses. West edge
+## portal leads back to the farm.
 ##
 ## Not a DungeonFloor subclass — town has no enemies/kill-ledger and (like
 ## farm.gd) owns its own prop placement, so it follows farm.gd's shape
 ## instead: a plain Node2D that builds Ground/World/Camera/UI itself.
+##
+## World Stride B: Marta replaces the old generic shopkeeper.gd — same
+## counter/collision footprint, now an NPC (scripts/npcs/npc.gd) driven by
+## MartaData/MartaDialog. Schedule-driven placement: town.gd listens for
+## EventBus.time_ticked and re-calls Marta.refresh_schedule() whenever the
+## NPCRegistry time-block boundary changes (block-teleport, per the bible's
+## "accepted standard this phase" — no walking animation between spots).
 
 const WIDTH := 30
 const HEIGHT := 20
@@ -31,6 +39,8 @@ const SPAWNS := {
 const FARM_PORTAL_CELL := Vector2i(1, 10)
 
 var player: Player
+var marta: NPC
+var _last_block := ""
 
 
 func _ready() -> void:
@@ -68,6 +78,10 @@ func _ready() -> void:
 	cam.make_current()
 
 	MapSceneHelper.instance_ui_and_flow_layer(self)
+
+	_last_block = NPCRegistry.block_for(Clock.hour())
+	marta.refresh_schedule()
+	EventBus.time_ticked.connect(_on_time_ticked)
 
 
 func _layout() -> PackedStringArray:
@@ -120,7 +134,8 @@ func _add_props(world: Node2D) -> void:
 	counter.add_child(counter_col)
 	world.add_child(counter)
 
-	world.add_child(_make_shopkeeper())
+	marta = _make_marta()
+	world.add_child(marta)
 
 
 func _make_house(cell: Vector2i) -> StaticBody2D:
@@ -139,14 +154,15 @@ func _make_house(cell: Vector2i) -> StaticBody2D:
 	return house
 
 
-func _make_shopkeeper() -> Area2D:
-	var area := Area2D.new()
-	area.name = "Shopkeeper"
-	area.set_script(load("res://scripts/town/shopkeeper.gd"))
-	area.position = MapBuilder.cell_center(SHOPKEEPER_CELL)
+func _make_marta() -> NPC:
+	var area := NPC.new()
+	area.name = "Marta"
+	area.npc_data = MartaData.build()
+	area.dialog_data = MartaDialog.DATA
+	area.has_shop = true
 	var sprite := Sprite2D.new()
 	sprite.name = "Sprite2D"
-	sprite.texture = load("res://assets/placeholder/char_shopkeeper.png")
+	sprite.texture = load("res://assets/placeholder/char_marta.png")
 	area.add_child(sprite)
 	var col := CollisionShape2D.new()
 	var shape := RectangleShape2D.new()
@@ -154,3 +170,10 @@ func _make_shopkeeper() -> Area2D:
 	col.shape = shape
 	area.add_child(col)
 	return area
+
+
+func _on_time_ticked(_hour, _minute) -> void:
+	var block := NPCRegistry.block_for(Clock.hour())
+	if block != _last_block:
+		_last_block = block
+		marta.refresh_schedule()

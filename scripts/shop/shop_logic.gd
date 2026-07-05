@@ -19,11 +19,15 @@ enum Result {
 }
 
 
-static func buy(item_id: String, count: int = 1) -> Result:
+static func buy(item_id: String, count: int = 1, discount: float = 1.0) -> Result:
+	## `discount` is a price MULTIPLIER (1.0 = full price), applied per-unit
+	## then rounded down — Marta's L4/L7 shop discount (0.95 / 0.90, World
+	## Stride B) is the only caller that passes anything but the default.
 	var data := ItemDB.get_item(item_id)
 	if data == null or data.buy_price <= 0:
 		return Result.NOT_FOR_SALE
-	var cost: int = data.buy_price * count
+	var unit_cost := unit_price(data.buy_price, discount)
+	var cost: int = unit_cost * count
 	if GameState.gold < cost:
 		return Result.INSUFFICIENT_GOLD
 	if not GameState.try_spend_gold(cost):
@@ -31,10 +35,14 @@ static func buy(item_id: String, count: int = 1) -> Result:
 	var leftover := Inventory.add_item(item_id, count)
 	if leftover > 0:
 		# Partial or total failure to fit: refund the un-delivered portion.
-		GameState.add_gold(data.buy_price * leftover)
+		GameState.add_gold(unit_cost * leftover)
 		if leftover == count:
 			return Result.INVENTORY_FULL
 	return Result.OK
+
+
+static func unit_price(base_price: int, discount: float = 1.0) -> int:
+	return int(floorf(base_price * discount))
 
 
 static func sell(item_id: String, count: int = 1) -> Result:

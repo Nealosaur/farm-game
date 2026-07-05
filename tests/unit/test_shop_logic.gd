@@ -79,6 +79,20 @@ func test_buy_inventory_full_refunds_gold() -> void:
 	assert_eq(Inventory.count_of("turnip_seeds"), 0)
 
 
+func test_buy_applies_discount_multiplier() -> void:
+	# World Stride B: Marta's L4 discount is 0.95, L7 is 0.90.
+	var gold_before := GameState.gold
+	var result := ShopLogic.buy("turnip_seeds", 1, 0.95)
+	assert_eq(result, ShopLogic.Result.OK)
+	assert_eq(GameState.gold, gold_before - 19, "20g * 0.95 = 19g (floored)")
+
+
+func test_unit_price_floors_the_discount() -> void:
+	assert_eq(ShopLogic.unit_price(20, 0.95), 19)
+	assert_eq(ShopLogic.unit_price(20, 0.90), 18)
+	assert_eq(ShopLogic.unit_price(20, 1.0), 20)
+
+
 func test_buy_iron_sword_is_purchasable_and_equippable_data() -> void:
 	GameState.gold = 5000
 	var result := ShopLogic.buy("iron_sword")

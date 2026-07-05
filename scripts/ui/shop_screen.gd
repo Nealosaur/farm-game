@@ -17,6 +17,11 @@ enum Tab { BUY, SELL }
 
 const ROW_HEIGHT := 24
 
+## Price multiplier applied to every BUY row (World Stride B: Marta's L4/L7
+## shop discount). 1.0 = no discount. The caller (npc.gd) sets this right
+## before calling open() and it's read back to 1.0 by close() so a later
+## generic shopkeeper interaction (if any) never inherits a stale discount.
+var discount := 1.0
 var _tab := Tab.BUY
 var gold_label: Label
 var hint_label: Label
@@ -108,6 +113,7 @@ func close() -> void:
 		return
 	visible = false
 	get_tree().paused = false
+	discount = 1.0
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -165,7 +171,8 @@ func _clear(container: Node) -> void:
 func _build_buy_rows() -> void:
 	_clear(buy_list)
 	for item: ItemData in ShopLogic.buyable_items():
-		var row := _make_row(item.icon, "%s — %dg" % [item.display_name, item.buy_price])
+		var price := ShopLogic.unit_price(item.buy_price, discount)
+		var row := _make_row(item.icon, "%s — %dg" % [item.display_name, price])
 		row.pressed.connect(_on_buy_pressed.bind(item.id))
 		buy_list.add_child(row)
 
@@ -190,7 +197,7 @@ func _make_row(icon: Texture2D, text: String) -> Button:
 
 
 func _on_buy_pressed(item_id: String) -> void:
-	var result := ShopLogic.buy(item_id)
+	var result := ShopLogic.buy(item_id, 1, discount)
 	match result:
 		ShopLogic.Result.INSUFFICIENT_GOLD:
 			EventBus.toast_requested.emit("Not enough gold")
