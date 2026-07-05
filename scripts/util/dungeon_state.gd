@@ -32,18 +32,25 @@ static func ensure_day(blob: Dictionary, day: int) -> Dictionary:
 static func is_killed(blob: Dictionary, floor_key: String, spawn_index: int) -> bool:
 	var killed: Dictionary = blob.get("killed", {})
 	var list: Array = killed.get(floor_key, [])
-	return list.has(spawn_index)
+	# int(v) compare, NOT list.has(): the blob round-trips through JSON
+	# (SaveManager), which turns ints into floats — and Array.has(3) does
+	# not match 3.0 in Godot 4. Caught by test_survives_json_round_trip.
+	for v in list:
+		if int(v) == spawn_index:
+			return true
+	return false
 
 
 static func record_kill(blob: Dictionary, floor_key: String, spawn_index: int) -> Dictionary:
 	## Returns a new blob with spawn_index recorded as killed for floor_key.
-	## Idempotent: recording the same index twice doesn't duplicate it.
+	## Idempotent: recording the same index twice doesn't duplicate it (also
+	## across the JSON int->float round-trip, see is_killed).
 	var out := blob.duplicate(true)
 	if not out.has("killed"):
 		out["killed"] = {}
 	var killed: Dictionary = out["killed"]
 	var list: Array = (killed.get(floor_key, []) as Array).duplicate()
-	if not list.has(spawn_index):
+	if not is_killed(out, floor_key, spawn_index):
 		list.append(spawn_index)
 	killed[floor_key] = list
 	out["killed"] = killed

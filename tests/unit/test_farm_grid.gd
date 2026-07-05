@@ -120,3 +120,35 @@ func test_ripe_crop_stops_counting_days() -> void:
 	grid.advance_day()
 	assert_eq(grid.plots[c].stage, 3)
 	assert_eq(grid.plots[c].days_in_stage, 0)
+
+
+func test_advance_stored_day_grows_saved_blob_without_live_grid() -> void:
+	# DayFlow's away-from-farm night: no FarmGrid alive, growth applied
+	# straight to the world blob. Turnip stage_days [1,1,1] -> one watered
+	# night moves stage 0 -> 1 and clears the watered flag.
+	SaveManager.world["farm_grid"] = {
+		"5,5": {"tilled": true, "watered": true, "crop_id": "turnip",
+			"stage": 0, "days_in_stage": 0},
+		"6,5": {"tilled": true, "watered": false, "crop_id": "turnip",
+			"stage": 0, "days_in_stage": 0},
+	}
+	FarmGrid.advance_stored_day()
+	var watered_plot: Dictionary = SaveManager.world["farm_grid"]["5,5"]
+	assert_eq(watered_plot["stage"], 1, "watered crop grew overnight")
+	assert_false(watered_plot["watered"], "watered flag resets for the new day")
+	var dry_plot: Dictionary = SaveManager.world["farm_grid"]["6,5"]
+	assert_eq(dry_plot["stage"], 0, "unwatered crop did not grow")
+	SaveManager.world.erase("farm_grid")
+
+
+func test_exit_tree_stores_blob_per_world_contract() -> void:
+	# Leaving the farm scene (portal to the dungeon) must persist the
+	# morning's field work — the world-data contract's store-on-exit rule.
+	var g := FarmGrid.new()
+	g.tillable = Rect2i(0, 0, 10, 10)
+	add_child(g)
+	g.till(Vector2i(2, 2))
+	g.free()   # triggers _exit_tree -> store()
+	var blob: Dictionary = SaveManager.world.get("farm_grid", {})
+	assert_true(blob.has("2,2"), "grid stored its plots on scene exit")
+	SaveManager.world.erase("farm_grid")
