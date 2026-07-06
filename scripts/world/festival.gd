@@ -69,6 +69,18 @@ static func is_festival_hour(festival_id: String, hour: int) -> bool:
 	return hour >= window.x and hour < window.y
 
 
+static func _willow_leaves_early(festival_id: String) -> bool:
+	## Bible: "ALL 8 NPCs at assigned plaza cells 10:00-18:00 (Willow leaves
+	## at 15:00; sunfire instead 16:00-22:00)" — read as two independent
+	## notes on the DEFAULT (non-sunfire) window: NPCs are present 10-18, but
+	## Willow specifically leaves at 15:00; sunfire is a wholly separate
+	## evening window with no early-leave carve-out of its own mentioned
+	## anywhere (characters.md's own Willow schedule line: "leaves early...
+	## (present 10:00-15:00 only)" — a time range that only makes sense
+	## against the 10-18 default, not sunfire's 16-22 evening slot).
+	return festival_id != ID_SUNFIRE
+
+
 static func phase_signature(hour: int) -> String:
 	## A cheap "has anything about festival placement changed" fingerprint for
 	## maps' time-ticked handlers to compare tick-to-tick, IN ADDITION to
@@ -80,7 +92,7 @@ static func phase_signature(hour: int) -> String:
 	## willow-present) tuples never collide on the same string by construction.
 	var festival_id := Clock.is_festival_today()
 	var in_window := is_festival_hour(festival_id, hour)
-	var willow_present := in_window and hour < WILLOW_LEAVES_HOUR
+	var willow_present := in_window and not (_willow_leaves_early(festival_id) and hour >= WILLOW_LEAVES_HOUR)
 	return "%s|%s|%s" % [festival_id, in_window, willow_present]
 
 
@@ -93,7 +105,7 @@ static func is_npc_at_festival(npc_id: String, hour: int) -> bool:
 	var festival_id := Clock.is_festival_today()
 	if not is_festival_hour(festival_id, hour):
 		return false
-	if npc_id == WILLOW_ID and hour >= WILLOW_LEAVES_HOUR:
+	if npc_id == WILLOW_ID and _willow_leaves_early(festival_id) and hour >= WILLOW_LEAVES_HOUR:
 		return false
 	return true
 

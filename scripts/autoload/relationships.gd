@@ -161,14 +161,19 @@ func has_talked_today(npc_id: String) -> bool:
 
 
 func talk(npc_id: String) -> bool:
-	## +15 once/day; +30 extra on a festival day. Returns false (no change) if
+	## +15 once/day; +30 extra when talking to this NPC AT the festival
+	## (bible: "talking to each NPC there grants the +30" — World Stride D
+	## tightened this from "any festival day" to Festival.is_npc_at_festival()
+	## so the bonus only applies during the NPC's actual festival hours/
+	## presence, e.g. not to Garrick at home at 1 AM on a festival day, and
+	## not to Willow after her early leave). Returns false (no change) if
 	## already talked today.
 	if has_talked_today(npc_id):
 		return false
 	var state := _get_or_create(npc_id)
 	state["talked_day"] = Clock.day
 	var gain := TALK_GAIN
-	if Clock.is_festival_today() != "":
+	if Festival.is_npc_at_festival(npc_id, Clock.hour()):
 		gain += FESTIVAL_TALK_BONUS
 	_add_points(npc_id, gain)
 	return true

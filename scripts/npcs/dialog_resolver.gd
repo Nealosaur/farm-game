@@ -15,17 +15,34 @@ extends RefCounted
 ## a single resolved line). pick() covers everything AFTER that gate: the
 ## ordinary "what does the NPC say when I talk to them" question.
 ##
-## context keys (all required; caller fills from Clock/Relationships):
+## context keys (all required except festival_id; caller fills from
+## Clock/Relationships/Festival):
 ##   "tier": String            — current tier name (Relationships.tier_name)
 ##   "season": int             — Clock.season()
 ##   "is_raining": bool        — Clock.is_raining()
-##   "is_festival": bool       — Clock.is_festival_today() != ""
+##   "is_festival": bool       — Festival.is_npc_at_festival(npc_id, hour)
+##                                (World Stride D: hour-window-aware, not the
+##                                raw Clock.is_festival_today() != "" boolean)
+##   "festival_id": String     — Clock.is_festival_today() (""/sowing/sunfire/
+##                                harvest_fair/winter_star). OPTIONAL — omitted
+##                                context dicts (older callers/tests) default
+##                                to "", which only affects FILTERING of
+##                                per-festival dict entries (see below); plain
+##                                string festival lines are unaffected.
 ##   "is_birthday": bool       — NPCData.is_birthday_today(npc)
 ##   "shown_indices": Array[int] — Relationships.shown_indices(npc_id, tier),
 ##                                  indices already shown THIS pool-cycle for
 ##                                  the resolved tier pool
 ##   "rng": RandomNumberGenerator — injectable for deterministic tests;
 ##                                  gameplay passes a real one
+##
+## "festival" data entries (World Stride D): each entry is EITHER a plain
+## String (shown on ANY festival, the original shape — Marta/Rosa/etc. still
+## ship `"festival": []`) OR a Dictionary {"festival": id, "line": String}
+## for a line that should only surface during that SPECIFIC festival (e.g.
+## Alden's Sowing speech, Finn's Sunfire dare). Dict entries whose "festival"
+## doesn't match the current festival_id are skipped; if filtering leaves
+## nothing, this falls through to the tier pool exactly like an empty array.
 ##
 ## Result shape: {"text": String, "source": String, "pool_index": int}
 ## `source` is one of "birthday"/"festival"/"rain"/"seasonal"/"tier_pool" —
@@ -39,7 +56,8 @@ static func pick(data: Dictionary, context: Dictionary) -> Dictionary:
 		return {"text": data["birthday_reaction"], "source": "birthday", "pool_index": -1}
 
 	if bool(context.get("is_festival", false)):
-		var festival_lines: Array = data.get("festival", [])
+		var festival_id := String(context.get("festival_id", ""))
+		var festival_lines := _eligible_festival_lines(data, festival_id)
 		if not festival_lines.is_empty():
 			var rng: RandomNumberGenerator = context.get("rng")
 			var idx: int = rng.randi() % festival_lines.size() if rng != null else 0
@@ -61,6 +79,21 @@ static func pick(data: Dictionary, context: Dictionary) -> Dictionary:
 		return {"text": seasonal_line, "source": "seasonal", "pool_index": -1}
 
 	return _pick_from_tier_pool(data, tier, context)
+
+
+static func _eligible_festival_lines(data: Dictionary, festival_id: String) -> Array:
+	## See class doc's "festival" data entries note: plain Strings pass
+	## through unconditionally; Dictionary entries are kept only when their
+	## "festival" key matches the CURRENT festival_id.
+	var raw: Array = data.get("festival", [])
+	var out: Array = []
+	for entry in raw:
+		if entry is Dictionary:
+			if String(entry.get("festival", "")) == festival_id:
+				out.append(String(entry.get("line", "")))
+		else:
+			out.append(entry)
+	return out
 
 
 static func _seasonal_line_for(data: Dictionary, tier: String, season: int) -> String:

@@ -43,7 +43,9 @@ const DATA := {
 	"rain": [
 		"Pier's slippery. Which makes it BETTER, but Doc made me promise.",
 	],
-	"festival": [],
+	"festival": [
+		{"festival": "sunfire", "line": "Bet you won't touch the Delve door. Right now. Just to see. I would, but Doc's watching and also I would not."},
+	],
 	"birthday_reaction": "You KNOW my birthday? This is the best day of my ENTIRE— okay top five. TOP FIVE.",
 	"gift_reactions": {
 		"loved": "SLIME! You get me. You completely get me.",

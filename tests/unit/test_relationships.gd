@@ -10,12 +10,14 @@ func before_each() -> void:
 	Relationships._state = {}
 	SaveManager.world.erase("relationships")
 	Clock.day = 1
+	Clock.minutes = Clock.DAY_START_MINUTES
 
 
 func after_each() -> void:
 	Relationships._state = {}
 	SaveManager.world.erase("relationships")
 	Clock.day = 1
+	Clock.minutes = Clock.DAY_START_MINUTES
 
 
 # ---- level / tier math ----
@@ -79,8 +81,15 @@ func test_talk_again_next_day_grants_again() -> void:
 
 func test_talk_on_festival_day_grants_bonus() -> void:
 	Clock.day = 14  # Spring 14 — Sowing Festival
+	Clock.minutes = 12 * 60  # within the 10:00-18:00 festival window (World Stride D: hour-gated, not day-only)
 	assert_true(Relationships.talk(NPC_ID))
 	assert_eq(Relationships.points(NPC_ID), 15 + 30)
+
+
+func test_talk_on_festival_day_outside_hours_grants_no_bonus() -> void:
+	Clock.day = 14  # Sowing Festival, but before it opens (default 6 AM)
+	assert_true(Relationships.talk(NPC_ID))
+	assert_eq(Relationships.points(NPC_ID), 15, "no festival bonus outside the festival's hour window")
 
 
 func test_talk_emits_relationship_changed() -> void:

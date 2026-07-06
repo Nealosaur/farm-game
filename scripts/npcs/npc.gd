@@ -231,6 +231,7 @@ func _resolver_context() -> Dictionary:
 		"season": Clock.season(),
 		"is_raining": Clock.is_raining(),
 		"is_festival": Festival.is_npc_at_festival(npc_data.id, Clock.hour()),
+		"festival_id": Clock.is_festival_today(),
 		"is_birthday": NPCData.is_birthday_today(npc_data),
 		"shown_indices": Relationships.shown_indices(npc_data.id, Relationships.tier_name(npc_data.id)),
 		"rng": _rng,

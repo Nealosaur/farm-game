@@ -57,7 +57,9 @@ const DATA := {
 	"rain": [
 		"Rain on the ledger means rain in the fields means a good column of numbers. Lovely.",
 	],
-	"festival": [],
+	"festival": [
+		{"festival": "sowing", "line": "Neighbors! The Sowing Festival, once more. Every year I say a few words, and every year the plaza forgives me for it. Plant something worth the season. Attend something worth the walk."},
+	],
 	"birthday_reaction": "Well. The office rarely receives, only disburses. Thank you, truly.",
 	"gift_reactions": {
 		"loved": "A turnip. You absolute historian. Thank you.",
