@@ -83,6 +83,7 @@ func _ready() -> void:
 	EventBus.inventory_changed.connect(_refresh_hotbar)
 	EventBus.hotbar_selection_changed.connect(_on_hotbar_selection)
 	EventBus.toast_requested.connect(toast)
+	EventBus.quest_updated.connect(_on_quest_updated)
 	_refresh_stats()
 	_refresh_clock()
 	_refresh_hotbar()
@@ -102,6 +103,15 @@ func _on_day_passed(_d) -> void:
 
 func _on_hotbar_selection(_i) -> void:
 	_refresh_hotbar()
+
+
+func _on_quest_updated(quest_id) -> void:
+	## Bible: "EventBus signal quest_updated for HUD toast ('Quest updated:
+	## New Roots')" — a short name, not the full display_name's subtitle
+	## (e.g. "New Roots", not "New Roots — meet everyone in Emberhollow").
+	var full := Quests.display_name(String(quest_id))
+	var short_name := full.split(" — ")[0]
+	toast("Quest updated: " + short_name)
 
 
 func _bar(color: Color) -> ProgressBar:

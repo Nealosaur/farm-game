@@ -30,6 +30,10 @@ func _ready() -> void:
 	# here so seasonal ground recolor never applies underground. Group must
 	# be set BEFORE instance_ui_and_flow_layer() so DayTint._ready() sees it.
 	add_to_group("dungeon_map")
+	# World Stride D: "Prove It" completes on ENTERING dungeon_2 (or deeper).
+	# Hooked here (not a portal-only trigger) so it also fires correctly on a
+	# same-day scene reload/re-entry, not just the first arrival.
+	Quests.record_floor_entered(_floor_key())
 	var rows := _layout()
 	var width := 0 if rows.is_empty() else rows[0].length()
 	var height := rows.size()

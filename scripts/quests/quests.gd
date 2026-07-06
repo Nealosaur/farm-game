@@ -256,14 +256,28 @@ func active_quest_ids() -> Array:
 	return out
 
 
+func done_quest_ids() -> Array:
+	## Quests that finished but are still awaiting hand-in (see _retire()'s
+	## doc — a fully handed-in quest is erased from _quests entirely, so
+	## anything with state == "done" found here is real "completed, go
+	## collect your reward" content for the Journal's completed section).
+	var out: Array = []
+	for quest_id: String in _quests:
+		if is_done(quest_id):
+			out.append(quest_id)
+	out.sort()
+	return out
+
+
 func progress_text(quest_id: String) -> String:
+	var done := is_done(quest_id)
 	match quest_id:
 		ID_NEW_ROOTS:
 			return "Met %d/%d" % [met_npcs(ID_NEW_ROOTS).size(), NEW_ROOTS_NPCS.size()]
 		ID_PROVE_IT:
-			return "Floor 2: not yet"
+			return "Floor 2: reached!" if done else "Floor 2: not yet"
 		ID_KING_BELOW:
-			return "Slime King: not yet"
+			return "Slime King: defeated!" if done else "Slime King: not yet"
 		_:
 			return ""
 

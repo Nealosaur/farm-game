@@ -1,10 +1,15 @@
 class_name Journal
 extends CanvasLayer
-## Player's journal (World Stride B). Two tabs:
-##   SOCIAL — every registered NPC (this stride: Marta only): name, level bar
-##            (points/1000), tier name, birthday, talked-today/gifted-today
-##            checkmarks.
-##   QUESTS — empty placeholder panel ("No active quests") for World D.
+## Player's journal. Two tabs:
+##   SOCIAL — every registered NPC: name, level bar (points/1000), tier
+##            name, birthday, talked-today/gifted-today checkmarks.
+##   QUESTS — (World Stride D) real quest list: active quests with a
+##            progress string (Quests.progress_text), then a completed
+##            section for quests that finished but haven't been handed in
+##            yet (state == "done" but still present — see quests.gd's
+##            "retire on hand-in" contract, meaning anything still in
+##            Quests' tracking dict IS either active or awaiting hand-in;
+##            nothing shows here once fully handed in).
 ##
 ## Key binding: "journal" input action = physical_keycode 75 (K). NOT J (74) —
 ## J is already bound to use_item (see project.godot). Documented here and in
@@ -36,7 +41,8 @@ const NPCS := [
 
 var tab_container: TabContainer
 var social_list: VBoxContainer
-var quests_label: Label
+var quests_label: Label  # kept for the "no active quests" empty-state text
+var quests_list: VBoxContainer
 
 
 func _ready() -> void:
@@ -68,15 +74,18 @@ func _ready() -> void:
 	social_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	social_scroll.add_child(social_list)
 
-	var quests_panel := Control.new()
-	quests_panel.name = "Quests"
-	tab_container.add_child(quests_panel)
+	var quests_scroll := ScrollContainer.new()
+	quests_scroll.name = "Quests"
+	tab_container.add_child(quests_scroll)
+	quests_list = VBoxContainer.new()
+	quests_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	quests_scroll.add_child(quests_list)
 	quests_label = Label.new()
 	quests_label.text = "No active quests"
-	quests_label.position = Vector2(8, 8)
-	quests_panel.add_child(quests_label)
+	quests_list.add_child(quests_label)
 
 	EventBus.relationship_changed.connect(_on_relationship_changed)
+	EventBus.quest_updated.connect(_on_quest_updated)
 
 
 func is_open() -> bool:
@@ -96,6 +105,7 @@ func open() -> void:
 	visible = true
 	get_tree().paused = true
 	_refresh_social()
+	_refresh_quests()
 
 
 func close() -> void:
@@ -120,6 +130,11 @@ func _unhandled_input(event: InputEvent) -> void:
 func _on_relationship_changed(_npc_id) -> void:
 	if is_open():
 		_refresh_social()
+
+
+func _on_quest_updated(_quest_id) -> void:
+	if is_open():
+		_refresh_quests()
 
 
 func _clear(container: Node) -> void:
@@ -159,6 +174,54 @@ func _make_npc_row(npc: NPCData) -> Control:
 	detail.text = "Birthday: %s %d   Talked today: %s   Gifted today: %s" % [
 		season_name, npc.birthday_day, talked, gifted,
 	]
+	detail.add_theme_font_size_override("font_size", 10)
+	row.add_child(detail)
+
+	var spacer := Control.new()
+	spacer.custom_minimum_size = Vector2(0, 6)
+	row.add_child(spacer)
+
+	return row
+
+
+## ---- QUESTS tab (World Stride D) ----
+
+func _refresh_quests() -> void:
+	_clear(quests_list)
+	var active := Quests.active_quest_ids()
+	var done := Quests.done_quest_ids()
+	if active.is_empty() and done.is_empty():
+		quests_label = Label.new()
+		quests_label.text = "No active quests"
+		quests_list.add_child(quests_label)
+		return
+
+	if not active.is_empty():
+		var active_header := Label.new()
+		active_header.text = "Active"
+		quests_list.add_child(active_header)
+		for quest_id: String in active:
+			quests_list.add_child(_make_quest_row(quest_id, false))
+
+	if not done.is_empty():
+		var done_header := Label.new()
+		done_header.text = "Completed"
+		quests_list.add_child(done_header)
+		for quest_id: String in done:
+			quests_list.add_child(_make_quest_row(quest_id, true))
+
+
+func _make_quest_row(quest_id: String, done: bool) -> Control:
+	var row := VBoxContainer.new()
+
+	var name_label := Label.new()
+	name_label.text = Quests.display_name(quest_id)
+	name_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	row.add_child(name_label)
+
+	var detail := Label.new()
+	var progress := Quests.progress_text(quest_id)
+	detail.text = ("Complete — " + progress) if done else progress
 	detail.add_theme_font_size_override("font_size", 10)
 	row.add_child(detail)
 
