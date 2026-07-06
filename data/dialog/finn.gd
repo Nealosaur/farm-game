@@ -72,4 +72,19 @@ const DATA := {
 			"response_b": "\"Right. Just a boat. Tide's going out, you should too.\"",
 		},
 	},
+	## Level perks (bible/characters.md): L5 gift: 3 tideshell; L8 gift:
+	## "lucky lure" trinket dialog + 150g. See marta.gd's "perks" doc for the
+	## shape npc.gd consumes.
+	"perks": {
+		"l5": {
+			"line": "Three tideshells! The good ones. I've been SAVING these.",
+			"items": {"tideshell": 3},
+			"gold": 0,
+		},
+		"l8": {
+			"line": "My lucky lure. Don't lose it. Actually — you won't. That's why it's yours now.",
+			"items": {},
+			"gold": 150,
+		},
+	},
 }

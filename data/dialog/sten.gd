@@ -72,4 +72,19 @@ const DATA := {
 			"response_b": "\"Maybe. Forge's cold today.\"",
 		},
 	},
+	## Level perks (bible/characters.md): L5 gift: 150g "scrap credit"; L8
+	## gift: whetstone dialog + 300g. See marta.gd's "perks" doc for the
+	## shape npc.gd consumes.
+	"perks": {
+		"l5": {
+			"line": "Scrap credit. Don't spend it on anything soft.",
+			"items": {},
+			"gold": 150,
+		},
+		"l8": {
+			"line": "A whetstone. Keep that edge yourself for once.",
+			"items": {},
+			"gold": 300,
+		},
+	},
 }

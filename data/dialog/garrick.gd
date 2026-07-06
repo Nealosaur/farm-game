@@ -77,4 +77,20 @@ const DATA := {
 			"response_b": "\"Same reason the town keeps a broken adventurer. Somebody might need the reminder. Night, farmer.\"",
 		},
 	},
+	## Level perks (bible/characters.md): L5 gift: 2 goblin fang; L8 gift:
+	## "old shield technique" dialog → one-time +10 max HP flag. See
+	## marta.gd's "perks" doc for the shape npc.gd consumes.
+	"perks": {
+		"l5": {
+			"line": "Two goblin fangs. Delve salvage. Don't ask how old.",
+			"items": {"goblin_fang": 2},
+			"gold": 0,
+		},
+		"l8": {
+			"line": "The old shield technique. Watch the shoulders, brace like this — there. You'll carry it now.",
+			"items": {},
+			"gold": 0,
+			"max_hp": 10,
+		},
+	},
 }

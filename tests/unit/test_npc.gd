@@ -103,6 +103,7 @@ func test_picking_browse_store_opens_shop_with_discount() -> void:
 	_set_hour(10)
 	Relationships._get_or_create("marta")["points"] = 500  # level 5 (FRIEND) -> 0.95 discount (L4+)
 	Relationships.mark_event_seen("marta", "l3")  # clear the L3 heart-event gate so talk proceeds normally
+	Relationships.mark_perk_given("marta", "l5")  # clear the L5 perk-handout gate (World Stride C) too
 	npc.interact(null)
 	dialog._advance()
 	var labels: Array[String] = []

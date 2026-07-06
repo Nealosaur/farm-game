@@ -89,4 +89,23 @@ const DATA := {
 			"response_b": "\"...Yes. Inventory. That's all it was.\"",
 		},
 	},
+	## Level perks (bible/characters.md): a one-time handout on the first
+	## talk after reaching L5/L8, gated by Relationships.pending_perk() and
+	## marked via mark_perk_given() (see npc.gd's perk-handout step). `line`
+	## plays as a short in-voice follow-up BEFORE the ordinary resolved line;
+	## `items` is item_id -> count granted via Inventory.add_item(); `gold`
+	## is added via GameState.add_gold(); `max_hp` (optional) is a one-time
+	## GameState.max_hp += N flag (Bram L8 / Garrick L8 only).
+	"perks": {
+		"l5": {
+			"line": "I saved the good seed packets back for you. Don't tell Alden.",
+			"items": {"strawberry_seeds": 3},
+			"gold": 0,
+		},
+		"l8": {
+			"line": "Loyalty refund. Don't argue, it's already rung up.",
+			"items": {},
+			"gold": 200,
+		},
+	},
 }

@@ -77,4 +77,20 @@ const DATA := {
 			"response_b": "\"...Perhaps. The drawer will outlast the dream, at this rate. Good evening.\"",
 		},
 	},
+	## Level perks (bible/characters.md): L5 gift: 100g "town gratitude
+	## fund"; L8 gift: deed dialog + plaza key line (flavor only — no
+	## concrete item/gold named beyond the L5 fund). See marta.gd's "perks"
+	## doc for the shape npc.gd consumes.
+	"perks": {
+		"l5": {
+			"line": "A disbursement from the town gratitude fund. Long overdue.",
+			"items": {},
+			"gold": 100,
+		},
+		"l8": {
+			"line": "A key to the plaza gates, and the deed's footnote with your name added. Small formalities. They matter anyway.",
+			"items": {},
+			"gold": 0,
+		},
+	},
 }

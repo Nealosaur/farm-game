@@ -72,4 +72,21 @@ const DATA := {
 			"response_b": "\"'Forget it.' The city said that too. Good evening.\"",
 		},
 	},
+	## Level perks (bible/characters.md): L5 gift: 2 frostcap; L8 gift:
+	## "house call" +20 max HP permanent (one-time, GameState.max_hp += 20
+	## with the perks_given flag as the "one-time" guard — see marta.gd's
+	## "perks" doc for the shape npc.gd consumes).
+	"perks": {
+		"l5": {
+			"line": "Two frostcap. Eat them before the Delve, not after.",
+			"items": {"frostcap": 2},
+			"gold": 0,
+		},
+		"l8": {
+			"line": "A house call, on me. You'll feel it — I've adjusted your chart permanently.",
+			"items": {},
+			"gold": 0,
+			"max_hp": 20,
+		},
+	},
 }

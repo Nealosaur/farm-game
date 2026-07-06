@@ -112,7 +112,11 @@ func _play_talk(dialog: DialogBox, player: Node) -> void:
 		Relationships.mark_line_shown(npc_data.id, context["tier"], int(result["pool_index"]))
 	Relationships.talk(npc_data.id)  # no-ops (returns false) if already talked today
 
-	var lines: Array[String] = [String(result["text"])]
+	var lines: Array[String] = []
+	var perk_line := _grant_pending_perk_if_any()
+	if perk_line != "":
+		lines.append(perk_line)
+	lines.append(String(result["text"]))
 	var choices := _build_choices(player)
 	if choices.is_empty():
 		dialog.show_lines(lines)
@@ -122,6 +126,39 @@ func _play_talk(dialog: DialogBox, player: Node) -> void:
 	_choice_labels = choices
 	_choice_player = player
 	dialog.show_choices(lines, choices)
+
+
+## ---- level perks (World Stride C) ----
+
+func _grant_pending_perk_if_any() -> String:
+	## "on talk with pending_perk after greeting — short in-voice line +
+	## grant" (stride contract): checked every ordinary talk (heart events
+	## already short-circuit interact() before this is ever reached, so a
+	## perk and a heart event never fire on the same interaction). Returns
+	## the perk's flavor line to prepend before the day's ordinary resolved
+	## line, or "" if nothing is pending. Applies the grant (items/gold/
+	## max_hp) and marks it given immediately — this is a simple one-shot
+	## handout, not a choice, so there's nothing to defer to a follow-up
+	## signal the way gifting/heart-events do.
+	var perk_id := Relationships.pending_perk(npc_data.id)
+	if perk_id == "":
+		return ""
+	var perk: Dictionary = dialog_data.get("perks", {}).get(perk_id, {})
+	if perk.is_empty():
+		return ""
+	Relationships.mark_perk_given(npc_data.id, perk_id)
+	var items: Dictionary = perk.get("items", {})
+	for item_id: String in items:
+		Inventory.add_item(item_id, int(items[item_id]))
+	var gold := int(perk.get("gold", 0))
+	if gold > 0:
+		GameState.add_gold(gold)
+	var max_hp_bonus := int(perk.get("max_hp", 0))
+	if max_hp_bonus > 0:
+		GameState.max_hp += max_hp_bonus
+		GameState.hp += max_hp_bonus  # the bonus is immediately usable, not just headroom
+		EventBus.stats_changed.emit()
+	return String(perk.get("line", ""))
 
 
 func _resolver_context() -> Dictionary:

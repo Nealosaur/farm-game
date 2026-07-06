@@ -72,4 +72,19 @@ const DATA := {
 			"response_b": "\"That's the till talking, love. Good night.\"",
 		},
 	},
+	## Level perks (bible/characters.md): L5 gift: 2 melon seeds; L8 gift:
+	## "The Ember's own" recipe dialog + 250g. See marta.gd's "perks" doc for
+	## the shape npc.gd consumes.
+	"perks": {
+		"l5": {
+			"line": "Two melon seeds. Grow something worth celebrating, love.",
+			"items": {"melon_seeds": 2},
+			"gold": 0,
+		},
+		"l8": {
+			"line": "The Ember's own recipe. Mother's, really. Don't tell the whole town.",
+			"items": {},
+			"gold": 250,
+		},
+	},
 }

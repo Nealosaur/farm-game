@@ -72,4 +72,20 @@ const DATA := {
 			"response_b": "\"That's what losing your voice FEELS like, at first. More tea?\"",
 		},
 	},
+	## Level perks (bible/characters.md): L5 gift: 2 wildroot + 1 emberberry;
+	## L8 gift: "forest-mark" dialog + 200g worth of forage bundle (shipped
+	## as flat gold — no itemized "bundle" contents are specified). See
+	## marta.gd's "perks" doc for the shape npc.gd consumes.
+	"perks": {
+		"l5": {
+			"line": "The forest sent these along. Well — I picked them. The forest just approved.",
+			"items": {"wildroot": 2, "emberberry": 1},
+			"gold": 0,
+		},
+		"l8": {
+			"line": "A forest-mark, just for you. And a bundle from the good clearings. The forest agrees, for once loudly.",
+			"items": {},
+			"gold": 200,
+		},
+	},
 }
