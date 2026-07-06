@@ -100,3 +100,37 @@ func test_relationship_changed_refreshes_open_journal() -> void:
 
 func test_quests_tab_shows_placeholder() -> void:
 	assert_eq(journal.quests_label.text, "No active quests")
+
+
+func _all_label_texts(node: Node) -> Array[String]:
+	var out: Array[String] = []
+	for child in node.get_children():
+		if child is Label:
+			out.append((child as Label).text)
+		out.append_array(_all_label_texts(child))
+	return out
+
+
+func test_quests_tab_shows_active_and_completed_sections() -> void:
+	Quests._quests = {}
+	Quests.grant_new_roots()
+	Quests.record_talk("marta")
+	Quests.grant_prove_it()
+	Quests.record_floor_entered("dungeon_2")
+	journal.open()
+	var texts := _all_label_texts(journal.quests_list)
+	assert_true(texts.any(func(t): return t == "Active"))
+	assert_true(texts.any(func(t): return t == "Completed"))
+	assert_true(texts.any(func(t): return t.contains("New Roots")))
+	assert_true(texts.any(func(t): return t.contains("Met 1/8")))
+	assert_true(texts.any(func(t): return t.contains("Prove It")))
+	Quests._quests = {}
+	SaveManager.world.erase("quests")
+
+
+func test_quests_tab_shows_winter_star_gift_target_on_winter_star_day() -> void:
+	Clock.day = (3 * Clock.DAYS_PER_SEASON) + 24  # Winter 24
+	journal.open()
+	var texts := _all_label_texts(journal.quests_list)
+	assert_true(texts.any(func(t): return t == WinterStar.journal_text()))
+	Clock.day = 1

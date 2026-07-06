@@ -188,6 +188,15 @@ func _make_npc_row(npc: NPCData) -> Control:
 
 func _refresh_quests() -> void:
 	_clear(quests_list)
+	if Clock.is_festival_today() == Festival.ID_WINTER_STAR:
+		var winter_star_label := Label.new()
+		winter_star_label.text = WinterStar.journal_text()
+		winter_star_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		quests_list.add_child(winter_star_label)
+		var winter_star_spacer := Control.new()
+		winter_star_spacer.custom_minimum_size = Vector2(0, 6)
+		quests_list.add_child(winter_star_spacer)
+
 	var active := Quests.active_quest_ids()
 	var done := Quests.done_quest_ids()
 	if active.is_empty() and done.is_empty():
