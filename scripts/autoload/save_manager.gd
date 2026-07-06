@@ -27,6 +27,11 @@ var save_path := "user://save1.json"
 ##                     after new_game()/load_game() (no signal fires on load —
 ##                     same sequencing rule as Clock.restore_calendar()). All
 ##                     ints/arrays are coerced on read (JSON floats gotcha).
+##   "forage"        — map_id -> {"day": int, "taken": ["x,y", ...]}. Daily
+##                     forage-spawn ledger (Riverwoods/Beach), shape + rules
+##                     live in Forage (scripts/util/forage.gd) — same
+##                     ensure_day()-before-query pattern as "dungeon_state".
+##                     int()/String() coerced on read like every other blob.
 var world := {}  # map-owned persistent blobs (farm grid etc.), set by scenes
 
 

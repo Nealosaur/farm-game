@@ -219,15 +219,27 @@ func shop_discount() -> float:
 
 ## ---- schedule ----
 
-func refresh_schedule() -> void:
+func refresh_schedule(host_map_id: String = "") -> void:
 	## Repositions/hides this NPC per NPCRegistry.cell_for() for the current
 	## hour/weather/festival state. Call at map build AND whenever the host
 	## map detects a block boundary crossing (see town.gd).
+	##
+	## `host_map_id` is the map SCENE this node lives in right now (e.g.
+	## "town", "farm"). Defaults to npc_data.home_map for backward
+	## compatibility (every World-Stride-B NPC only ever appears on their
+	## home_map, so the old no-arg call sites still behave identically).
+	## World Stride C NPCs that move between maps in their schedule (Garrick:
+	## farm morning block, town/saloon otherwise) MUST pass the actual host
+	## map id so this hides the instance on blocks that belong to the OTHER
+	## map instead of showing it at a stale cell.
 	if npc_data == null:
 		return
-	var cell := RP.cell_for(npc_data, Clock.hour(), Clock.is_raining(), Clock.is_festival_today() != "")
-	if cell == Vector2i(-1, -1):
+	var map_id := host_map_id if host_map_id != "" else npc_data.home_map
+	var hour := Clock.hour()
+	var raining := Clock.is_raining()
+	var festival := Clock.is_festival_today() != ""
+	if not RP.is_present_on_map(npc_data, map_id, hour, raining, festival):
 		visible = false
 		return
 	visible = true
-	position = MapBuilder.cell_center(cell)
+	position = MapBuilder.cell_center(RP.cell_for(npc_data, hour, raining, festival))

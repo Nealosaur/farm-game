@@ -43,6 +43,45 @@ static func cell_for(npc: NPCData, hour: int, is_raining: bool, is_festival: boo
 	## Vector2i(-1, -1) (matching NPCData.festival_cell's "unset" sentinel)
 	## only if the NPC has no schedule entry at all for the resolved block —
 	## callers should treat that as "NPC absent this block".
+	##
+	## Schedule entries may be a plain Vector2i (cell on npc.home_map) OR a
+	## {"map": String, "cell": Vector2i} Dictionary (per-block map override,
+	## e.g. Garrick's farm-side Delve entrance block) — this always returns
+	## just the CELL half; callers that also need to know which map to check
+	## use map_for() below with the same arguments.
+	var raw := _raw_entry(npc, hour, is_raining, is_festival)
+	if raw == null:
+		return Vector2i(-1, -1)
+	if raw is Dictionary:
+		return raw.get("cell", Vector2i(-1, -1))
+	return raw
+
+
+static func map_for(npc: NPCData, hour: int, is_raining: bool, is_festival: bool) -> String:
+	## Which map's build() should place this NPC for the resolved block/
+	## weather/festival state — npc.home_map unless the entry is a per-block
+	## {"map": ..., "cell": ...} override (see cell_for's doc).
+	var raw := _raw_entry(npc, hour, is_raining, is_festival)
+	if raw is Dictionary:
+		return String(raw.get("map", npc.home_map))
+	return npc.home_map
+
+
+static func is_present(npc: NPCData, hour: int, is_raining: bool, is_festival: bool) -> bool:
+	return cell_for(npc, hour, is_raining, is_festival) != Vector2i(-1, -1)
+
+
+static func is_present_on_map(npc: NPCData, map_id: String, hour: int, is_raining: bool, is_festival: bool) -> bool:
+	## Convenience for map scripts: is this NPC BOTH present this block AND
+	## located on `map_id` specifically? Lets a map (e.g. farm.gd) query the
+	## full registry without accidentally placing an NPC who belongs
+	## elsewhere this block.
+	if not is_present(npc, hour, is_raining, is_festival):
+		return false
+	return map_for(npc, hour, is_raining, is_festival) == map_id
+
+
+static func _raw_entry(npc: NPCData, hour: int, is_raining: bool, is_festival: bool):
 	if is_festival and npc.festival_cell != Vector2i(-1, -1):
 		return npc.festival_cell
 	var block := block_for(hour)
@@ -50,8 +89,4 @@ static func cell_for(npc: NPCData, hour: int, is_raining: bool, is_festival: boo
 		return npc.rain_schedule[block]
 	if npc.schedule.has(block):
 		return npc.schedule[block]
-	return Vector2i(-1, -1)
-
-
-static func is_present(npc: NPCData, hour: int, is_raining: bool, is_festival: bool) -> bool:
-	return cell_for(npc, hour, is_raining, is_festival) != Vector2i(-1, -1)
+	return null

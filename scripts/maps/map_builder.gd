@@ -15,6 +15,7 @@ const TILE_TEXTURES := {
 	"tile_wall": "res://assets/placeholder/tile_wall.png",
 	"tile_water": "res://assets/placeholder/tile_water.png",
 	"tile_path": "res://assets/placeholder/tile_path.png",
+	"tile_sand": "res://assets/placeholder/tile_sand.png",
 }
 
 const SOLID := ["tile_wall", "tile_water"]
@@ -26,6 +27,7 @@ const CHAR_TILES := {
 	"W": "tile_wall",
 	"~": "tile_water",
 	"P": "tile_path",
+	"A": "tile_sand",
 }
 
 

@@ -17,6 +17,7 @@ const TILES := {
 	"tile_wall": "3a3a44",
 	"tile_water": "2f5f8f",
 	"tile_path": "9a8a6a",
+	"tile_sand": "d8c888",
 }
 
 # Silhouette kind per sprite: "" = flat square (tiles/most props, unchanged).
@@ -35,12 +36,22 @@ const SPRITES := {
 	"char_wisp": [16, 16, "70c0e0", KIND_TRIANGLE],
 	"char_goblin": [16, 24, "a05030", KIND_HEADBAND],
 	"char_slime_king": [48, 48, "208020", KIND_CIRCLE_CHAR],
+	# World Stride C: the remaining seven NPCs, distinct headband colors.
+	"char_sten": [16, 32, "704838", KIND_HEADBAND],
+	"char_bram": [16, 32, "d8d8d8", KIND_HEADBAND],
+	"char_rosa": [16, 32, "e04848", KIND_HEADBAND],
+	"char_alden": [16, 32, "384868", KIND_HEADBAND],
+	"char_finn": [16, 32, "e0a838", KIND_HEADBAND],
+	"char_willow": [16, 32, "588858", KIND_HEADBAND],
+	"char_garrick": [16, 32, "605850", KIND_HEADBAND],
 	"prop_bed": [16, 24, "b03030", ""],
 	"prop_shipping_bin": [16, 16, "8a5a2a", ""],
 	"prop_stairs_down": [16, 16, "222230", "chevron_down"],
 	"prop_stairs_up": [16, 16, "d0d0e0", "chevron_up"],
 	"prop_house": [48, 48, "7a4a3a", ""],
 	"prop_counter": [32, 16, "5a3a2a", ""],
+	"prop_sign": [16, 24, "8a6a3a", ""],
+	"prop_boat_shed": [24, 16, "5a4a3a", ""],
 	"item_turnip": [16, 16, "e8e0d0", KIND_CIRCLE_ITEM],
 	"item_carrot": [16, 16, "e07820", KIND_CIRCLE_ITEM],
 	"item_pumpkin": [16, 16, "d06010", KIND_CIRCLE_ITEM],
