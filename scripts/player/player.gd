@@ -172,7 +172,11 @@ func _use_tool(tool_data: ToolData) -> void:
 				GameState.spend_rp(tool_data.rp_cost)
 				machine.transition("UseTool")
 		ToolData.ToolType.WATERING_CAN:
-			if grid != null and grid.water(target_cell()):
+			# Craft Stride 2: water_width > 1 (Copper Watering Can) also waters
+			# the flanking cells perpendicular to facing — RP is still spent
+			# exactly ONCE per swing, on success of ANY cell (see
+			# FarmGrid.water_wide()'s doc).
+			if grid != null and grid.water_wide(target_cell(), facing, tool_data.water_width):
 				GameState.spend_rp(tool_data.rp_cost)
 				machine.transition("UseTool")
 		ToolData.ToolType.SWORD:

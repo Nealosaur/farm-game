@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ToolData" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/placeholder/item_copper_can.png" id="1_ss861"]
+[ext_resource type="Script" path="res://scripts/resources/tool_data.gd" id="2_vkkwv"]
+
+[resource]
+script = ExtResource("2_vkkwv")
+tool_type = 1
+rp_cost = 3
+water_width = 3
+id = "copper_can"
+display_name = "Copper Watering Can"
+icon = ExtResource("1_ss861")
+max_stack = 1

@@ -52,6 +52,41 @@ func water(cell: Vector2i) -> bool:
 	return true
 
 
+static func flanking_cells(target: Vector2i, facing: Vector2i, width: int) -> Array[Vector2i]:
+	## Craft Stride 2 (Copper Watering Can): target cell + the (width-1)/2
+	## cells flanking it PERPENDICULAR to facing, on each side. width <= 1
+	## returns just [target] (every pre-Forge can, and any even/invalid width
+	## defensively treated the same way — the bible only ever specifies odd
+	## widths). Facing up/down -> flank left/right; facing left/right -> flank
+	## up/down. Does NOT filter by tillable/existing-plot bounds — callers
+	## (water_wide()) run each cell through the ordinary water() gate anyway,
+	## so an out-of-bounds or untilled flank cell just harmlessly fails there
+	## (bible: "edge-of-field partial applies what it can").
+	var cells: Array[Vector2i] = [target]
+	var half := (width - 1) / 2
+	if half <= 0:
+		return cells
+	var perp: Vector2i = Vector2i(1, 0) if (facing == Vector2i.UP or facing == Vector2i.DOWN) else Vector2i(0, 1)
+	for i in range(1, half + 1):
+		cells.append(target + perp * i)
+		cells.append(target - perp * i)
+	return cells
+
+
+func water_wide(target: Vector2i, facing: Vector2i, width: int) -> bool:
+	## Waters `target` plus its flanking cells (see flanking_cells()) — each
+	## cell independently attempts water() (so an already-watered or
+	## untilled/out-of-bounds flank simply no-ops for that one cell, per the
+	## bible's "edge-of-field partial applies what it can"). Returns true if
+	## ANY cell was newly watered, so the caller (player.gd) charges RP
+	## exactly once per swing on ANY success, never per-cell.
+	var any_watered := false
+	for cell: Vector2i in flanking_cells(target, facing, width):
+		if water(cell):
+			any_watered = true
+	return any_watered
+
+
 func water_all() -> int:
 	## Rain overnight: waters every tilled plot (plots only holds tilled
 	## cells, cropped or not). Returns how many newly got water.

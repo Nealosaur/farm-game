@@ -29,6 +29,8 @@ const KIND_DIAMOND := "diamond"            # seeds
 const KIND_BLADE := "blade"                # swords: diagonal stripe
 const KIND_CROSS := "cross"                # tools
 const KIND_CIRCLE_DOT := "circle_dot"      # cooked dishes: filled circle + contrasting center dot
+const KIND_BLADE_ACCENT := "blade_accent"  # Craft Stride 2: blade stripe + a contrasting accent tick near the tip (fangsteel_blade)
+const KIND_CAN_WIDE := "can_wide"          # Craft Stride 2: cross (tool silhouette) + a wider spout mark (copper_can)
 
 const SPRITES := {
 	"char_player": [16, 32, "e0b070", KIND_HEADBAND],
@@ -64,6 +66,13 @@ const SPRITES := {
 	"item_watering_can": [16, 16, "4080b0", KIND_CROSS],
 	"item_wooden_sword": [16, 16, "9a6a3a", KIND_BLADE],
 	"item_iron_sword": [16, 16, "c0c8d0", KIND_BLADE],
+	# Craft Stride 2 (Forging): steel is a LIGHTER blade stripe than iron
+	# (bible: "steel lighter"); fangsteel is a DARKER stripe with a
+	# contrasting accent tick near the tip (bible: "fangsteel darker w/
+	# accent") — both deterministic, no new draw primitive needed for steel.
+	"item_steel_sword": [16, 16, "e0e8f0", KIND_BLADE],
+	"item_fangsteel_blade": [16, 16, "586070", KIND_BLADE_ACCENT],
+	"item_copper_can": [16, 16, "c07840", KIND_CAN_WIDE],
 	"item_slime_gel": [16, 16, "60d060", KIND_CIRCLE_ITEM],
 	"item_wisp_dust": [16, 16, "90d0f0", KIND_CIRCLE_ITEM],
 	"item_goblin_fang": [16, 16, "e0d0b0", KIND_CIRCLE_ITEM],
@@ -237,6 +246,42 @@ static func draw_triangle(img: Image, c: Color) -> void:
 	_bordered(img, c)
 
 
+static func draw_blade_accent(img: Image, c: Color) -> void:
+	## Craft Stride 2 (Fangsteel Blade): same diagonal stripe + cross-guard as
+	## draw_blade(), plus one extra contrasting accent pixel-cluster near the
+	## TIP (top-right third) — a lighter "fang" fleck on the darker base
+	## steel, so fangsteel reads distinctly from the plain steel/iron blades
+	## at a glance even though all three share KIND_BLADE's geometry.
+	draw_blade(img, c)
+	var w := img.get_width()
+	var h := img.get_height()
+	var accent_c := c.lightened(0.6)
+	var ax := int(w * 0.74)
+	var ay := int(h * 0.24)
+	for i in range(-1, 2):
+		var px: int = clampi(ax + i, 0, w - 1)
+		var py: int = clampi(ay - i, 0, h - 1)
+		img.set_pixel(px, py, accent_c)
+
+
+static func draw_can_wide(img: Image, c: Color) -> void:
+	## Craft Stride 2 (Copper Watering Can): same cross silhouette as
+	## draw_cross() (tool-family read), plus a WIDER spout mark — three
+	## short ticks fanning out from the top-right corner instead of the
+	## ordinary can's implicit single-point spout — so the wide-water can
+	## reads distinctly from the plain watering_can at a glance.
+	draw_cross(img, c)
+	var w := img.get_width()
+	var h := img.get_height()
+	var spout_c := c.darkened(0.3)
+	var origin := Vector2i(int(w * 0.78), int(h * 0.22))
+	var offsets := [Vector2i(0, -1), Vector2i(1, 0), Vector2i(1, -1)]
+	for off: Vector2i in offsets:
+		var px: int = clampi(origin.x + off.x, 0, w - 1)
+		var py: int = clampi(origin.y + off.y, 0, h - 1)
+		img.set_pixel(px, py, spout_c)
+
+
 static func draw_circle_dot(img: Image, c: Color) -> void:
 	## Cooked-dish silhouette: filled circle (like KIND_CIRCLE_ITEM) plus a
 	## smaller contrasting dot in the center, so dishes read distinctly from
@@ -317,6 +362,10 @@ static func _write_kind(name: String, w: int, h: int, c: Color, kind: String) ->
 			draw_cross(img, c)
 		KIND_CIRCLE_DOT:
 			draw_circle_dot(img, c)
+		KIND_BLADE_ACCENT:
+			draw_blade_accent(img, c)
+		KIND_CAN_WIDE:
+			draw_can_wide(img, c)
 		"chevron_down":
 			img.fill(c)
 			draw_chevron(img, c, true)

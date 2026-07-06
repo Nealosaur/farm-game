@@ -15,6 +15,7 @@ const AUTO_INSTANCE_SCRIPTS := [
 	"res://scripts/components/day_flow.gd",
 	"res://scripts/ui/pause_menu.gd",
 	"res://scripts/util/debug_keys.gd",
+	"res://scripts/ui/forge_screen.gd",  # Craft Stride 2: Sten's Forge UI
 ]
 
 

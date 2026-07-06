@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ToolData" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/placeholder/item_fangsteel_blade.png" id="1_isaoq"]
+[ext_resource type="Script" path="res://scripts/resources/tool_data.gd" id="2_3g1rh"]
+
+[resource]
+script = ExtResource("2_3g1rh")
+tool_type = 2
+rp_cost = 3
+damage = 22
+id = "fangsteel_blade"
+display_name = "Fangsteel Blade"
+icon = ExtResource("1_isaoq")
+max_stack = 1

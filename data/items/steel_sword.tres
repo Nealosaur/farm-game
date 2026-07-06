@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ToolData" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/placeholder/item_steel_sword.png" id="1_ooxfd"]
+[ext_resource type="Script" path="res://scripts/resources/tool_data.gd" id="2_a1agg"]
+
+[resource]
+script = ExtResource("2_a1agg")
+tool_type = 2
+rp_cost = 3
+damage = 16
+id = "steel_sword"
+display_name = "Steel Sword"
+icon = ExtResource("1_ooxfd")
+max_stack = 1

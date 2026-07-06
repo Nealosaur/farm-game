@@ -41,6 +41,15 @@ func _init() -> void:
 	_tool("wooden_sword", "Wooden Sword", ToolData.ToolType.SWORD, 3, 5, 0)
 	_tool("iron_sword", "Iron Sword", ToolData.ToolType.SWORD, 3, 11, 2500)
 
+	# Craft Stride 2 (Forging) — Sten's smithy upgrades. All three are
+	# forge-only (buy_price 0 = "not sold", per the bible: granted by
+	# ForgeLogic.upgrade(), never Marta's shop) and max_stack 1 (swords/cans
+	# are equipment, never stack — matches every existing ToolData). water_width
+	# defaults to 1 for every tool except the Copper Watering Can.
+	_tool("steel_sword", "Steel Sword", ToolData.ToolType.SWORD, 3, 16, 0)
+	_tool("fangsteel_blade", "Fangsteel Blade", ToolData.ToolType.SWORD, 3, 22, 0)
+	_tool_watering_can("copper_can", "Copper Watering Can", 3, 3)
+
 	_material("slime_gel", "Slime Gel", 15)
 	_material("wisp_dust", "Wisp Dust", 25)
 	_material("goblin_fang", "Goblin Fang", 40)
@@ -154,6 +163,24 @@ func _tool(id: String, name: String, type: ToolData.ToolType, rp_cost: int, dama
 	r.tool_type = type
 	r.rp_cost = rp_cost
 	r.damage = damage
+	_save(r, "items/%s.tres" % id)
+
+
+func _tool_watering_can(id: String, name: String, rp_cost: int, water_width: int) -> void:
+	## Craft Stride 2: Copper Watering Can — same shape as _tool() but also
+	## sets water_width (see tool_data.gd's field doc). Kept as its own small
+	## helper rather than adding a rarely-used parameter to every _tool() call
+	## site (every OTHER tool, present and future non-can, is water_width 1
+	## by the field's own default).
+	var r := ToolData.new()
+	r.id = id
+	r.display_name = name
+	r.icon = _icon(id)
+	r.max_stack = 1
+	r.buy_price = 0
+	r.tool_type = ToolData.ToolType.WATERING_CAN
+	r.rp_cost = rp_cost
+	r.water_width = water_width
 	_save(r, "items/%s.tres" % id)
 
 
