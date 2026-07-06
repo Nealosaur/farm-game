@@ -16,11 +16,22 @@ extends CanvasLayer
 ## ShopScreen uses for "pause"/"inventory".
 ##
 ## Registered-NPC list: NPCS constant below is the "who exists" registry for
-## the SOCIAL tab. World Stride B only wires Marta; later strides append
-## their MartaData-style factories here (npc_data.id -> factory.build()).
+## the SOCIAL tab. World Stride C appends all 7 remaining NPCs alongside
+## Marta (npc_data.id -> factory.build()); NPCFactory.ALL_IDS/REGISTRY is the
+## single source of truth for id -> data-script path everywhere else, but
+## this stays a plain path list (matching World Stride B's shape) since the
+## SOCIAL tab only ever needs the data half, never the dialog/sprite/has_shop
+## bits NPCFactory also carries.
 
 const NPCS := [
 	"res://data/npcs/marta.gd",
+	"res://data/npcs/sten.gd",
+	"res://data/npcs/bram.gd",
+	"res://data/npcs/rosa.gd",
+	"res://data/npcs/alden.gd",
+	"res://data/npcs/finn.gd",
+	"res://data/npcs/willow.gd",
+	"res://data/npcs/garrick.gd",
 ]
 
 var tab_container: TabContainer
