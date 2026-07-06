@@ -49,7 +49,7 @@ static func cell_for(npc: NPCData, hour: int, is_raining: bool, is_festival: boo
 	## e.g. Garrick's farm-side Delve entrance block) — this always returns
 	## just the CELL half; callers that also need to know which map to check
 	## use map_for() below with the same arguments.
-	var raw := _raw_entry(npc, hour, is_raining, is_festival)
+	var raw = _raw_entry(npc, hour, is_raining, is_festival)
 	if raw == null:
 		return Vector2i(-1, -1)
 	if raw is Dictionary:
@@ -61,7 +61,7 @@ static func map_for(npc: NPCData, hour: int, is_raining: bool, is_festival: bool
 	## Which map's build() should place this NPC for the resolved block/
 	## weather/festival state — npc.home_map unless the entry is a per-block
 	## {"map": ..., "cell": ...} override (see cell_for's doc).
-	var raw := _raw_entry(npc, hour, is_raining, is_festival)
+	var raw = _raw_entry(npc, hour, is_raining, is_festival)
 	if raw is Dictionary:
 		return String(raw.get("map", npc.home_map))
 	return npc.home_map
@@ -81,7 +81,7 @@ static func is_present_on_map(npc: NPCData, map_id: String, hour: int, is_rainin
 	return map_for(npc, hour, is_raining, is_festival) == map_id
 
 
-static func _raw_entry(npc: NPCData, hour: int, is_raining: bool, is_festival: bool):
+static func _raw_entry(npc: NPCData, hour: int, is_raining: bool, is_festival: bool) -> Variant:
 	if is_festival and npc.festival_cell != Vector2i(-1, -1):
 		return npc.festival_cell
 	var block := block_for(hour)
