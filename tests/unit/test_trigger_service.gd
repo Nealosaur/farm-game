@@ -98,6 +98,69 @@ func test_block_hours_fails_when_not_matching() -> void:
 	assert_false(TriggerService.evaluate({"block/hours": "17-20"}))
 
 
+func test_block_hours_array_passes_when_current_block_is_any_of_them() -> void:
+	## Craft Stride 2: an Array value means "any of these blocks" — "Fang
+	## Steel" spans 6-12, i.e. two registry blocks.
+	Clock.minutes = 10 * 60  # 9-12 block
+	assert_true(TriggerService.evaluate({"block/hours": ["6-9", "9-12"]}))
+	Clock.minutes = 7 * 60  # 6-9 block
+	assert_true(TriggerService.evaluate({"block/hours": ["6-9", "9-12"]}))
+
+
+func test_block_hours_array_fails_when_current_block_is_none_of_them() -> void:
+	Clock.minutes = 13 * 60  # 12-17 block
+	assert_false(TriggerService.evaluate({"block/hours": ["6-9", "9-12"]}))
+
+
+## ---- has_item (Craft Stride 2) ----
+
+func test_has_item_passes_when_inventory_holds_it() -> void:
+	Inventory.reset()
+	Inventory.add_item("steel_sword", 1)
+	assert_true(TriggerService.evaluate({"has_item": "steel_sword"}))
+	Inventory.reset()
+
+
+func test_has_item_fails_when_inventory_lacks_it() -> void:
+	Inventory.reset()
+	assert_false(TriggerService.evaluate({"has_item": "steel_sword"}))
+
+
+## ---- next_day_after_flag (Craft Stride 2) ----
+
+func test_next_day_after_flag_fails_on_the_same_day() -> void:
+	GameState.flags["sten_l7_choice_a"] = true
+	GameState.flags["sten_l7_choice_a_day"] = 5
+	Clock.day = 5
+	assert_false(TriggerService.evaluate({"next_day_after_flag": "sten_l7_choice_a"}))
+
+
+func test_next_day_after_flag_passes_the_day_after() -> void:
+	GameState.flags["sten_l7_choice_a"] = true
+	GameState.flags["sten_l7_choice_a_day"] = 5
+	Clock.day = 6
+	assert_true(TriggerService.evaluate({"next_day_after_flag": "sten_l7_choice_a"}))
+
+
+func test_next_day_after_flag_survives_json_float_coercion() -> void:
+	## Save/load round-trips flag values through JSON, turning the recorded
+	## int day into a float — the int() read coercion must keep the gate exact.
+	GameState.flags["sten_l7_choice_a"] = true
+	GameState.flags["sten_l7_choice_a_day"] = 5.0
+	Clock.day = 5
+	assert_false(TriggerService.evaluate({"next_day_after_flag": "sten_l7_choice_a"}))
+	Clock.day = 6
+	assert_true(TriggerService.evaluate({"next_day_after_flag": "sten_l7_choice_a"}))
+
+
+func test_next_day_after_flag_passes_when_day_record_missing() -> void:
+	## Documented fallback: a missing "<flag>_day" record reads as day 0 —
+	## kinder to pre-record saves than locking the scene out forever.
+	GameState.flags["sten_l7_choice_a"] = true
+	Clock.day = 1
+	assert_true(TriggerService.evaluate({"next_day_after_flag": "sten_l7_choice_a"}))
+
+
 ## ---- map ----
 
 func test_map_passes_when_current_map_matches() -> void:
