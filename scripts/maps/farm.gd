@@ -13,19 +13,30 @@ const SPAWN_CELL := Vector2i(9, 9)      # legacy default, kept as SPAWNS["defaul
 ## is looked up here after the world is built; unknown/missing names fall back
 ## to "default". "from_dungeon" sits just off the dungeon portal cell (41, 12)
 ## so returning players don't land back on its trigger area. "from_town" is
-## the same idea for the new west-edge town portal (1, 7): offset east of it.
+## the same idea for the west-edge town portal (1, 7). "from_riverwoods"
+## (World Stride C) is the same idea for the new south-edge riverwoods portal.
 const SPAWNS := {
 	"default": Vector2i(9, 9),
 	"wake": Vector2i(8, 8),
 	"from_dungeon": Vector2i(39, 12),
 	"from_town": Vector2i(4, 7),
+	"from_riverwoods": Vector2i(17, 22),
 }
 
 const DUNGEON_PORTAL_CELL := Vector2i(41, 12)
 const TOWN_PORTAL_CELL := Vector2i(1, 7)
+const RIVERWOODS_PORTAL_CELL := Vector2i(17, 24)
+
+## Garrick's farm-side Delve entrance cell (World Stride C): his morning
+## schedule blocks place him here (see data/npcs/garrick.gd's per-block
+## {"map": "farm", ...} override) — a few cells short of the dungeon portal
+## itself so he isn't standing on its trigger area.
+const GARRICK_DELVE_CELL := Vector2i(38, 12)
 
 var grid: FarmGrid
 var player: Player
+var garrick: NPC
+var _last_block := ""
 
 
 func _ready() -> void:
@@ -61,6 +72,7 @@ func _ready() -> void:
 	renderer.setup(grid, soil, ids)
 
 	_add_props(world)
+	_add_garrick(world)
 
 	player = (load("res://scenes/player/player.tscn") as PackedScene).instantiate()
 	player.global_position = MapBuilder.cell_center(
@@ -71,6 +83,7 @@ func _ready() -> void:
 
 	_add_dungeon_portal(world)
 	_add_town_portal(world)
+	_add_riverwoods_portal(world)
 
 	var cam := CameraShake.new()
 	cam.limit_left = 0
@@ -98,6 +111,11 @@ func _ready() -> void:
 			var node: Node = (load(extra) as GDScript).new()
 			add_child(node)
 
+	_last_block = NPCRegistry.block_for(Clock.hour())
+	if garrick != null:
+		garrick.refresh_schedule("farm")
+	EventBus.time_ticked.connect(_on_time_ticked)
+
 
 func _layout() -> PackedStringArray:
 	var rows := PackedStringArray()
@@ -108,6 +126,8 @@ func _layout() -> PackedStringArray:
 				row += "W"
 			elif y == 7 and x >= 1 and x <= 14:
 				row += "P"
+			elif x == RIVERWOODS_PORTAL_CELL.x and y >= RIVERWOODS_PORTAL_CELL.y and y <= HEIGHT - 2:
+				row += "P"  # short path stub up from the south (riverwoods) portal
 			# ~3.5% deterministic sparse dark-grass patches (decorative only;
 			# elif order keeps them off walls/path).
 			elif (x * 7 + y * 13) % 29 == 0:
@@ -147,6 +167,29 @@ func _add_town_portal(world: Node2D) -> void:
 	world.add_child(portal)
 
 
+func _add_riverwoods_portal(world: Node2D) -> void:
+	## South-edge road down to Riverwoods (World Stride C).
+	var portal := Portal.make({
+		"cell": RIVERWOODS_PORTAL_CELL,
+		"target_scene": "res://scenes/maps/riverwoods.tscn",
+		"target_spawn": "from_farm",
+		"sprite": "res://assets/placeholder/prop_stairs_down.png",
+		"label": "Riverwoods",
+	})
+	portal.name = "RiverwoodsPortal"
+	world.add_child(portal)
+
+
+func _add_garrick(world: Node2D) -> void:
+	## Garrick's farm-side Delve entrance appearance (World Stride C): built
+	## unconditionally (like town.gd's NPCs) and hidden/shown by
+	## refresh_schedule() per the current time block — his schedule only
+	## resolves to "farm" during the 6-9/9-12 blocks (see data/npcs/
+	## garrick.gd's per-block map override); every other block hides him here.
+	garrick = NPCFactory.make_npc("garrick")
+	world.add_child(garrick)
+
+
 func _add_props(world: Node2D) -> void:
 	var house := StaticBody2D.new()
 	house.position = Vector2(HOUSE_CELL) * MapBuilder.TILE + Vector2(24, 24)
@@ -183,3 +226,11 @@ func _make_interactable(node_name: String, script_path: String, texture_path: St
 	col.shape = shape
 	area.add_child(col)
 	return area
+
+
+func _on_time_ticked(_hour, _minute) -> void:
+	var block := NPCRegistry.block_for(Clock.hour())
+	if block != _last_block:
+		_last_block = block
+		if garrick != null:
+			garrick.refresh_schedule("farm")
