@@ -23,7 +23,7 @@ const ID := "willow"
 
 const CELL_HUT := Vector2i(6, 5)          # Riverwoods hut (morning/evening/night)
 const CELL_RIVERBANK := Vector2i(14, 10)  # riverbank, mid-morning
-const CELL_FOREST_PATH := Vector2i(20, 14)  # forest paths, afternoon
+const CELL_FOREST_PATH := Vector2i(24, 14)  # forest paths, afternoon (east of the river, off the RIVER_X column)
 const CELL_FESTIVAL := Vector2i(26, 12)   # town plaza, "at the very edge"
 
 

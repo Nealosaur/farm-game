@@ -101,6 +101,18 @@ func test_talking_to_real_marta_node_grants_bond_once_per_day() -> void:
 
 	town.marta.interact(town.player)
 	assert_eq(Relationships.points("marta"), 15, "same-day second talk must not add points again")
+	# This interact() opened a second dialog (a talk still shows a line even
+	# when talk() itself no-ops) that would otherwise leak get_tree().paused
+	# = true past this test — every later test in the suite that relies on
+	# real frame/timer processing (wait_seconds, etc.) would then hang
+	# forever waiting on a permanently-paused tree (World Stride C found this
+	# the hard way via a full-suite hang). Close it synchronously (no await —
+	# the tree may still be paused right now) before the test ends.
+	if dialog.is_open():
+		dialog._advance()
+		if dialog.is_open() and dialog.choice_box.get_child_count() > 0:
+			(dialog.choice_box.get_child(dialog.choice_box.get_child_count() - 1) as Button).pressed.emit()
+	assert_false(get_tree().paused, "no test may leave the SceneTree paused for the next test")
 
 
 func test_heart_event_fires_at_gate_and_choice_applies_delta() -> void:
