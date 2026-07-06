@@ -434,6 +434,24 @@ every time."
 food first, farmer."
 [B] "Blade first sounds cooler." → "'Cooler.' Aye. Cool as a condolence
 letter. Alden signs those, ask him."
+**SCENE: "The Bench"** (event script `garrick_sten_bench`; authored canon):
+Triggers once, the next morning the player enters town (9-12 block) after
+choosing [A] in Garrick's L7 event. Garrick walks from the town entrance to
+the smithy; camera follows, then frames both men.
+Garrick: "Sten." / Sten: "Garrick." (beat) "Twenty years, and you pick a
+Tuesday." / Garrick: "Blade did everything right. I didn't. Blocked the slam
+you told me never to block." (beat) / Sten: "...I know. I measured the
+break. Told the whole town nothing. Seemed kinder to let them blame my steel
+than your knee." / Garrick: "Your steel saved my life ten years before the
+day it didn't. Should have led with that." / Sten: "Hm." (turns to the
+forge) "Forge is hot. Stand there and hand me things." / Garrick: "That an
+apology?" / Sten: "It's a job. Take it."
+Toast: "Something in Emberhollow just got quietly better." Both +50 bond;
+flag `garrick_sten_reconciled`.
+**Post-scene gating:** Garrick's KINDRED line "I told Sten his steel saved
+my life..." only surfaces once the flag is set; Sten gains a flag-gated
+CLOSE line: "Garrick's back at the bench. Hands me things wrong. It's good."
+
 **HEART EVENT L7 — "The Broken Sword":** Saloon, late. He sets a wrapped
 bundle on the table: two halves of a beautiful blade. "Sten's masterwork,
 before the one he never finished. I told the whole town it failed ME.

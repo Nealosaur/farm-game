@@ -282,9 +282,21 @@ func test_resolve_actor_returns_player_for_the_player_id() -> void:
 
 
 func test_resolve_actor_spawns_a_temp_npc_when_none_present() -> void:
+	# Temp-spawning requires an ACTIVE scene (post-fix contract: spawning
+	# outside one would orphan the actor forever). Hold a scene open on a wait.
+	runner.play(_script(["wait 60", "end"]))
+	await wait_process_frames(1)
 	var garrick := runner.resolve_actor("garrick")
 	assert_not_null(garrick)
 	assert_true(garrick is NPC)
+	runner._end_scene()  # explicit cleanup so the temp actor is freed
+	await wait_process_frames(2)
+
+
+func test_resolve_actor_returns_null_for_temp_when_no_scene_running() -> void:
+	assert_false(runner._running, "precondition: no scene active")
+	assert_null(runner.resolve_actor("garrick"),
+		"must not spawn an orphan temp actor outside a scene")
 
 
 func test_resolve_actor_finds_the_live_marta_instance_on_town() -> void:

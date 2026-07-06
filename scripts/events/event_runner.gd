@@ -147,6 +147,10 @@ func _end_scene() -> void:
 		if is_instance_valid(actor):
 			actor.queue_free()
 	_temp_actors = []
+	# Clear the resolve cache too — it can hold the temp actors we just freed
+	# (or NPCs despawned mid-scene); a stale typed return of a freed instance
+	# is exactly Godot's "Trying to return a previously freed instance" error.
+	_actors = {}
 	Clock.paused = _clock_was_paused
 	GameFlow.cutscene_active = false
 	finished.emit()
@@ -168,11 +172,19 @@ func resolve_actor(actor_id: String) -> Node2D:
 	if actor_id == "player":
 		return _player
 	if _actors.has(actor_id):
-		return _actors[actor_id]
+		var cached = _actors[actor_id]
+		if is_instance_valid(cached):
+			return cached
+		_actors.erase(actor_id)  # NPC freed under us (despawn/block change)
 	var found := _find_live_npc(actor_id)
 	if found != null:
 		_actors[actor_id] = found
 		return found
+	if not _running:
+		# Finding live NPCs is harmless anytime, but SPAWNING a temp actor
+		# outside a running scene would orphan it forever (_end_scene is the
+		# only cleanup point). Post-scene resolution of a temp = null.
+		return null
 	var spawned := _spawn_temp_actor(actor_id)
 	if spawned != null:
 		_actors[actor_id] = spawned
