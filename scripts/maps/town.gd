@@ -247,11 +247,15 @@ func _add_npcs(world: Node2D) -> void:
 func _has_any_town_slot(data: NPCData) -> bool:
 	## An NPC is worth instancing on the town scene if ANY schedule/rain/
 	## festival entry places them here — either because home_map == "town"
-	## (the common case) or because a per-block {"map": "town", ...} override
-	## exists (none currently do; kept for symmetry with farm.gd's Garrick
-	## check). Garrick's home_map is "town" (evenings/saloon), so he still
-	## qualifies even though his morning blocks override to "farm".
+	## (the common case), a per-block {"map": "town", ...} override exists
+	## (none currently do; kept for symmetry with farm.gd's Garrick check),
+	## or (World Stride D) they have a festival_cell at all — every festival
+	## is on the plaza (NPCRegistry.FESTIVAL_MAP), so any NPC with a set
+	## festival_cell needs a town instance even if their ordinary home_map is
+	## elsewhere (Willow: "riverwoods" normally, "town" during festivals).
 	if data.home_map == "town":
+		return true
+	if data.festival_cell != Vector2i(-1, -1):
 		return true
 	for block: String in NPCRegistry.BLOCKS:
 		if NPCRegistry.map_for(data, _hour_for_block(block), false, false) == "town":

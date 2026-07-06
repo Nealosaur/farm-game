@@ -44,6 +44,7 @@ const MAP_ID := "riverwoods"
 var player: Player
 var npcs: Dictionary = {}
 var _last_block := ""
+var _last_festival_phase := ""  # World Stride D: catches Willow's festival hour-window boundaries block-change alone would miss
 
 
 func _ready() -> void:
@@ -85,6 +86,7 @@ func _ready() -> void:
 	MapSceneHelper.instance_ui_and_flow_layer(self)
 
 	_last_block = NPCRegistry.block_for(Clock.hour())
+	_last_festival_phase = Festival.phase_signature(Clock.hour())
 	for npc_id: String in npcs:
 		(npcs[npc_id] as NPC).refresh_schedule("riverwoods")
 	EventBus.time_ticked.connect(_on_time_ticked)
@@ -201,7 +203,9 @@ func _forage_candidate_cells() -> Array:
 
 func _on_time_ticked(_hour, _minute) -> void:
 	var block := NPCRegistry.block_for(Clock.hour())
-	if block != _last_block:
+	var festival_phase := Festival.phase_signature(Clock.hour())
+	if block != _last_block or festival_phase != _last_festival_phase:
 		_last_block = block
+		_last_festival_phase = festival_phase
 		for npc_id: String in npcs:
 			(npcs[npc_id] as NPC).refresh_schedule("riverwoods")

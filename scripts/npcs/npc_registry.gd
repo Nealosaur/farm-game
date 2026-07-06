@@ -57,10 +57,19 @@ static func cell_for(npc: NPCData, hour: int, is_raining: bool, is_festival: boo
 	return raw
 
 
+const FESTIVAL_MAP := "town"  # World Stride D: every festival is "on the plaza" (world-bible.md) — always the town map
+
+
 static func map_for(npc: NPCData, hour: int, is_raining: bool, is_festival: bool) -> String:
 	## Which map's build() should place this NPC for the resolved block/
 	## weather/festival state — npc.home_map unless the entry is a per-block
-	## {"map": ..., "cell": ...} override (see cell_for's doc).
+	## {"map": ..., "cell": ...} override (see cell_for's doc), OR a plain
+	## festival_cell hit (World Stride D: the plaza is ALWAYS on the town
+	## map, regardless of the NPC's normal home_map — Willow's home_map is
+	## "riverwoods", but her festival_cell places her on town's plaza like
+	## every other NPC, not in the riverwoods).
+	if is_festival and npc.festival_cell != Vector2i(-1, -1):
+		return FESTIVAL_MAP
 	var raw = _raw_entry(npc, hour, is_raining, is_festival)
 	if raw is Dictionary:
 		return String(raw.get("map", npc.home_map))
