@@ -365,7 +365,13 @@ gets vain."
 Mine is just... crowds. The trees never ask me to be loud." / "I marked
 your fence line in forest-sign. It means 'kin of this ground.' The deer
 will still eat your lettuce. It's not magic. It's manners." / "Take
-frostcap into the Delve in winter. The dark respects what grows in cold."
+frostcap into the Delve in winter. The dark respects what grows in cold." /
+"You kept one. The woods sorted you into "safe" years ago. Now the slimes
+have too." **[GATED — Craft Stride 3 Taming: only surfaces once
+world["taming"].barn is non-empty, i.e. the player has at least one tamed
+slime living in the farm's pen. Filtered out of the CLOSE pool otherwise by
+npc.gd's _gated_dialog_data() / _BARN_GATED_LINES, same mechanism as "The
+Bench"'s reconciliation-gated lines for Garrick/Sten.]**
 **KINDRED:** "The woods count you as weather now. Reliable. Returning.
 That's their highest rank. Mine too." / "When the wisps calm someday —
 and they will, near you — come find me first."

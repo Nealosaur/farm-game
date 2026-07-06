@@ -243,29 +243,57 @@ const _RECONCILED_GATED_LINES := {
 	},
 }
 
+## Craft Stride 3 (Taming): Willow's barn-gated line, same shallow-filter
+## mechanism as _RECONCILED_GATED_LINES above but keyed on a WORLD STATE
+## condition (world["taming"].barn non-empty) instead of a GameState.flags
+## boolean — see _barn_non_empty() below. Kept as its own table/gate rather
+## than folded into _RECONCILED_GATED_LINES so that table's "flag name ->
+## bool" shape doesn't need to grow a second, different kind of condition.
+const _BARN_GATED_LINES := {
+	"willow": {
+		"tier": "CLOSE",
+		"line": "You kept one. The woods sorted you into \"safe\" years ago. Now the slimes have too.",
+	},
+}
+
 
 func _gated_dialog_data() -> Dictionary:
 	## Returns `dialog_data` unchanged for every NPC/tier that has no gated
 	## line at all, or a SHALLOW COPY with just that one tier's pool filtered
-	## when a gate applies and its flag isn't set yet — never mutates the
-	## shared `const DATA` dict itself (every NPC instance built from the
+	## when a gate applies and its condition isn't met yet — never mutates
+	## the shared `const DATA` dict itself (every NPC instance built from the
 	## same data/dialog/<id>.gd file points at the SAME Dictionary object).
-	var gate: Dictionary = _RECONCILED_GATED_LINES.get(npc_data.id, {})
-	if gate.is_empty():
-		return dialog_data
-	if bool(GameState.flags.get("garrick_sten_reconciled", false)):
-		return dialog_data  # unlocked: no filtering needed
+	var out := dialog_data
+	var reconciled_gate: Dictionary = _RECONCILED_GATED_LINES.get(npc_data.id, {})
+	if not reconciled_gate.is_empty() and not bool(GameState.flags.get("garrick_sten_reconciled", false)):
+		out = _filter_gated_line(out, reconciled_gate)
+	var barn_gate: Dictionary = _BARN_GATED_LINES.get(npc_data.id, {})
+	if not barn_gate.is_empty() and not _barn_non_empty():
+		out = _filter_gated_line(out, barn_gate)
+	return out
+
+
+func _barn_non_empty() -> bool:
+	return Taming.barn_count(SaveManager.world) > 0
+
+
+static func _filter_gated_line(data: Dictionary, gate: Dictionary) -> Dictionary:
+	## Shared filter step: removes `gate.line` from `data.tier_pools[gate.tier]`
+	## if present, returning a shallow copy (data itself untouched). Called
+	## once per applicable-and-unmet gate from _gated_dialog_data() above, so
+	## an NPC with gates in BOTH tables (none today) would get both filtered
+	## in sequence without either mutating the shared const dialog data.
 	var tier: String = gate["tier"]
 	var gated_line: String = gate["line"]
-	var pools: Dictionary = dialog_data.get("tier_pools", {})
+	var pools: Dictionary = data.get("tier_pools", {})
 	var pool: Array = pools.get(tier, [])
 	if not (gated_line in pool):
-		return dialog_data  # nothing to filter (defensive; shouldn't happen with real data)
+		return data  # nothing to filter (defensive; shouldn't happen with real data)
 	var filtered_pool: Array = pool.duplicate()
 	filtered_pool.erase(gated_line)
 	var filtered_pools := pools.duplicate()
 	filtered_pools[tier] = filtered_pool
-	var out := dialog_data.duplicate()
+	var out := data.duplicate()
 	out["tier_pools"] = filtered_pools
 	return out
 

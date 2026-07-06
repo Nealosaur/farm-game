@@ -4,6 +4,13 @@ extends RefCounted
 ## docs/design/characters.md (typos and all — they're voice). Do not
 ## paraphrase; if a line needs to change, change characters.md first.
 ##
+## Craft Stride 3 (Taming): the CLOSE pool's "You kept one..." line only
+## actually surfaces once world["taming"].barn is non-empty (a tamed slime
+## living in the farm's pen) — npc.gd's _gated_dialog_data() filters it OUT
+## of the pool dynamically until then (see its _BARN_GATED_LINES table).
+## Lives here in the ordinary pool (not a separate list) so this file stays
+## pure data, same convention as Garrick/Sten's "The Bench" gated lines.
+##
 ## Shape consumed by DialogResolver.pick() — see data/dialog/marta.gd's
 ## header comment for the full documented shape.
 
@@ -31,6 +38,7 @@ const DATA := {
 			"I came here after the city, like Doc. His wound has a name. Mine is just... crowds. The trees never ask me to be loud.",
 			"I marked your fence line in forest-sign. It means 'kin of this ground.' The deer will still eat your lettuce. It's not magic. It's manners.",
 			"Take frostcap into the Delve in winter. The dark respects what grows in cold.",
+			"You kept one. The woods sorted you into \"safe\" years ago. Now the slimes have too.",
 		],
 		"KINDRED": [
 			"The woods count you as weather now. Reliable. Returning. That's their highest rank. Mine too.",
