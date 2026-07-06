@@ -56,6 +56,12 @@ func end_day(collapsed: bool) -> void:
 		return
 	_busy = true
 	Clock.paused = true
+	# Alive Stride 2: gates player input for the WHOLE end-of-day sequence —
+	# fixes the long-standing debt where Clock.paused stopped time/crops but
+	# Player.Idle/Move still polled input during the fade (see GameFlow's
+	# class doc). Cleared on every return path below (both the on-farm and
+	# away-from-farm branches).
+	GameFlow.cutscene_active = true
 	await SceneChanger.fade_to_black()
 
 	var bin: Dictionary = SaveManager.world.get("shipping_bin", {})
@@ -111,10 +117,12 @@ func end_day(collapsed: bool) -> void:
 		for msg in toasts:
 			EventBus.toast_requested.emit(msg)
 		Clock.paused = false
+		GameFlow.cutscene_active = false
 		_busy = false
 	else:
 		# Away from the farm: finish our own state, then hand off the swap
 		# (see class doc — we die at the swap, so no awaits after this).
 		Clock.paused = false
+		GameFlow.cutscene_active = false
 		_busy = false
 		SceneChanger.swap_scene_while_black(FARM_SCENE, "wake", toasts)

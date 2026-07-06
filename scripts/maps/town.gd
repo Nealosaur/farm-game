@@ -67,6 +67,7 @@ var marta: NPC  # kept as a named alias (World Stride B call sites / tests refer
 var notice_board: NoticeBoard
 var festival_decor: TileMapLayer  # World Stride D: reversible plaza accent cells while a festival is active
 var path_grid: PathGrid  # Alive Stride 1: walkable-grid for NPC pathfinding, read via the "map_root" group
+var event_director: EventDirector  # Alive Stride 2: fires authored EventScript scenes gated to this map (see class doc)
 var _tile_ids: Dictionary = {}
 var _last_block := ""
 var _last_festival_phase := ""  # World Stride D: catches festival-hour boundaries block-change alone would miss
@@ -126,8 +127,22 @@ func _ready() -> void:
 	for npc_id: String in npcs:
 		(npcs[npc_id] as NPC).refresh_schedule("town")
 	_apply_festival_decor()
+	_add_event_director()
 	EventBus.time_ticked.connect(_on_time_ticked)
 	EventBus.day_passed.connect(_on_day_passed)
+
+
+func _add_event_director() -> void:
+	## Alive Stride 2: authored scenes gated to the town map. "The Bench"
+	## (Garrick & Sten reconciliation) is the first and only candidate today —
+	## see data/events/garrick_sten_bench.gd. checked once immediately (in
+	## case its preconditions already held when this scene loaded) and again
+	## on every subsequent block change (see _on_time_ticked below).
+	event_director = EventDirector.new()
+	event_director.current_map_id = "town"
+	event_director.candidates = [GarrickStenBenchEvent.DATA]
+	add_child(event_director)
+	event_director.check()
 
 
 func _layout() -> PackedStringArray:
@@ -313,6 +328,8 @@ func _on_time_ticked(_hour, _minute) -> void:
 		_last_festival_phase = festival_phase
 		for npc_id: String in npcs:
 			(npcs[npc_id] as NPC).refresh_schedule("town")
+		if event_director != null:
+			event_director.check()
 
 
 func _on_day_passed(_day: int) -> void:

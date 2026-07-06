@@ -10,6 +10,13 @@ extends RefCounted
 ## (pick() only resolves the ordinary ambient-talk line; quest grant/hand-in
 ## are their own dedicated flow).
 ##
+## Alive Stride 2: the KINDRED pool's "I told Sten his steel saved my
+## life..." line only actually surfaces once flag "garrick_sten_reconciled"
+## is true (set by "The Bench" scene, data/events/garrick_sten_bench.gd) —
+## npc.gd's _gated_dialog_data() filters it OUT of the pool dynamically until
+## then. Lives here in the ordinary pool (not a separate list) so this file
+## stays pure data.
+##
 ## Shape consumed by DialogResolver.pick() — see data/dialog/marta.gd's
 ## header comment for the full documented shape.
 

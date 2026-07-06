@@ -6,6 +6,14 @@ extends RefCounted
 ##
 ## Shape consumed by DialogResolver.pick() — see data/dialog/marta.gd's
 ## header comment for the full documented shape.
+##
+## Alive Stride 2: the CLOSE pool below carries ONE line ("Garrick's back at
+## the bench...") that only actually surfaces once flag
+## "garrick_sten_reconciled" is true — npc.gd's _gated_dialog_data() filters
+## it OUT of the pool dynamically until then (see its class doc). It lives
+## here, in the ordinary pool, rather than a separate gated-only list, so
+## this file stays pure data and the completeness meta-test's "every NPC has
+## 3+ lines per tier" style checks see it like any other line.
 
 const DATA := {
 	"tier_pools": {
@@ -31,6 +39,7 @@ const DATA := {
 			"Started something on the back bench. Not for sale. Maybe for you, someday, if you stop dying.",
 			"My father shod horses here. His father too. I make swords for a farmer. World's strange.",
 			"You're the only one who doesn't flinch at the forge. Noticed that.",
+			"Garrick's back at the bench. Hands me things wrong. It's good.",
 		],
 		"KINDRED": [
 			"Bench is yours whenever. Just put the hammer back straight.",

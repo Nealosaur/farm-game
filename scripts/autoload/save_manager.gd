@@ -55,6 +55,17 @@ var save_path := "user://save1.json"
 ##                     world key; this entry documents that choice so a
 ##                     future reader doesn't go looking for a "world.intro"
 ##                     key that was never created).
+##   "events_seen"   — event_id -> true (one-time-forever scenes) or -> int
+##                     day (daily-capped scenes), plus a "_any_fired_day": int
+##                     companion key enforcing "at most one scene per day"
+##                     globally. Owned by TriggerService (scripts/events/
+##                     trigger_service.gd) — a stateless RefCounted utility
+##                     (unlike Relationships/Quests, it has no autoload/
+##                     restore() step of its own); callers read/write this
+##                     blob directly via world.get("events_seen", {}) the same
+##                     way "festival"/"forage" are read inline elsewhere. No
+##                     int()/String() coercion beyond what TriggerService's
+##                     own helpers already do internally.
 var world := {}  # map-owned persistent blobs (farm grid etc.), set by scenes
 
 

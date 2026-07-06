@@ -158,6 +158,13 @@ func _on_heart_event_choice(index: int) -> void:
 	var empathetic := index == 0
 	Relationships.apply_heart_event_choice(npc_data.id, empathetic)
 	Relationships.mark_event_seen(npc_data.id, _heart_event_id)
+	# Alive Stride 2: Garrick's L7 event choice A ("Twenty years is long
+	# enough. Tell HIM that.") ALSO sets a world flag, on top of the ordinary
+	# bond delta — this is the wire that arms "The Bench" reconciliation
+	# scene's trigger (see data/events/garrick_sten_bench.gd's precondition
+	# doc). Minimal, surgical: every OTHER NPC's heart events are unaffected.
+	if npc_data.id == "garrick" and _heart_event_id == "l7" and empathetic:
+		GameState.flags["garrick_l7_choice_a"] = true
 	var response := String(event.get("response_a" if empathetic else "response_b", ""))
 	if response != "":
 		var dialog := get_tree().get_first_node_in_group("dialog_box") as DialogBox
@@ -171,7 +178,8 @@ func _on_heart_event_choice(index: int) -> void:
 
 func _play_talk(dialog: DialogBox, player: Node) -> void:
 	var context := _resolver_context()
-	var result := DialogResolver.pick(dialog_data, context)
+	var effective_data := _gated_dialog_data()
+	var result := DialogResolver.pick(effective_data, context)
 	if String(result.get("source", "")) == "tier_pool":
 		Relationships.mark_line_shown(npc_data.id, context["tier"], int(result["pool_index"]))
 	Relationships.talk(npc_data.id)  # no-ops (returns false) if already talked today
@@ -196,6 +204,51 @@ func _play_talk(dialog: DialogBox, player: Node) -> void:
 	_choice_labels = choices
 	_choice_player = player
 	dialog.show_choices(lines, choices)
+
+
+## ---- post-scene content gating (Alive Stride 2, "The Bench") ----
+
+## Verbatim lines that only appear once flag "garrick_sten_reconciled" is
+## true — see data/events/garrick_sten_bench.gd's class doc. Declared here
+## (not in each NPC's own dialog DATA file) so the gate logic lives in ONE
+## place: dialog DATA stays pure data, and a future third gated line doesn't
+## need its own bespoke filtering method.
+const _RECONCILED_GATED_LINES := {
+	"garrick": {
+		"tier": "KINDRED",
+		"line": "I told Sten his steel saved my life for ten years before the day it didn't. Took me twenty years and one farmer to say it. He heard me out. So. That happened.",
+	},
+	"sten": {
+		"tier": "CLOSE",
+		"line": "Garrick's back at the bench. Hands me things wrong. It's good.",
+	},
+}
+
+
+func _gated_dialog_data() -> Dictionary:
+	## Returns `dialog_data` unchanged for every NPC/tier that has no gated
+	## line at all, or a SHALLOW COPY with just that one tier's pool filtered
+	## when a gate applies and its flag isn't set yet — never mutates the
+	## shared `const DATA` dict itself (every NPC instance built from the
+	## same data/dialog/<id>.gd file points at the SAME Dictionary object).
+	var gate: Dictionary = _RECONCILED_GATED_LINES.get(npc_data.id, {})
+	if gate.is_empty():
+		return dialog_data
+	if bool(GameState.flags.get("garrick_sten_reconciled", false)):
+		return dialog_data  # unlocked: no filtering needed
+	var tier: String = gate["tier"]
+	var gated_line: String = gate["line"]
+	var pools: Dictionary = dialog_data.get("tier_pools", {})
+	var pool: Array = pools.get(tier, [])
+	if not (gated_line in pool):
+		return dialog_data  # nothing to filter (defensive; shouldn't happen with real data)
+	var filtered_pool: Array = pool.duplicate()
+	filtered_pool.erase(gated_line)
+	var filtered_pools := pools.duplicate()
+	filtered_pools[tier] = filtered_pool
+	var out := dialog_data.duplicate()
+	out["tier_pools"] = filtered_pools
+	return out
 
 
 ## ---- quests (World Stride D) ----
