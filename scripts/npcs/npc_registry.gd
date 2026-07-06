@@ -16,6 +16,34 @@ extends RefCounted
 ## Standard this phase (bible): "block-teleport is the accepted standard" —
 ## NPCs jump straight to their new block's cell with no walking animation.
 ## Maps re-query on every block CHANGE, not every tick (see npc.gd).
+##
+## Alive Stride 1 adds WALKING on top of block-teleport (see npc.gd's walk
+## controller) — cell RESOLUTION here is unchanged; only how an NPC gets to
+## the resolved cell differs (walk vs. teleport) at the call site.
+##
+## Schedule key priority (Alive Stride 1 extension, data-compatible): a
+## per-NPC schedule Dictionary MAY now carry extra top-level keys beyond the
+## plain block table, checked for the CURRENT block in this order:
+##   festival_cell (handled separately, above all of this) >
+##   rain_schedule (existing) >
+##   "<season>_weekend" (season name lowercase, e.g. "winter_weekend") >
+##   "weekend" >
+##   "<season>" (e.g. "winter") >
+##   schedule (default, existing)
+## Every extra key is a block-keyed Dictionary with the SAME shape as
+## `schedule` (block -> Vector2i or {"map","cell"}) and is entirely OPTIONAL —
+## an NPCData with none of them set (every NPC shipped before this stride)
+## resolves EXACTLY as before: rain_schedule then schedule. A season/weekend
+## table need not cover every block; a block missing from it falls back
+## further down the SAME priority chain (e.g. a "winter" table with only the
+## 6-9 block set still falls back to `schedule` for 9-12 onward), not
+## straight to `schedule` — see _raw_entry's ordered lookup below.
+##
+## Weekend rule (bible: "day%7>=5", adapted for 1-based day_of_season): the
+## 28-day month is 4 weeks of 7; days 6 and 7 of each week are the weekend.
+## Concretely: (day_of_season - 1) % 7 in {5, 6} -> day_of_season in
+## {6, 7, 13, 14, 21, 22, 28} (day 28's (28-1)%7 == 6, so the month's last
+## day is a weekend day, not a stray 8th day). See is_weekend().
 
 const BLOCK_6_9 := "6-9"
 const BLOCK_9_12 := "9-12"
@@ -24,6 +52,8 @@ const BLOCK_17_20 := "17-20"
 const BLOCK_20_2 := "20-2"
 
 const BLOCKS := [BLOCK_6_9, BLOCK_9_12, BLOCK_12_17, BLOCK_17_20, BLOCK_20_2]
+
+const SEASON_KEYS := ["spring", "summer", "fall", "winter"]  # matches Clock.SEASON_NAMES order, lowercased
 
 
 static func block_for(hour: int) -> String:
@@ -38,18 +68,33 @@ static func block_for(hour: int) -> String:
 	return BLOCK_20_2  # 20:00 through day-end, and the pre-6AM sliver if ever queried
 
 
-static func cell_for(npc: NPCData, hour: int, is_raining: bool, is_festival: bool) -> Vector2i:
-	## Precedence: festival > rain > normal block schedule. Returns
-	## Vector2i(-1, -1) (matching NPCData.festival_cell's "unset" sentinel)
-	## only if the NPC has no schedule entry at all for the resolved block —
-	## callers should treat that as "NPC absent this block".
+## Sentinel meaning "derive from Clock" for the two new optional trailing
+## params cell_for/map_for/is_present/is_present_on_map now accept — every
+## call site written before Alive Stride 1 passes exactly 4 positional args
+## and gets IDENTICAL behavior to before (season/day_of_season are only ever
+## consulted for the "<season>_weekend"/"weekend"/"<season>" keys, which no
+## pre-stride NPCData populates, so a stale/wrong derived value here can
+## never change any existing call site's result). Tests that DO want to
+## exercise the new keys pass season/day_of_season explicitly so the
+## resolution stays pure or scene-tree-free.
+const _UNSET := -1
+
+
+static func cell_for(npc: NPCData, hour: int, is_raining: bool, is_festival: bool,
+		season: int = _UNSET, day_of_season: int = _UNSET) -> Vector2i:
+	## Precedence: festival > rain > "<season>_weekend" > "weekend" >
+	## "<season>" > normal block schedule (see class doc for the full Alive
+	## Stride 1 key list). Returns Vector2i(-1, -1) (matching
+	## NPCData.festival_cell's "unset" sentinel) only if the NPC has no
+	## schedule entry at all for the resolved block — callers should treat
+	## that as "NPC absent this block".
 	##
 	## Schedule entries may be a plain Vector2i (cell on npc.home_map) OR a
 	## {"map": String, "cell": Vector2i} Dictionary (per-block map override,
 	## e.g. Garrick's farm-side Delve entrance block) — this always returns
 	## just the CELL half; callers that also need to know which map to check
 	## use map_for() below with the same arguments.
-	var raw = _raw_entry(npc, hour, is_raining, is_festival)
+	var raw = _raw_entry(npc, hour, is_raining, is_festival, season, day_of_season)
 	if raw == null:
 		return Vector2i(-1, -1)
 	if raw is Dictionary:
@@ -60,7 +105,8 @@ static func cell_for(npc: NPCData, hour: int, is_raining: bool, is_festival: boo
 const FESTIVAL_MAP := "town"  # World Stride D: every festival is "on the plaza" (world-bible.md) — always the town map
 
 
-static func map_for(npc: NPCData, hour: int, is_raining: bool, is_festival: bool) -> String:
+static func map_for(npc: NPCData, hour: int, is_raining: bool, is_festival: bool,
+		season: int = _UNSET, day_of_season: int = _UNSET) -> String:
 	## Which map's build() should place this NPC for the resolved block/
 	## weather/festival state — npc.home_map unless the entry is a per-block
 	## {"map": ..., "cell": ...} override (see cell_for's doc), OR a plain
@@ -70,32 +116,59 @@ static func map_for(npc: NPCData, hour: int, is_raining: bool, is_festival: bool
 	## every other NPC, not in the riverwoods).
 	if is_festival and npc.festival_cell != Vector2i(-1, -1):
 		return FESTIVAL_MAP
-	var raw = _raw_entry(npc, hour, is_raining, is_festival)
+	var raw = _raw_entry(npc, hour, is_raining, is_festival, season, day_of_season)
 	if raw is Dictionary:
 		return String(raw.get("map", npc.home_map))
 	return npc.home_map
 
 
-static func is_present(npc: NPCData, hour: int, is_raining: bool, is_festival: bool) -> bool:
-	return cell_for(npc, hour, is_raining, is_festival) != Vector2i(-1, -1)
+static func is_present(npc: NPCData, hour: int, is_raining: bool, is_festival: bool,
+		season: int = _UNSET, day_of_season: int = _UNSET) -> bool:
+	return cell_for(npc, hour, is_raining, is_festival, season, day_of_season) != Vector2i(-1, -1)
 
 
-static func is_present_on_map(npc: NPCData, map_id: String, hour: int, is_raining: bool, is_festival: bool) -> bool:
+static func is_present_on_map(npc: NPCData, map_id: String, hour: int, is_raining: bool, is_festival: bool,
+		season: int = _UNSET, day_of_season: int = _UNSET) -> bool:
 	## Convenience for map scripts: is this NPC BOTH present this block AND
 	## located on `map_id` specifically? Lets a map (e.g. farm.gd) query the
 	## full registry without accidentally placing an NPC who belongs
 	## elsewhere this block.
-	if not is_present(npc, hour, is_raining, is_festival):
+	if not is_present(npc, hour, is_raining, is_festival, season, day_of_season):
 		return false
-	return map_for(npc, hour, is_raining, is_festival) == map_id
+	return map_for(npc, hour, is_raining, is_festival, season, day_of_season) == map_id
 
 
-static func _raw_entry(npc: NPCData, hour: int, is_raining: bool, is_festival: bool) -> Variant:
+static func is_weekend(day_of_season: int) -> bool:
+	## Bible: "weekend (day%7>=5)", adapted for Clock.day_of_season()'s
+	## 1-based counting: the 28-day month is 4 weeks of 7; days 6 and 7 of
+	## each week are the weekend. (day_of_season - 1) % 7 in {5, 6} ->
+	## day_of_season in {6, 7, 13, 14, 21, 22, 28} for a 28-day month.
+	var zero_based := (day_of_season - 1) % 7
+	return zero_based == 5 or zero_based == 6
+
+
+static func _raw_entry(npc: NPCData, hour: int, is_raining: bool, is_festival: bool,
+		season: int = _UNSET, day_of_season: int = _UNSET) -> Variant:
 	if is_festival and npc.festival_cell != Vector2i(-1, -1):
 		return npc.festival_cell
 	var block := block_for(hour)
 	if is_raining and npc.rain_schedule.has(block):
 		return npc.rain_schedule[block]
+
+	var resolved_season := Clock.season() if season == _UNSET else season
+	var resolved_day := Clock.day_of_season() if day_of_season == _UNSET else day_of_season
+	var season_key: String = SEASON_KEYS[resolved_season] if resolved_season >= 0 and resolved_season < SEASON_KEYS.size() else ""
+
+	if is_weekend(resolved_day) and season_key != "":
+		var seasonal_weekend_key := "%s_weekend" % season_key
+		var seasonal_weekend: Dictionary = npc.extra_schedules.get(seasonal_weekend_key, {})
+		if seasonal_weekend.has(block):
+			return seasonal_weekend[block]
+	if is_weekend(resolved_day) and npc.extra_schedules.get("weekend", {}).has(block):
+		return npc.extra_schedules["weekend"][block]
+	if season_key != "" and npc.extra_schedules.get(season_key, {}).has(block):
+		return npc.extra_schedules[season_key][block]
+
 	if npc.schedule.has(block):
 		return npc.schedule[block]
 	return null

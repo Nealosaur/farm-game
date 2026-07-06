@@ -11,6 +11,12 @@ extends RefCounted
 ##   floor — see beach.gd's own constants for the exact rects.
 ##   Town (scripts/maps/town.gd): PLAZA Rect2i(16,10,12,8); SALOON_FLOOR
 ##   Rect2i(17,21,8,5) for his rain shelter.
+##
+## Alive Stride 1 proof-of-concept: a "weekend" extra_schedules entry — Finn
+## sleeps in and skips his early pier block on weekends, hanging at the
+## plaza fountain edge (the same spot he ends up at every evening anyway)
+## instead of walking down to the beach at dawn. Only the 6-9 block differs;
+## every other block falls back to `schedule` (see NPCRegistry._raw_entry).
 
 const ID := "finn"
 
@@ -55,5 +61,13 @@ static func build() -> NPCData:
 	}
 	# Festival (bible): "wherever the food is".
 	d.festival_cell = CELL_FESTIVAL
+
+	# Weekend (Alive Stride 1 proof): sleeps in, skips the dawn pier walk —
+	# fountain edge instead (same cell his 17-20 block already uses).
+	d.extra_schedules = {
+		"weekend": {
+			NPCRegistry.BLOCK_6_9: CELL_PLAZA_FOUNTAIN,
+		},
+	}
 
 	return d

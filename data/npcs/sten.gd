@@ -6,6 +6,14 @@ extends RefCounted
 ## Town cell layout reference (scripts/maps/town.gd, World Stride C):
 ## SMITHY_FLOOR Rect2i(31,16,6,5) east side south; SALOON_FLOOR
 ## Rect2i(17,21,8,5) south of plaza.
+##
+## Alive Stride 1 proof-of-concept: a "winter" extra_schedules entry
+## (characters.md seasonal line: "Forge season. Whole town finally
+## understands my job.") — in winter he stays at the smithy through the
+## evening block instead of heading to the saloon, only letting up for the
+## night block same as always. Only the 17-20 block differs from `schedule`;
+## every other block is left unset so NPCRegistry falls back to the normal
+## schedule for them (see NPCRegistry._raw_entry's per-block fallback).
 
 const ID := "sten"
 
@@ -49,5 +57,14 @@ static func build() -> NPCData:
 	}
 	# Festival (bible): "plaza, standing at the edge".
 	d.festival_cell = CELL_FESTIVAL
+
+	# Winter (Alive Stride 1 proof, characters.md: "Forge season. Whole town
+	# finally understands my job.") — stays at the smithy through 17-20
+	# instead of the saloon; 20-2 home is untouched (falls back to `schedule`).
+	d.extra_schedules = {
+		"winter": {
+			NPCRegistry.BLOCK_17_20: CELL_SMITHY,
+		},
+	}
 
 	return d

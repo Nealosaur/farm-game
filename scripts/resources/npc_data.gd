@@ -46,6 +46,16 @@ const ANY_CROP_CATEGORY := "any_crop"
 ## Optional: single cell used for every block on a festival day.
 @export var festival_cell := Vector2i(-1, -1)
 
+## Alive Stride 1: optional priority-key schedule tables, keyed by table name
+## ("spring"/"summer"/"fall"/"winter", "weekend", "<season>_weekend"), each a
+## block_key -> Vector2i (or {"map","cell"}) Dictionary with the same shape
+## as `schedule`. Checked by NPCRegistry._raw_entry in priority order between
+## rain_schedule and schedule — see NPCRegistry's class doc for the full
+## precedence chain and the weekend rule. Entirely optional: an empty (the
+## default) or partial table for any key is fine — a missing block falls
+## back further down the chain, never straight to `schedule`.
+@export var extra_schedules: Dictionary = {}
+
 
 static func is_birthday_today(npc: NPCData) -> bool:
 	return Clock.season() == npc.birthday_season and Clock.day_of_season() == npc.birthday_day
