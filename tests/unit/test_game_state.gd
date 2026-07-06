@@ -106,3 +106,53 @@ func test_sleep_restore_normal_vs_collapse() -> void:
 	GameState.rp = 0
 	GameState.sleep_restore(true)
 	assert_eq(GameState.rp, roundi(GameState.max_rp / 2.0))
+
+
+# ---- Craft Stride 1: buff food ----
+
+func test_effective_attack_with_no_buff_equals_base_attack() -> void:
+	assert_eq(GameState.effective_attack(), GameState.attack)
+
+
+func test_set_temp_attack_adds_to_effective_attack() -> void:
+	GameState.set_temp_attack(2)
+	assert_eq(GameState.temp_attack, 2)
+	assert_eq(GameState.effective_attack(), GameState.attack + 2)
+
+
+func test_set_temp_attack_replaces_not_stacks() -> void:
+	GameState.set_temp_attack(2)
+	GameState.set_temp_attack(5)
+	assert_eq(GameState.temp_attack, 5, "second buff should REPLACE, not add to, the first")
+	assert_eq(GameState.effective_attack(), GameState.attack + 5)
+
+
+func test_clear_temp_attack_resets_to_zero() -> void:
+	GameState.set_temp_attack(2)
+	GameState.clear_temp_attack()
+	assert_eq(GameState.temp_attack, 0)
+	assert_eq(GameState.effective_attack(), GameState.attack)
+
+
+func test_sleep_restore_clears_temp_attack_normal_sleep() -> void:
+	GameState.set_temp_attack(2)
+	GameState.sleep_restore(false)
+	assert_eq(GameState.temp_attack, 0)
+
+
+func test_sleep_restore_clears_temp_attack_on_collapse() -> void:
+	GameState.set_temp_attack(2)
+	GameState.sleep_restore(true)
+	assert_eq(GameState.temp_attack, 0, "collapse must clear the buff same as normal sleep")
+
+
+func test_reset_new_game_clears_temp_attack() -> void:
+	GameState.set_temp_attack(2)
+	GameState.reset_new_game()
+	assert_eq(GameState.temp_attack, 0)
+
+
+func test_set_temp_attack_emits_stats_changed() -> void:
+	watch_signals(EventBus)
+	GameState.set_temp_attack(2)
+	assert_signal_emitted(EventBus, "stats_changed")

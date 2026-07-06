@@ -79,3 +79,33 @@ func test_third_swing_gets_boosted_knockback() -> void:
 	swing.begin_swing(tool_data)  # 3
 	assert_eq(swing._chain, 3)
 	assert_almost_eq(swing._pending_knockback, player.sword_hitbox.knockback_force * 1.5, 0.01)
+
+
+# ---- Craft Stride 1: buff food in the real swing damage path ----
+
+func test_swing_damage_includes_temp_attack_buff() -> void:
+	GameState.set_temp_attack(2)
+	var enemy := _make_dummy_enemy(player.global_position + Vector2(14, 0))
+	var tool_data: ToolData = ItemDB.get_item("wooden_sword")
+	var expected_damage: int = GameState.attack + 2 + tool_data.damage
+
+	player.try_use_selected()
+	await wait_physics_frames(6)
+
+	assert_eq(enemy.health.hp, enemy.health.max_hp - expected_damage)
+
+
+func test_swing_damage_matches_effective_attack_accessor() -> void:
+	GameState.set_temp_attack(2)
+	var tool_data: ToolData = ItemDB.get_item("wooden_sword")
+	var swing := player.machine.get_node("Swing") as PlayerSwing
+	swing.begin_swing(tool_data)
+	assert_eq(swing._pending_damage, GameState.effective_attack() + tool_data.damage)
+
+
+func test_swing_damage_without_buff_unaffected() -> void:
+	assert_eq(GameState.temp_attack, 0)
+	var tool_data: ToolData = ItemDB.get_item("wooden_sword")
+	var swing := player.machine.get_node("Swing") as PlayerSwing
+	swing.begin_swing(tool_data)
+	assert_eq(swing._pending_damage, GameState.attack + tool_data.damage)

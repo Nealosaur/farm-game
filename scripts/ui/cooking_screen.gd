@@ -105,6 +105,7 @@ func _make_row(recipe: RecipeData) -> Control:
 	box.name = "Row_" + recipe.id
 
 	var header := HBoxContainer.new()
+	header.name = "Header"
 	box.add_child(header)
 
 	var result := ItemDB.get_item(recipe.result_id)
@@ -156,7 +157,7 @@ func _refresh_rows() -> void:
 		var row: VBoxContainer = _rows.get(recipe.id)
 		if row == null:
 			continue
-		var cook_btn := row.get_node("HBoxContainer/CookButton") as Button
+		var cook_btn := row.get_node("Header/CookButton") as Button
 		cook_btn.disabled = not CookingLogic.can_cook(recipe)
 		var ing_label := row.get_node("IngredientsLabel") as RichTextLabel
 		ing_label.text = _ingredients_bbcode(recipe)

@@ -84,6 +84,29 @@ func test_eating_restores_rp() -> void:
 	assert_eq(Inventory.count_of("turnip"), 0)
 
 
+func test_eating_buff_food_sets_temp_attack() -> void:
+	Inventory.add_item("miners_meal", 1)
+	_select("miners_meal")
+	player.try_use_selected()
+	assert_eq(GameState.temp_attack, 2, "Miner's Meal bible rule: +2 attack until sleep")
+
+
+func test_eating_non_buff_food_does_not_touch_temp_attack() -> void:
+	GameState.set_temp_attack(2)
+	Inventory.add_item("turnip", 1)
+	_select("turnip")
+	player.try_use_selected()
+	assert_eq(GameState.temp_attack, 2, "eating a non-buff food must not clear an active buff")
+
+
+func test_eating_second_buff_food_replaces_not_stacks() -> void:
+	Inventory.add_item("miners_meal", 2)
+	_select("miners_meal")
+	player.try_use_selected()
+	player.try_use_selected()
+	assert_eq(GameState.temp_attack, 2, "eating the same buff food twice must not stack")
+
+
 func test_day_flow_rollover_pays_shipping_and_saves() -> void:
 	var flow = farm.get_tree().get_first_node_in_group("day_flow")
 	assert_not_null(flow, "DayFlow should be in the farm scene")
@@ -103,3 +126,23 @@ func test_collapse_halves_rp() -> void:
 	var flow = farm.get_tree().get_first_node_in_group("day_flow")
 	await flow.end_day(true)
 	assert_eq(GameState.rp, roundi(GameState.max_rp / 2.0))
+
+
+func test_day_flow_sleep_clears_buff_food() -> void:
+	Inventory.add_item("miners_meal", 1)
+	_select("miners_meal")
+	player.try_use_selected()
+	assert_eq(GameState.temp_attack, 2)
+	var flow = farm.get_tree().get_first_node_in_group("day_flow")
+	await flow.end_day(false)
+	assert_eq(GameState.temp_attack, 0, "the Miner's Meal buff must not survive sleep")
+
+
+func test_day_flow_collapse_clears_buff_food() -> void:
+	Inventory.add_item("miners_meal", 1)
+	_select("miners_meal")
+	player.try_use_selected()
+	assert_eq(GameState.temp_attack, 2)
+	var flow = farm.get_tree().get_first_node_in_group("day_flow")
+	await flow.end_day(true)
+	assert_eq(GameState.temp_attack, 0, "the Miner's Meal buff must not survive a collapse either")

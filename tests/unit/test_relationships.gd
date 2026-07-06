@@ -179,6 +179,55 @@ func test_gift_disliked_on_birthday_also_multiplied() -> void:
 	assert_eq(Relationships.points(NPC_ID), -20 * 8)
 
 
+# ---- Craft Stride 1: cooked-gift x1.5 ----
+
+func test_gift_cooked_dish_liked_by_default_applies_one_point_five_mult() -> void:
+	var npc := _npc()  # no explicit preferences at all
+	assert_eq(Relationships.gift(NPC_ID, "roast_turnip", npc), "liked",
+		"dishes default to liked for every NPC unless loved/disliked says otherwise")
+	assert_eq(Relationships.points(NPC_ID), roundi(Relationships.GIFT_LIKED * 1.5))
+
+
+func test_gift_cooked_dish_loved_still_applies_cooked_mult() -> void:
+	var npc := _npc(["roast_turnip"])  # explicitly loved
+	assert_eq(Relationships.gift(NPC_ID, "roast_turnip", npc), "loved")
+	assert_eq(Relationships.points(NPC_ID), roundi(80 * 1.5))
+
+
+func test_gift_cooked_dish_disliked_explicit_still_applies_cooked_mult() -> void:
+	var npc := _npc([], [], ["roast_turnip"])  # explicitly disliked overrides the dish default
+	assert_eq(Relationships.gift(NPC_ID, "roast_turnip", npc), "disliked")
+	assert_eq(Relationships.points(NPC_ID), roundi(-20 * 1.5))
+
+
+func test_gift_non_dish_food_unaffected_by_cooked_mult() -> void:
+	var npc := _npc([], ["turnip"])
+	assert_eq(Relationships.gift(NPC_ID, "turnip", npc), "liked")
+	assert_eq(Relationships.points(NPC_ID), 45, "raw produce must not get the cooked x1.5")
+
+
+func test_gift_cooked_dish_on_birthday_applies_cooked_mult_before_birthday_mult() -> void:
+	## Order (bible): cooked x1.5 applied AFTER preference points but BEFORE
+	## birthday x8 — round(80 * 1.5) = 120, then * 8 = 960.
+	Clock.day = 19
+	var npc := _npc(["roast_turnip"], [], [], [], 0, 19)
+	assert_eq(Relationships.gift(NPC_ID, "roast_turnip", npc), "loved")
+	assert_eq(Relationships.points(NPC_ID), roundi(80 * 1.5) * 8)
+
+
+func test_gift_cooked_dish_rounding_happens_at_cooked_stage_not_after_birthday() -> void:
+	## GIFT_LIKED (45) * 1.5 = 67.5 -> rounds to 68 at the cooked-multiplier
+	## stage, THEN * 8 birthday = 544. If rounding were deferred to after
+	## the birthday multiply instead (45 * 8 = 360, * 1.5 = 540 exactly),
+	## this would assert 540 — the two orders diverge here, unlike the
+	## loved/disliked cases above where 1.5x lands on an exact half-integer
+	## either way. 544 confirms rounding happens at the cooked-mult stage.
+	Clock.day = 19
+	var npc := _npc([], ["roast_turnip"], [], [], 0, 19)
+	assert_eq(Relationships.gift(NPC_ID, "roast_turnip", npc), "liked")
+	assert_eq(Relationships.points(NPC_ID), 544)
+
+
 func test_gift_reaction_preview_does_not_mutate_state() -> void:
 	var npc := _npc(["pumpkin"])
 	assert_eq(Relationships.gift_reaction(NPC_ID, "pumpkin", npc), "loved")
