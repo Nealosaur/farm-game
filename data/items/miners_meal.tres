@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="FoodData" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/placeholder/dish_miners_meal.png" id="1_jti0d"]
+[ext_resource type="Script" path="res://scripts/resources/food_data.gd" id="2_c8308"]
+
+[resource]
+script = ExtResource("2_c8308")
+rp_restore = 100
+attack_bonus = 2
+is_dish = true
+id = "miners_meal"
+display_name = "Miner's Meal"
+icon = ExtResource("1_jti0d")
+sell_price = 213

@@ -28,6 +28,7 @@ const KIND_CIRCLE_ITEM := "circle_item"    # crops/materials: filled circle
 const KIND_DIAMOND := "diamond"            # seeds
 const KIND_BLADE := "blade"                # swords: diagonal stripe
 const KIND_CROSS := "cross"                # tools
+const KIND_CIRCLE_DOT := "circle_dot"      # cooked dishes: filled circle + contrasting center dot
 
 const SPRITES := {
 	"char_player": [16, 32, "e0b070", KIND_HEADBAND],
@@ -52,6 +53,7 @@ const SPRITES := {
 	"prop_counter": [32, 16, "5a3a2a", ""],
 	"prop_sign": [16, 24, "8a6a3a", ""],
 	"prop_boat_shed": [24, 16, "5a4a3a", ""],
+	"prop_kitchen": [24, 16, "8a6248", ""],  # Craft Stride 1: farm kitchen, beside the house
 	"item_turnip": [16, 16, "e8e0d0", KIND_CIRCLE_ITEM],
 	"item_carrot": [16, 16, "e07820", KIND_CIRCLE_ITEM],
 	"item_pumpkin": [16, 16, "d06010", KIND_CIRCLE_ITEM],
@@ -83,6 +85,18 @@ const SPRITES := {
 	"item_frostcap": [16, 16, "a8d8e8", KIND_CIRCLE_ITEM],
 	"item_tideshell": [16, 16, "e0d0b8", KIND_CIRCLE_ITEM],
 	"item_driftglass": [16, 16, "78c8c0", KIND_CIRCLE_ITEM],
+	# Craft Stride 1: cooked dishes — circle-with-dot silhouette, distinct
+	# from raw produce's plain KIND_CIRCLE_ITEM (bible: "distinct from raw
+	# produce"). Filenames are "dish_<id>" (not "item_<id>") so ItemDB's
+	# generic item icon convention still reads correctly at a glance.
+	"dish_roast_turnip": [16, 16, "e8b070", KIND_CIRCLE_DOT],
+	"dish_carrot_soup": [16, 16, "e08838", KIND_CIRCLE_DOT],
+	"dish_berry_jam": [16, 16, "c83858", KIND_CIRCLE_DOT],
+	"dish_corn_chowder": [16, 16, "e8d060", KIND_CIRCLE_DOT],
+	"dish_melon_sorbet": [16, 16, "80d0a0", KIND_CIRCLE_DOT],
+	"dish_pumpkin_pie": [16, 16, "d87018", KIND_CIRCLE_DOT],
+	"dish_forest_stew": [16, 16, "886038", KIND_CIRCLE_DOT],
+	"dish_miners_meal": [16, 16, "8868a8", KIND_CIRCLE_DOT],
 }
 
 # 4 growth-stage sprites per crop: stage 0 (seeded, soil brown) -> 3 (ripe, final color).
@@ -223,6 +237,18 @@ static func draw_triangle(img: Image, c: Color) -> void:
 	_bordered(img, c)
 
 
+static func draw_circle_dot(img: Image, c: Color) -> void:
+	## Cooked-dish silhouette: filled circle (like KIND_CIRCLE_ITEM) plus a
+	## smaller contrasting dot in the center, so dishes read distinctly from
+	## raw produce at a glance.
+	var w := img.get_width()
+	var h := img.get_height()
+	img.fill(Color(0, 0, 0, 0))
+	fill_circle(img, w / 2.0, h / 2.0, minf(w, h) / 2.0 - 1.0, c)
+	_bordered(img, c)
+	fill_circle(img, w / 2.0, h / 2.0, minf(w, h) / 6.0, c.lightened(0.5))
+
+
 static func draw_headband(img: Image, c: Color) -> void:
 	## Filled rect body (already flat-filled by caller) plus a darker band
 	## across the head (top ~30% of the sprite) to read as a head silhouette.
@@ -289,6 +315,8 @@ static func _write_kind(name: String, w: int, h: int, c: Color, kind: String) ->
 			draw_blade(img, c)
 		KIND_CROSS:
 			draw_cross(img, c)
+		KIND_CIRCLE_DOT:
+			draw_circle_dot(img, c)
 		"chevron_down":
 			img.fill(c)
 			draw_chevron(img, c, true)

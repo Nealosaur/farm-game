@@ -6,9 +6,11 @@ func test_content_loaded() -> void:
 	# amberleaf -> 6 produce + 6 seeds = 12 items) + 5 forage items (wildroot,
 	# emberberry, frostcap, tideshell, driftglass) = 13 + 17 = 30 items;
 	# 3 + 6 = 9 crops. Enemies untouched.
-	assert_eq(ItemDB.items.size(), 30)
+	# Craft Stride 1: + 8 cooked dishes = 38 items; + 8 recipes.
+	assert_eq(ItemDB.items.size(), 38)
 	assert_eq(ItemDB.crops.size(), 9)
 	assert_eq(ItemDB.enemies.size(), 4)
+	assert_eq(ItemDB.recipes.size(), 8)
 
 
 func test_typed_lookups() -> void:

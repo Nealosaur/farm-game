@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="FoodData" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/placeholder/dish_forest_stew.png" id="1_r8kwf"]
+[ext_resource type="Script" path="res://scripts/resources/food_data.gd" id="2_ksr2n"]
+
+[resource]
+script = ExtResource("2_ksr2n")
+rp_restore = 110
+hp_restore = 25
+is_dish = true
+id = "forest_stew"
+display_name = "Forest Stew"
+icon = ExtResource("1_r8kwf")
+sell_price = 163

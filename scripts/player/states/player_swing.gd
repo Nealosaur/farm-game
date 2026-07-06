@@ -37,7 +37,7 @@ func begin_swing(tool_data: ToolData) -> void:
 		_chain = 0
 	_chain = mini(_chain + 1, MAX_CHAIN)
 	_time_since_last_swing = 0.0
-	_pending_damage = GameState.attack + tool_data.damage
+	_pending_damage = GameState.effective_attack() + tool_data.damage
 	_pending_knockback = _base_knockback
 	if _chain == MAX_CHAIN:
 		_pending_knockback *= THIRD_HIT_KNOCKBACK_MULT

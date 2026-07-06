@@ -4,7 +4,7 @@ extends SceneTree
 ## Run AFTER an --import pass (needs placeholder icons + class names).
 
 func _init() -> void:
-	for d in ["res://data/items", "res://data/crops", "res://data/enemies"]:
+	for d in ["res://data/items", "res://data/crops", "res://data/enemies", "res://data/recipes"]:
 		DirAccess.make_dir_recursive_absolute(d)
 
 	# Seeds — sell = half of buy, rounded down (eggplant 45 -> 22).
@@ -64,6 +64,27 @@ func _init() -> void:
 	_enemy("goblin", "Goblin", 35, 10, 45.0, 20, 8, 15, "goblin_fang", 0.4)
 	_enemy("slime_king", "Slime King", 300, 14, 30.0, 150, 200, 300, "slime_gel", 1.0)
 
+	# Craft Stride 1 — Cooking. Dishes (FoodData, is_dish=true) + recipes
+	# (RecipeData). Sell price = round(sum of ingredient sell_price * 1.25)
+	# per the bible's "sell ≈ sum of ingredients +25%, rounded" rule.
+	_dish("roast_turnip", "Roast Turnip", 113, 70, 0, 0)
+	_dish("carrot_soup", "Carrot Soup", 263, 90, 10, 0)
+	_dish("berry_jam", "Berry Jam", 488, 80, 0, 0)
+	_dish("corn_chowder", "Corn Chowder", 381, 120, 20, 0)
+	_dish("melon_sorbet", "Melon Sorbet", 400, 140, 0, 0)
+	_dish("pumpkin_pie", "Pumpkin Pie", 438, 160, 40, 0)
+	_dish("forest_stew", "Forest Stew", 163, 110, 25, 0)
+	_dish("miners_meal", "Miner's Meal", 213, 100, 0, 2)
+
+	_recipe("roast_turnip", {"turnip": 2}, "roast_turnip")
+	_recipe("carrot_soup", {"carrot": 2}, "carrot_soup")
+	_recipe("berry_jam", {"strawberry": 3}, "berry_jam")
+	_recipe("corn_chowder", {"corn": 2, "carrot": 1}, "corn_chowder")
+	_recipe("melon_sorbet", {"melon": 1}, "melon_sorbet")
+	_recipe("pumpkin_pie", {"pumpkin": 1, "corn": 1}, "pumpkin_pie")
+	_recipe("forest_stew", {"wildroot": 2, "emberberry": 1}, "forest_stew")
+	_recipe("miners_meal", {"frostcap": 1, "eggplant": 1}, "miners_meal")
+
 	print("content written")
 	quit(0)
 
@@ -97,6 +118,30 @@ func _food(id: String, name: String, sell: int, rp: int, hp: int) -> void:
 	r.rp_restore = rp
 	r.hp_restore = hp
 	_save(r, "items/%s.tres" % id)
+
+
+func _dish(id: String, name: String, sell: int, rp: int, hp: int, attack_bonus: int) -> void:
+	## Cooked dish (Craft Stride 1): uses the "dish_<id>" placeholder icon
+	## (circle-with-dot, distinct from raw produce's plain circle — see
+	## gen_placeholders.gd's KIND_CIRCLE_DOT).
+	var r := FoodData.new()
+	r.id = id
+	r.display_name = name
+	r.icon = load("res://assets/placeholder/dish_%s.png" % id)
+	r.sell_price = sell
+	r.rp_restore = rp
+	r.hp_restore = hp
+	r.attack_bonus = attack_bonus
+	r.is_dish = true
+	_save(r, "items/%s.tres" % id)
+
+
+func _recipe(id: String, ingredients: Dictionary, result_id: String) -> void:
+	var r := RecipeData.new()
+	r.id = id
+	r.ingredients = ingredients
+	r.result_id = result_id
+	_save(r, "recipes/%s.tres" % id)
 
 
 func _tool(id: String, name: String, type: ToolData.ToolType, rp_cost: int, damage: int, buy: int) -> void:

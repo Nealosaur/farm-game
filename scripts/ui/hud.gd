@@ -7,6 +7,7 @@ var rp_bar: ProgressBar
 var gold_label: Label
 var clock_label: Label
 var day_label: Label
+var buff_label: Label
 var toast_label: Label
 var slot_panels: Array[Panel] = []
 var slot_icons: Array[TextureRect] = []
@@ -32,6 +33,14 @@ func _ready() -> void:
 	rp_bar = _bar(Color("30a060"))
 	top_left.add_child(hp_bar)
 	top_left.add_child(rp_bar)
+
+	# Craft Stride 1: small buff-food indicator, shown only while a temp
+	# attack bonus is active (see GameState.temp_attack / _refresh_stats()).
+	buff_label = Label.new()
+	buff_label.add_theme_font_size_override("font_size", 10)
+	buff_label.add_theme_color_override("font_color", Color("e0a838"))
+	buff_label.visible = false
+	top_left.add_child(buff_label)
 
 	var top_right := VBoxContainer.new()
 	top_right.set_anchors_preset(Control.PRESET_TOP_RIGHT)
@@ -130,6 +139,9 @@ func _refresh_stats() -> void:
 	rp_bar.max_value = GameState.max_rp
 	rp_bar.value = GameState.rp
 	gold_label.text = "%dg" % GameState.gold
+	buff_label.visible = GameState.temp_attack > 0
+	if buff_label.visible:
+		buff_label.text = "+%d ATK" % GameState.temp_attack
 
 
 func _refresh_clock() -> void:

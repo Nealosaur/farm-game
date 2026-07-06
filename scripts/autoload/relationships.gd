@@ -39,6 +39,7 @@ const GIFT_LIKED := 45
 const GIFT_NEUTRAL := 20
 const GIFT_DISLIKED := -20
 const BIRTHDAY_GIFT_MULT := 8
+const COOKED_GIFT_MULT := 1.5  # Craft Stride 1: cooked dish gifts ("handmade means more")
 const HEART_EVENT_DELTA := 30
 const DECAY_AMOUNT := 2
 const DECAY_MIN_LEVEL := 2  # decay only applies at L2+ (bible: "only at L2+")
@@ -212,7 +213,20 @@ static func _reaction_for(npc_id: String, item_id: String, npc_data: NPCData) ->
 		return "liked"
 	if NPCData.matches_any_category(item_id, npc_data.liked_categories):
 		return "liked"
+	# Craft Stride 1: cooked dishes default to "liked" for every NPC unless
+	# the NPC's loved/disliked lists explicitly say otherwise (both already
+	# checked above) — bible: "dishes default to 'liked' for everyone unless
+	# the NPC's loved list says otherwise". No characters.md changes this
+	# stride, so no NPC currently loves/dislikes a specific dish — this is
+	# the fallback every dish gift hits today.
+	if _is_dish(item_id):
+		return "liked"
 	return "neutral"
+
+
+static func _is_dish(item_id: String) -> bool:
+	var item := ItemDB.get_item(item_id)
+	return item is FoodData and (item as FoodData).is_dish
 
 
 func gift(npc_id: String, item_id: String, npc_data: NPCData) -> String:
@@ -225,10 +239,17 @@ func gift(npc_id: String, item_id: String, npc_data: NPCData) -> String:
 	## nothing in the bible says Winter Star ever falls on a birthday, but
 	## composing rather than picking one is the least-surprising rule if it
 	## ever does).
+	## Craft Stride 1: cooked dishes ("handmade means more") apply an
+	## additional x1.5 (rounded), ordered AFTER the preference-reaction
+	## points but BEFORE the birthday x8 multiplier (bible: "after preference
+	## lookup, before birthday x8") — e.g. a loved dish on a birthday:
+	## round(80 * 1.5) = 120, then * 8 = 960, not 80 * 8 = 640 then * 1.5.
 	if has_gifted_today(npc_id):
 		return "already"
 	var reaction := _reaction_for(npc_id, item_id, npc_data)
 	var delta := _delta_for_reaction(reaction)
+	if _is_dish(item_id):
+		delta = roundi(delta * COOKED_GIFT_MULT)
 	if npc_data != null and NPCData.is_birthday_today(npc_data):
 		delta *= BIRTHDAY_GIFT_MULT
 	delta *= WinterStar.gift_bond_multiplier(npc_id)

@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="RecipeData" format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/recipe_data.gd" id="1_dkyfv"]
+
+[resource]
+script = ExtResource("1_dkyfv")
+id = "roast_turnip"
+ingredients = {
+"turnip": 2
+}
+result_id = "roast_turnip"

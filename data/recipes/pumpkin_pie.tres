@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="RecipeData" format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/recipe_data.gd" id="1_eleri"]
+
+[resource]
+script = ExtResource("1_eleri")
+id = "pumpkin_pie"
+ingredients = {
+"corn": 1,
+"pumpkin": 1
+}
+result_id = "pumpkin_pie"

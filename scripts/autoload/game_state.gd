@@ -20,6 +20,15 @@ var rp := BASE_MAX_RP
 var attack := BASE_ATTACK
 var flags := {}
 
+## Craft Stride 1: cooked buff-food attack bonus. 0 = no buff active. Set by
+## player.gd's _eat() (REPLACES, never stacks — bible: "stacking replaced,
+## not added"); cleared by DayFlow on sleep/collapse. Deliberately NOT
+## persisted (see to_dict/from_dict): the buff dies with the day, same as the
+## save model itself (saves only happen at sleep, so a mid-day quit already
+## loses unsaved progress — losing an active buff on a quit-without-sleeping
+## is consistent with that, not a new tradeoff).
+var temp_attack := 0
+
 
 func reset_new_game() -> void:
 	level = 1
@@ -31,6 +40,7 @@ func reset_new_game() -> void:
 	rp = max_rp
 	attack = BASE_ATTACK
 	flags = {}
+	temp_attack = 0
 	EventBus.stats_changed.emit()
 	EventBus.money_changed.emit(gold)
 
@@ -109,7 +119,28 @@ func try_spend_gold(amount: int) -> bool:
 func sleep_restore(collapsed: bool) -> void:
 	hp = max_hp
 	rp = roundi(max_rp / 2.0) if collapsed else max_rp
+	clear_temp_attack()
 	EventBus.stats_changed.emit()
+
+
+## ---- Craft Stride 1: buff food ----
+
+func set_temp_attack(bonus: int) -> void:
+	## REPLACES any existing buff (bible: "stacking replaced, not added").
+	temp_attack = bonus
+	EventBus.stats_changed.emit()
+
+
+func clear_temp_attack() -> void:
+	temp_attack = 0
+	EventBus.stats_changed.emit()
+
+
+func effective_attack() -> int:
+	## Single accessor for "attack to use in a damage calc" — every swing-
+	## damage site should read THIS, not `attack` directly, so the buff
+	## applies everywhere without scattering `+ GameState.temp_attack` calls.
+	return attack + temp_attack
 
 
 func to_dict() -> Dictionary:

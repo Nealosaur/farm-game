@@ -7,6 +7,10 @@ const TILLABLE := Rect2i(24, 10, 14, 10)
 const BED_CELL := Vector2i(8, 6)
 const BIN_CELL := Vector2i(11, 7)
 const HOUSE_CELL := Vector2i(4, 4)      # top-left cell of 3x3 house footprint
+## Craft Stride 1: kitchen prop, beside the house on its west side — clear of
+## the house's own solid footprint (_solid_prop_rects()), the path row (y=7),
+## and every other prop/portal cell on this map.
+const KITCHEN_CELL := Vector2i(2, 5)
 const SPAWN_CELL := Vector2i(9, 9)      # legacy default, kept as SPAWNS["default"]
 
 ## Named spawn support (Plan: dungeon+portal system). SceneChanger.spawn_name
@@ -113,6 +117,7 @@ func _ready() -> void:
 		"res://scripts/ui/inventory_screen.gd",
 		"res://scripts/ui/dialog_box.gd",
 		"res://scripts/ui/shop_screen.gd",
+		"res://scripts/ui/cooking_screen.gd",
 		"res://scripts/ui/journal.gd",
 		"res://scripts/components/day_flow.gd",
 		"res://scripts/ui/pause_menu.gd",
@@ -258,6 +263,9 @@ func _add_props(world: Node2D) -> void:
 	world.add_child(_make_interactable(
 		"ShippingBin", "res://scripts/farm/shipping_bin.gd",
 		"res://assets/placeholder/prop_shipping_bin.png", BIN_CELL))
+	world.add_child(_make_interactable(
+		"Kitchen", "res://scripts/farm/kitchen.gd",
+		"res://assets/placeholder/prop_kitchen.png", KITCHEN_CELL))
 
 
 func _make_interactable(node_name: String, script_path: String, texture_path: String, cell: Vector2i) -> Area2D:

@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="RecipeData" format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/recipe_data.gd" id="1_e7jm8"]
+
+[resource]
+script = ExtResource("1_e7jm8")
+id = "corn_chowder"
+ingredients = {
+"carrot": 1,
+"corn": 2
+}
+result_id = "corn_chowder"

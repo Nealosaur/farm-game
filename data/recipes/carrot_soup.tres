@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="RecipeData" format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/recipe_data.gd" id="1_rv5xs"]
+
+[resource]
+script = ExtResource("1_rv5xs")
+id = "carrot_soup"
+ingredients = {
+"carrot": 2
+}
+result_id = "carrot_soup"

@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="FoodData" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/placeholder/dish_melon_sorbet.png" id="1_rkryr"]
+[ext_resource type="Script" path="res://scripts/resources/food_data.gd" id="2_i0k44"]
+
+[resource]
+script = ExtResource("2_i0k44")
+rp_restore = 140
+is_dish = true
+id = "melon_sorbet"
+display_name = "Melon Sorbet"
+icon = ExtResource("1_rkryr")
+sell_price = 400

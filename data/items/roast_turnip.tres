@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="FoodData" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/placeholder/dish_roast_turnip.png" id="1_8iqbt"]
+[ext_resource type="Script" path="res://scripts/resources/food_data.gd" id="2_mdrrg"]
+
+[resource]
+script = ExtResource("2_mdrrg")
+rp_restore = 70
+is_dish = true
+id = "roast_turnip"
+display_name = "Roast Turnip"
+icon = ExtResource("1_8iqbt")
+sell_price = 113

@@ -200,7 +200,12 @@ func _eat(food: FoodData) -> void:
 	GameState.restore_rp(food.rp_restore)
 	if food.hp_restore > 0:
 		GameState.heal(food.hp_restore)
-	EventBus.toast_requested.emit("Ate %s (+%d RP)" % [food.display_name, food.rp_restore])
+	if food.attack_bonus > 0:
+		GameState.set_temp_attack(food.attack_bonus)
+	var msg := "Ate %s (+%d RP)" % [food.display_name, food.rp_restore]
+	if food.attack_bonus > 0:
+		msg += " (+%d ATK until sleep)" % food.attack_bonus
+	EventBus.toast_requested.emit(msg)
 
 
 func try_interact() -> void:

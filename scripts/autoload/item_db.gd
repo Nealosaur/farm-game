@@ -4,12 +4,14 @@ extends Node
 var items := {}
 var crops := {}
 var enemies := {}
+var recipes := {}
 
 
 func _ready() -> void:
 	_load_dir("res://data/items", items)
 	_load_dir("res://data/crops", crops)
 	_load_dir("res://data/enemies", enemies)
+	_load_dir("res://data/recipes", recipes)
 	if not items.is_empty():
 		validate()
 
@@ -45,6 +47,10 @@ func get_enemy(id: String) -> EnemyData:
 	return enemies.get(id) as EnemyData
 
 
+func get_recipe(id: String) -> RecipeData:
+	return recipes.get(id) as RecipeData
+
+
 func validate() -> bool:
 	var ok := true
 	for id: String in items:
@@ -61,5 +67,14 @@ func validate() -> bool:
 		if e.drop_item_id != "" and not items.has(e.drop_item_id):
 			push_error("Enemy %s -> unknown drop %s" % [id, e.drop_item_id])
 			ok = false
+	for id: String in recipes:
+		var r: RecipeData = recipes[id]
+		if not items.has(r.result_id):
+			push_error("Recipe %s -> unknown result %s" % [id, r.result_id])
+			ok = false
+		for ing_id: String in r.ingredients:
+			if not items.has(ing_id):
+				push_error("Recipe %s -> unknown ingredient %s" % [id, ing_id])
+				ok = false
 	assert(ok, "ItemDB validation failed — see errors above")
 	return ok

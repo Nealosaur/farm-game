@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="FoodData" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/placeholder/dish_carrot_soup.png" id="1_hv4gu"]
+[ext_resource type="Script" path="res://scripts/resources/food_data.gd" id="2_1oasu"]
+
+[resource]
+script = ExtResource("2_1oasu")
+rp_restore = 90
+hp_restore = 10
+is_dish = true
+id = "carrot_soup"
+display_name = "Carrot Soup"
+icon = ExtResource("1_hv4gu")
+sell_price = 263

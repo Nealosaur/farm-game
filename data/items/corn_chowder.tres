@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="FoodData" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/placeholder/dish_corn_chowder.png" id="1_6no8a"]
+[ext_resource type="Script" path="res://scripts/resources/food_data.gd" id="2_mtu27"]
+
+[resource]
+script = ExtResource("2_mtu27")
+rp_restore = 120
+hp_restore = 20
+is_dish = true
+id = "corn_chowder"
+display_name = "Corn Chowder"
+icon = ExtResource("1_6no8a")
+sell_price = 381
