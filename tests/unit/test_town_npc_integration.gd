@@ -8,6 +8,15 @@ extends GutTest
 ## NOT covered headless (same documented tradeoff as test_dungeon_integration):
 ## actual portal travel. This only instantiates town.tscn directly and drives
 ## time within it.
+##
+## Alive Stride 1 note: these block-change assertions below still hold as
+## EXACT position checks (not "at or en route") without any changes, because
+## every one of them starts from Marta's counter cell — which registers
+## solid in PathGrid (see town.gd's _solid_prop_rects doc: the counter's
+## footprint spans her own SHOPKEEPER_CELL) — so find_path()'s FROM endpoint
+## is always unwalkable and every one of her transitions still falls back to
+## the pre-stride instant teleport. See test_npc_walk.gd for real in-flight
+## walk assertions using an NPC (Sten) whose transitions actually path.
 
 const TOWN_SCENE := "res://scenes/maps/town.tscn"
 
