@@ -96,6 +96,11 @@ func end_day(collapsed: bool) -> void:
 		toasts.append("The season turned — %d crops wilted." % wilted)
 	if Clock.is_raining():
 		toasts.append("Rain overnight — the field is watered.")
+	var festival_id := Clock.is_festival_today()
+	if festival_id != "":
+		toasts.append(Festival.wake_toast_text(festival_id))
+	if festival_id == Festival.ID_WINTER_STAR:
+		toasts.append(WinterStar.journal_text())
 
 	if grid != null:
 		# Original on-farm flow: reposition, fade in, toast, unpause.

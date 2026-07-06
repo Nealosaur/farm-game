@@ -41,6 +41,7 @@ var sprite: Sprite2D
 ## _on_choice_made can look the item back up without re-deriving it from
 ## Inventory state that may have changed by the time the signal fires.
 var _gift_item_id := ""
+var _contest_item_id := ""  # Harvest Fair contest (World Stride D) — same "set right before, read in the deferred resolver" pattern as _gift_item_id
 var _heart_event_id := ""
 var _rng := RandomNumberGenerator.new()
 ## Snapshot of the choice labels/player offered by the CURRENT show_choices()
@@ -116,6 +117,9 @@ func _play_talk(dialog: DialogBox, player: Node) -> void:
 	var lines: Array[String] = []
 	var quest_lines := _quest_hand_in_lines_if_any()
 	lines.append_array(quest_lines)
+	var winter_star_line := _winter_star_plaza_gift_line_if_any()
+	if winter_star_line != "":
+		lines.append(winter_star_line)
 	var perk_line := _grant_pending_perk_if_any()
 	if perk_line != "":
 		lines.append(perk_line)
@@ -170,6 +174,23 @@ func _grant_and_hand_in_garrick_quests(lines: Array[String]) -> void:
 		lines.append(String(quests_data.get(key, "")))
 
 
+## ---- Winter Star plaza gift (World Stride D) ----
+
+func _winter_star_plaza_gift_line_if_any() -> String:
+	## Bible: "at the plaza, one random-but-seeded NPC hands YOU a gift on
+	## first talk (their loved item or gold)". receive_plaza_gift_if_due()
+	## is itself the full gate (right festival, right NPC, not already
+	## collected today) so this is a thin flavor-line wrapper around it.
+	var result := WinterStar.receive_plaza_gift_if_due(npc_data.id)
+	if not result["received"]:
+		return ""
+	if String(result["item_id"]) != "":
+		var item := ItemDB.get_item(String(result["item_id"]))
+		var item_name := item.display_name if item != null else String(result["item_id"])
+		return "A Winter Star gift, just for you: %s." % item_name
+	return "A Winter Star gift, just for you: %dg." % int(result["gold"])
+
+
 ## ---- level perks (World Stride C) ----
 
 func _grant_pending_perk_if_any() -> String:
@@ -209,7 +230,7 @@ func _resolver_context() -> Dictionary:
 		"tier": Relationships.tier_name(npc_data.id),
 		"season": Clock.season(),
 		"is_raining": Clock.is_raining(),
-		"is_festival": Clock.is_festival_today() != "",
+		"is_festival": Festival.is_npc_at_festival(npc_data.id, Clock.hour()),
 		"is_birthday": NPCData.is_birthday_today(npc_data),
 		"shown_indices": Relationships.shown_indices(npc_data.id, Relationships.tier_name(npc_data.id)),
 		"rng": _rng,
@@ -221,10 +242,72 @@ func _build_choices(player: Node) -> Array[String]:
 	var gift_item := _giftable_selected_item(player)
 	if gift_item != "" and not Relationships.has_gifted_today(npc_data.id):
 		choices.append("Give " + ItemDB.get_item(gift_item).display_name)
-	if has_shop and ShopLogic.is_open(Clock.hour()):
+	if has_shop and ShopLogic.is_open(Clock.hour()) and not Festival.shop_closed_for_festival(Clock.hour()):
 		choices.append("Browse the store")
+	if _sowing_stall_available():
+		choices.append("Festival stall")
+	var contest_item := _contest_eligible_selected_item()
+	if contest_item != "":
+		choices.append("Enter the contest with " + ItemDB.get_item(contest_item).display_name)
 	choices.append("Leave")
 	return choices
+
+
+## ---- Sowing Festival stall (World Stride D, Marta only) ----
+
+func _sowing_stall_available() -> bool:
+	## Bible: "Marta plaza stall: DialogBox choice 'Festival stall' -> ShopScreen
+	## with spring seeds at additional 20% off". Marta-only, sowing-only,
+	## during festival hours only (her ordinary "Browse the store" choice is
+	## already omitted then via Festival.shop_closed_for_festival()).
+	if not has_shop:
+		return false
+	if Clock.is_festival_today() != Festival.ID_SOWING:
+		return false
+	return Festival.is_npc_at_festival(npc_data.id, Clock.hour())
+
+
+const SOWING_STALL_DISCOUNT := 0.8  # bible: "additional 20% off"
+
+
+func _open_sowing_stall() -> void:
+	## Composes with Marta's ordinary friendship discount (World Stride B:
+	## L4 5%/L7 10%) by MULTIPLYING the two multipliers, then rounding down
+	## ONCE at the final unit price (ShopLogic.unit_price already floors) —
+	## e.g. an L7 100g seed: 100 * 0.90 * 0.80 = 72.0 -> 72g, not two separate
+	## floor operations that could floor-then-floor to a different result.
+	var shop := get_tree().get_first_node_in_group("shop_screen") as ShopScreen
+	if shop == null or shop.is_open():
+		return
+	shop.discount = shop_discount() * SOWING_STALL_DISCOUNT
+	shop.festival_seeds_only = true
+	shop.open()
+
+
+## ---- Harvest Fair contest (World Stride D) ----
+
+func _contest_eligible_selected_item() -> String:
+	## Bible: "interact with Alden during festival with a crop item SELECTED
+	## on hotbar -> choice 'Enter the contest with <item>'... once per year".
+	## Alden-only, harvest_fair-only, during festival hours, item must be a
+	## crop PRODUCE (not a seed/tool), and the player must not have already
+	## entered this year.
+	if npc_data.id != "alden":
+		return ""
+	if Clock.is_festival_today() != Festival.ID_HARVEST_FAIR:
+		return ""
+	if not Festival.is_npc_at_festival(npc_data.id, Clock.hour()):
+		return ""
+	var blob: Dictionary = SaveManager.world.get("festival", {})
+	if Festival.has_entered_contest_this_year(blob, Clock.year()):
+		return ""
+	var slot = Inventory.get_selected()
+	if slot == null:
+		return ""
+	var item_id := String(slot.id)
+	if not NPCData.matches_any_category(item_id, [NPCData.ANY_CROP_CATEGORY]):
+		return ""
+	return item_id
 
 
 func _giftable_selected_item(_player: Node) -> String:
@@ -253,6 +336,11 @@ func _on_talk_choice(index: int) -> void:
 		_resolve_gift.call_deferred()
 	elif label == "Browse the store":
 		_open_shop.call_deferred()
+	elif label == "Festival stall":
+		_open_sowing_stall.call_deferred()
+	elif label.begins_with("Enter the contest with "):
+		_contest_item_id = _contest_eligible_selected_item()
+		_resolve_contest.call_deferred()
 	# "Leave" (or anything else): no further action.
 	_choice_labels = []
 	_choice_player = null
@@ -281,6 +369,49 @@ func _open_shop() -> void:
 		return
 	shop.discount = shop_discount()
 	shop.open()
+
+
+func _resolve_contest() -> void:
+	## Judges by ItemData.sell_price (bible): >=250 -> 1st (500g + ALL 8 NPCs
+	## +50 bond), >=100 -> 2nd (200g), else participation (50g). Consumes the
+	## entered item; once per YEAR (guarded again here in case the year
+	## rolled over between the choice showing and resolving, however
+	## unlikely — same defensive re-check _resolve_gift's "already" guard
+	## follows for gifting).
+	if _contest_item_id == "":
+		return
+	var blob: Dictionary = SaveManager.world.get("festival", {})
+	if Festival.has_entered_contest_this_year(blob, Clock.year()):
+		_contest_item_id = ""
+		return
+	var item := ItemDB.get_item(_contest_item_id)
+	if item == null:
+		_contest_item_id = ""
+		return
+	var tier := Festival.contest_tier(item.sell_price)
+	var gold := Festival.contest_gold_for_tier(tier)
+	Inventory.remove_item(_contest_item_id, 1)
+	GameState.add_gold(gold)
+	SaveManager.world["festival"] = Festival.record_contest_entry(blob, Clock.year())
+	if tier == "1st":
+		for npc_id: String in NPCFactory.ALL_IDS:
+			Relationships.add_flat_bond(npc_id, Festival.CONTEST_FIRST_BOND_BONUS)
+	var line := _contest_result_line(tier, gold)
+	var dialog := get_tree().get_first_node_in_group("dialog_box") as DialogBox
+	if dialog != null and not dialog.is_open():
+		var lines: Array[String] = [line]
+		dialog.show_lines(lines)
+	_contest_item_id = ""
+
+
+func _contest_result_line(tier: String, gold: int) -> String:
+	match tier:
+		"1st":
+			return "First place! The whole town's talking about it. +%dg, and everyone's a little warmer to you for it." % gold
+		"2nd":
+			return "A solid second place. +%dg — respectable, farmer." % gold
+		_:
+			return "Thank you for entering. +%dg for the effort." % gold
 
 
 ## ---- Marta discount (World Stride B) ----
@@ -316,7 +447,7 @@ func refresh_schedule(host_map_id: String = "") -> void:
 	var map_id := host_map_id if host_map_id != "" else npc_data.home_map
 	var hour := Clock.hour()
 	var raining := Clock.is_raining()
-	var festival := Clock.is_festival_today() != ""
+	var festival := Festival.is_npc_at_festival(npc_data.id, hour)
 	if not RP.is_present_on_map(npc_data, map_id, hour, raining, festival):
 		visible = false
 		return

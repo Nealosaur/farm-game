@@ -18,10 +18,16 @@ enum Tab { BUY, SELL }
 const ROW_HEIGHT := 24
 
 ## Price multiplier applied to every BUY row (World Stride B: Marta's L4/L7
-## shop discount). 1.0 = no discount. The caller (npc.gd) sets this right
-## before calling open() and it's read back to 1.0 by close() so a later
-## generic shopkeeper interaction (if any) never inherits a stale discount.
+## shop discount composed with World Stride D's Sowing Festival stall -20%,
+## see npc.gd's _open_shop()/shop_discount()). 1.0 = no discount. The caller
+## (npc.gd) sets this right before calling open() and it's read back to 1.0
+## by close() so a later generic shopkeeper interaction (if any) never
+## inherits a stale discount.
 var discount := 1.0
+## World Stride D: Marta's Sowing Festival plaza stall sells ONLY in-season
+## (spring) seeds — set true by npc.gd right before open() for that specific
+## flow, read back to false by close() same as `discount`.
+var festival_seeds_only := false
 var _tab := Tab.BUY
 var gold_label: Label
 var hint_label: Label
@@ -114,6 +120,7 @@ func close() -> void:
 	visible = false
 	get_tree().paused = false
 	discount = 1.0
+	festival_seeds_only = false
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -171,6 +178,8 @@ func _clear(container: Node) -> void:
 func _build_buy_rows() -> void:
 	_clear(buy_list)
 	for item: ItemData in ShopLogic.buyable_items():
+		if festival_seeds_only and not (item is SeedData):
+			continue  # Sowing Festival stall: spring seeds only, no tools/sword (World Stride D)
 		var price := ShopLogic.unit_price(item.buy_price, discount)
 		var row := _make_row(item.icon, "%s — %dg" % [item.display_name, price])
 		row.pressed.connect(_on_buy_pressed.bind(item.id))

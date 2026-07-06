@@ -38,12 +38,16 @@ var save_path := "user://save1.json"
 ##                     Quests.restore() after new_game()/load_game() (no
 ##                     signal fires on load — same sequencing rule as
 ##                     Clock.restore_calendar()/Relationships.restore()).
-##   "festival"      — {"decor_day": int, "contest_year": int}. Owned by the
-##                     Festival helper (scripts/world/festival.gd): tracks
-##                     which day the plaza decor was last applied (so it can
-##                     be cleared the following day) and the last year the
-##                     Harvest Fair contest was entered (once-per-year gate).
-##                     int() coerced on read like every other blob.
+##   "festival"      — {"contest_year": int}. Owned by the Festival helper
+##                     (scripts/world/festival.gd): the last year the Harvest
+##                     Fair contest was entered (once-per-year gate — see
+##                     Festival.has_entered_contest_this_year()/
+##                     record_contest_entry()). Plaza decor does NOT persist
+##                     here: it's a purely visual TileMapLayer town.gd
+##                     rebuilds fresh on every scene _ready() and re-derives
+##                     from Clock.is_festival_today() on EventBus.day_passed,
+##                     so it never needs its own save state. int() coerced on
+##                     read like every other blob.
 ##   "intro"         — {"done": bool}. Owned by GameState.flags in practice
 ##                     (see GameState.flags["intro_done"] — flags already
 ##                     round-trips via GameState.to_dict()/from_dict(), so

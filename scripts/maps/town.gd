@@ -64,12 +64,17 @@ const BEACH_PORTAL_CELL := Vector2i(21, 28)
 var player: Player
 var npcs: Dictionary = {}  # npc_id -> NPC node, for every id with a town schedule slot
 var marta: NPC  # kept as a named alias (World Stride B call sites / tests reference town.marta)
+var notice_board: NoticeBoard
+var festival_decor: TileMapLayer  # World Stride D: reversible plaza accent cells while a festival is active
+var _tile_ids: Dictionary = {}
 var _last_block := ""
+var _last_festival_phase := ""  # World Stride D: catches festival-hour boundaries block-change alone would miss
 
 
 func _ready() -> void:
 	var built := MapBuilder.build_tileset()
 	var ids: Dictionary = built.ids
+	_tile_ids = ids
 
 	var ground := TileMapLayer.new()
 	ground.name = "Ground"
@@ -77,6 +82,14 @@ func _ready() -> void:
 	add_child(ground)
 	MapBuilder.fill_layer(ground, _layout(), ids)
 	MapSceneHelper.attach_season_palette(self, ground)  # outdoor: seasonal recolor
+
+	# World Stride D: a SEPARATE layer (not painted into Ground) for festival
+	# plaza decor — trivially reversible via clear()/erase_cell(), and never
+	# risks corrupting the base layout's stone-floor tiles underneath.
+	festival_decor = TileMapLayer.new()
+	festival_decor.name = "FestivalDecor"
+	festival_decor.tile_set = built.tileset
+	add_child(festival_decor)
 
 	var world := Node2D.new()
 	world.name = "World"
@@ -106,9 +119,12 @@ func _ready() -> void:
 	MapSceneHelper.instance_ui_and_flow_layer(self)
 
 	_last_block = NPCRegistry.block_for(Clock.hour())
+	_last_festival_phase = Festival.phase_signature(Clock.hour())
 	for npc_id: String in npcs:
 		(npcs[npc_id] as NPC).refresh_schedule("town")
+	_apply_festival_decor()
 	EventBus.time_ticked.connect(_on_time_ticked)
+	EventBus.day_passed.connect(_on_day_passed)
 
 
 func _layout() -> PackedStringArray:
@@ -178,7 +194,8 @@ func _add_props(world: Node2D) -> void:
 	counter.add_child(counter_col)
 	world.add_child(counter)
 
-	world.add_child(_make_notice_board())
+	notice_board = _make_notice_board()
+	world.add_child(notice_board)
 
 
 func _make_house(cell: Vector2i) -> StaticBody2D:
@@ -197,10 +214,10 @@ func _make_house(cell: Vector2i) -> StaticBody2D:
 	return house
 
 
-func _make_notice_board() -> Area2D:
+func _make_notice_board() -> NoticeBoard:
 	## Interactable prop_sign on the plaza. Bible: "shows next festival + any
-	## active quest hints" — World Stride D scope for real content; this
-	## stride's contract is the flavor-toast stub: "Nothing posted yet."
+	## active quest hints" — World Stride D wires the "next festival"
+	## half via Festival.notice_board_text() (see notice_board.gd).
 	var board := Area2D.new()
 	board.name = "NoticeBoard"
 	board.set_script(load("res://scripts/components/notice_board.gd"))
@@ -213,7 +230,7 @@ func _make_notice_board() -> Area2D:
 	shape.size = Vector2(16, 24)
 	col.shape = shape
 	board.add_child(col)
-	return board
+	return board as NoticeBoard
 
 
 func _add_npcs(world: Node2D) -> void:
@@ -256,7 +273,31 @@ func _hour_for_block(block: String) -> int:
 
 func _on_time_ticked(_hour, _minute) -> void:
 	var block := NPCRegistry.block_for(Clock.hour())
-	if block != _last_block:
+	var festival_phase := Festival.phase_signature(Clock.hour())
+	if block != _last_block or festival_phase != _last_festival_phase:
 		_last_block = block
+		_last_festival_phase = festival_phase
 		for npc_id: String in npcs:
 			(npcs[npc_id] as NPC).refresh_schedule("town")
+
+
+func _on_day_passed(_day: int) -> void:
+	## Festival decor is "reversible at day end" (bible) — a fresh day always
+	## starts undecorated; _apply_festival_decor() re-adds it below if the
+	## NEW day also happens to be a festival day.
+	_clear_festival_decor()
+	_apply_festival_decor()
+
+
+## ---- festival plaza decor (World Stride D) ----
+
+func _apply_festival_decor() -> void:
+	var festival_id := Clock.is_festival_today()
+	if festival_id == "":
+		return
+	for cell: Vector2i in Festival.decor_cells_for(festival_id):
+		festival_decor.set_cell(cell, _tile_ids["tile_sand"], Vector2i.ZERO)
+
+
+func _clear_festival_decor() -> void:
+	festival_decor.clear()

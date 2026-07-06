@@ -186,10 +186,17 @@ func gift_reaction(npc_id: String, item_id: String, npc_data: NPCData) -> String
 	## committing. "already" if today's gift is used up.
 	if has_gifted_today(npc_id):
 		return "already"
-	return _reaction_for(item_id, npc_data)
+	return _reaction_for(npc_id, item_id, npc_data)
 
 
-static func _reaction_for(item_id: String, npc_data: NPCData) -> String:
+static func _reaction_for(npc_id: String, item_id: String, npc_data: NPCData) -> String:
+	## Winter Star (World Stride D): gifting the seeded secret-gift target
+	## reacts as "loved" regardless of the actual item (bible: "loved
+	## reaction regardless of item") — checked FIRST, ahead of the ordinary
+	## loved/liked/disliked/category resolution below.
+	var forced := WinterStar.forced_reaction(npc_id)
+	if forced != "":
+		return forced
 	if npc_data == null:
 		return "neutral"
 	if item_id in npc_data.loved_items:
@@ -207,13 +214,19 @@ func gift(npc_id: String, item_id: String, npc_data: NPCData) -> String:
 	## Applies the gift: once/day, +80/+45/+20/-20 by reaction, x8 on the
 	## NPC's birthday (bible: "Birthday ×8"; applied to loved/liked/neutral
 	## AND disliked alike — a birthday dud still stings x8). Does NOT touch
-	## the caller's inventory; npc.gd removes the item itself.
+	## the caller's inventory; npc.gd removes the item itself. World Stride D:
+	## also x5 (on top of any birthday x8) when gifting today's Winter Star
+	## secret-gift target (bible: "x5 bond" — the two multipliers compose;
+	## nothing in the bible says Winter Star ever falls on a birthday, but
+	## composing rather than picking one is the least-surprising rule if it
+	## ever does).
 	if has_gifted_today(npc_id):
 		return "already"
-	var reaction := _reaction_for(item_id, npc_data)
+	var reaction := _reaction_for(npc_id, item_id, npc_data)
 	var delta := _delta_for_reaction(reaction)
 	if npc_data != null and NPCData.is_birthday_today(npc_data):
 		delta *= BIRTHDAY_GIFT_MULT
+	delta *= WinterStar.gift_bond_multiplier(npc_id)
 	var state := _get_or_create(npc_id)
 	state["gifted_day"] = Clock.day
 	_add_points(npc_id, delta)
@@ -281,6 +294,13 @@ func mark_event_seen(npc_id: String, event_id: String) -> void:
 
 func apply_heart_event_choice(npc_id: String, empathetic: bool) -> void:
 	_add_points(npc_id, HEART_EVENT_DELTA if empathetic else -HEART_EVENT_DELTA)
+
+
+func add_flat_bond(npc_id: String, delta: int) -> void:
+	## Public "just add points" entry point for one-off bond grants that
+	## aren't a talk/gift/heart-event — World Stride D's Harvest Fair 1st-
+	## place contest bonus ("all 8 NPCs +50 bond") is the first caller.
+	_add_points(npc_id, delta)
 
 
 ## ---- perks ----

@@ -1,11 +1,10 @@
 class_name NoticeBoard
 extends Area2D
-## Plaza notice board (World Stride C). Bible's eventual contract is "shows
-## next festival + any active quest hints" — that's World Stride D content
-## (festivals/quests aren't implemented yet). This stride ships the
-## flavor-toast stub the contract explicitly calls for: interacting always
-## shows "Nothing posted yet." via the toast queue, same as any other
-## no-op-flavor interactable (see farm/bed.gd's placeholder toast).
+## Plaza notice board. Bible: "shows next festival + any active quest
+## hints" — World Stride D wires the "next festival" half via
+## Festival.notice_board_text(), which always has content (there are always
+## 4 festivals/year), so the old "Nothing posted yet." stub never shows once
+## this is live.
 
 func interact(_player: Node) -> void:
-	EventBus.toast_requested.emit("Nothing posted yet.")
+	EventBus.toast_requested.emit(Festival.notice_board_text(Clock.day))
