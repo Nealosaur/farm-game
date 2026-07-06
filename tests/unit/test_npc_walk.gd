@@ -67,10 +67,13 @@ func test_block_change_starts_a_walk_instead_of_teleporting() -> void:
 
 func test_walk_arrival_snaps_exactly_to_the_target_cell_center() -> void:
 	_advance_to_saloon_block()
-	# Smithy->saloon is a long path (~20 cells); simulate generously past
-	# how long it would take at WALK_SPEED to guarantee arrival, then assert
-	# the FINAL resting position is the exact cell center (no overshoot/drift).
-	simulate(npc, 4000, 0.05)  # 200 simulated seconds, far more than needed
+	# Smithy->saloon is a ~20-cell path at 40px/s (16px/cell = 0.4s/cell) ->
+	# ~8s to fully arrive. Simulate JUST past that (not much longer): once
+	# arrived, idle wander (always on, 4-8s timer) will start nudging the NPC
+	# away from and back to this exact cell, so over-simulating would make
+	# this assertion flaky against an in-progress wander leg rather than
+	# proving arrival precision, which is what this test is actually about.
+	simulate(npc, 90, 0.1)  # 9 simulated seconds — comfortably past arrival, short of the wander window
 	assert_eq(npc.position, MapBuilder.cell_center(StenData.CELL_SALOON))
 
 
