@@ -74,6 +74,7 @@ const CARDINAL_DIRS: Array[Vector2i] = [Vector2i.UP, Vector2i.DOWN, Vector2i.LEF
 var npc_data: NPCData
 var dialog_data: Dictionary = {}
 var has_shop := false  # Marta-only: offers "Browse the store" during shop hours
+var has_forge := false  # Craft Stride 2, Sten-only: offers "Forge" during smithy blocks 6-17
 var sprite: Sprite2D
 
 ## Set by the caller right before a "Give X" choice resolves, so
@@ -153,18 +154,28 @@ func _play_heart_event(dialog: DialogBox, event_key: String) -> void:
 	dialog.show_choices(lines, choices)
 
 
+## Alive Stride 2 / Craft Stride 2: heart-event choices that ALSO set a world
+## flag on top of the ordinary bond delta — the wire that arms a scripted
+## follow-on scene's trigger precondition. Table-driven (npc_id -> {event_key
+## -> flag}) so Sten's L7 wiring is the IDENTICAL mechanism as Garrick's, not
+## a copy-pasted second `if` — see garrick_sten_bench.gd's precondition doc
+## for Garrick's entry and sten_fang_steel.gd's for Sten's. Only fires on the
+## EMPATHETIC choice (index 0 / choice_a), same as Garrick's.
+const _HEART_EVENT_CHOICE_A_FLAGS := {
+	"garrick": {"l7": "garrick_l7_choice_a"},
+	"sten": {"l7": "sten_l7_choice_a"},
+}
+
+
 func _on_heart_event_choice(index: int) -> void:
 	var event: Dictionary = dialog_data.get("heart_events", {}).get(_heart_event_id, {})
 	var empathetic := index == 0
 	Relationships.apply_heart_event_choice(npc_data.id, empathetic)
 	Relationships.mark_event_seen(npc_data.id, _heart_event_id)
-	# Alive Stride 2: Garrick's L7 event choice A ("Twenty years is long
-	# enough. Tell HIM that.") ALSO sets a world flag, on top of the ordinary
-	# bond delta — this is the wire that arms "The Bench" reconciliation
-	# scene's trigger (see data/events/garrick_sten_bench.gd's precondition
-	# doc). Minimal, surgical: every OTHER NPC's heart events are unaffected.
-	if npc_data.id == "garrick" and _heart_event_id == "l7" and empathetic:
-		GameState.flags["garrick_l7_choice_a"] = true
+	if empathetic:
+		var flag_key := String(_HEART_EVENT_CHOICE_A_FLAGS.get(npc_data.id, {}).get(_heart_event_id, ""))
+		if flag_key != "":
+			GameState.flags[flag_key] = true
 	var response := String(event.get("response_a" if empathetic else "response_b", ""))
 	if response != "":
 		var dialog := get_tree().get_first_node_in_group("dialog_box") as DialogBox
@@ -363,11 +374,36 @@ func _build_choices(player: Node) -> Array[String]:
 		choices.append("Browse the store")
 	if _sowing_stall_available():
 		choices.append("Festival stall")
+	if _forge_available():
+		choices.append("Forge")
 	var contest_item := _contest_eligible_selected_item()
 	if contest_item != "":
 		choices.append("Enter the contest with " + ItemDB.get_item(contest_item).display_name)
 	choices.append("Leave")
 	return choices
+
+
+## ---- Forge (Craft Stride 2, Sten only) ----
+
+const _FORGE_BLOCKS := ["6-9", "9-12", "12-17"]  # bible: "smithy blocks (6-17)"
+
+
+func _forge_available() -> bool:
+	## Bible: "Sten dialog choice 'Forge' during smithy blocks (6-17)" —
+	## template is Marta's has_shop/"Browse the store" gate (see _build_choices
+	## above), generalized to Sten's three daytime blocks instead of a hard
+	## hour range, so it stays correct if NPCRegistry's block boundaries ever
+	## shift.
+	if not has_forge:
+		return false
+	return RP.block_for(Clock.hour()) in _FORGE_BLOCKS
+
+
+func _open_forge() -> void:
+	var forge := get_tree().get_first_node_in_group("forge_screen") as ForgeScreen
+	if forge == null or forge.is_open():
+		return
+	forge.open()
 
 
 ## ---- Sowing Festival stall (World Stride D, Marta only) ----
