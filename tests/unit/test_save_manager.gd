@@ -65,3 +65,23 @@ func test_version_mismatch_warns_but_loads() -> void:
 	f.close()
 	assert_true(SaveManager.load_game())
 	assert_eq(Clock.day, 4)
+
+
+func test_quests_and_festival_blobs_survive_save_and_load() -> void:
+	## World Stride D: Quests.restore()/world["festival"] round-trip alongside
+	## every other world blob (mirrors test_round_trip's farm_grid check).
+	Quests._quests = {}
+	Quests.grant_new_roots()
+	Quests.record_talk("marta")
+	SaveManager.world["festival"] = Festival.record_contest_entry({}, 2)
+	assert_true(SaveManager.save_game())
+	Quests._quests = {}
+	SaveManager.new_game()
+	assert_false(Quests.has_quest(Quests.ID_NEW_ROOTS))
+	assert_true(SaveManager.load_game())
+	assert_true(Quests.is_active(Quests.ID_NEW_ROOTS))
+	assert_eq(Quests.met_npcs(Quests.ID_NEW_ROOTS), ["marta"])
+	assert_true(Festival.has_entered_contest_this_year(SaveManager.world.get("festival", {}), 2))
+	Quests._quests = {}
+	SaveManager.world.erase("quests")
+	SaveManager.world.erase("festival")

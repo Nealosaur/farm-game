@@ -222,3 +222,15 @@ func test_winter_star_plaza_gifter_differs_from_target() -> void:
 func test_winter_star_empty_ids_returns_empty_string() -> void:
 	assert_eq(Festival.winter_star_target(1, []), "")
 	assert_eq(Festival.winter_star_plaza_gifter(1, []), "")
+
+
+# ---- world["festival"] JSON round-trip ----
+
+func test_festival_blob_survives_json_round_trip() -> void:
+	var blob := Festival.record_contest_entry({}, 3)
+	var stringified := JSON.stringify(blob)
+	var round_tripped = JSON.parse_string(stringified)
+	assert_true(Festival.has_entered_contest_this_year(round_tripped, 3))
+	assert_eq(typeof(round_tripped.get("contest_year")), TYPE_FLOAT, "JSON round-trips ints as floats — has_entered_contest_this_year must int() coerce")
+	assert_false(Festival.has_entered_contest_this_year(round_tripped, 4))
+
