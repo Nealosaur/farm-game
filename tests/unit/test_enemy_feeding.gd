@@ -18,6 +18,15 @@ func test_slime_data_is_tameable_with_turnip_favorite_food() -> void:
 	assert_eq(data.favorite_food, "turnip")
 
 
+func test_slime_favorite_food_resolves_to_a_real_food_item() -> void:
+	## Content-meta check: favorite_food must not be a dangling id — it has
+	## to resolve to an actual FoodData the player can hold/select/feed.
+	var data := ItemDB.get_enemy("slime")
+	var food := ItemDB.get_item(data.favorite_food)
+	assert_not_null(food, "slime's favorite_food '%s' must exist in ItemDB" % data.favorite_food)
+	assert_true(food is FoodData, "slime's favorite_food must be a FoodData (edible/holdable)")
+
+
 func test_wisp_goblin_and_boss_stay_untameable() -> void:
 	assert_false(ItemDB.get_enemy("wisp").tameable)
 	assert_false(ItemDB.get_enemy("goblin").tameable)
