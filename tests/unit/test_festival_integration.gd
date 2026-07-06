@@ -257,6 +257,32 @@ func test_festival_stall_opens_shop_with_extra_discount() -> void:
 	shop.close()
 
 
+func test_festival_stall_composes_with_friendship_discount_at_l7() -> void:
+	# L7 Marta grants her ordinary 10% (0.90) shop discount; the stall's own
+	## 20% off (0.80) composes by multiplication: 0.90 * 0.80 = 0.72.
+	Clock.day = SPRING_14
+	Clock.minutes = 12 * 60
+	var town: Node2D = _make_town()
+	add_child_autofree(town)
+	await wait_process_frames(2)
+	Relationships._get_or_create("marta")["points"] = 700  # L7
+	Relationships.mark_event_seen("marta", "l3")  # avoid the L3/L7 heart events short-circuiting interact()
+	Relationships.mark_event_seen("marta", "l7")
+	Relationships.mark_perk_given("marta", "l5")  # avoid the L5 perk line adding an extra dialog page
+
+	var dialog := get_tree().get_first_node_in_group("dialog_box") as DialogBox
+	var shop := get_tree().get_first_node_in_group("shop_screen") as ShopScreen
+	town.npcs["marta"].interact(town.player)
+	dialog._advance()
+	for child in dialog.choice_box.get_children():
+		if (child as Button).text == "Festival stall":
+			child.pressed.emit()
+			break
+	await wait_process_frames(2)
+	assert_almost_eq(shop.discount, 0.72, 0.001)
+	shop.close()
+
+
 # ---- festival +30 bond on talk ----
 
 func test_talking_at_the_festival_grants_festival_bonus() -> void:
