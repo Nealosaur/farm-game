@@ -150,3 +150,67 @@ Marriage/dating, building interiors, NPC pathfinding (block-teleport ok),
 cooking/forging, taming (schema still reserved), weather beyond rain,
 animations. Sprites: filenames stable; new placeholders only for new
 content (NPC silhouettes, forage items, new crops) via gen_placeholders.
+
+---
+
+# PHASE 2 ADDENDUM — Craft & Kin (cooking, forging, taming)
+
+## Cooking
+- **Kitchen** prop on the farm beside the house (prop_kitchen 24x16).
+  Interact → Cooking UI (recipe list, craft if ingredients in inventory,
+  tree-pause menu convention). Recipes are data (RecipeData resource:
+  id, ingredients {item: count}, result dish id).
+- **Dishes** (FoodData, sell = ~sum of ingredients +25%):
+  | Dish | Ingredients | Effect |
+  |---|---|---|
+  | Roast Turnip | 2 turnip | +70 RP |
+  | Carrot Soup | 2 carrot | +90 RP, +10 HP |
+  | Berry Jam | 3 strawberry | +80 RP |
+  | Corn Chowder | 2 corn, 1 carrot | +120 RP, +20 HP |
+  | Melon Sorbet | 1 melon | +140 RP |
+  | Pumpkin Pie | 1 pumpkin, 1 corn | +160 RP, +40 HP |
+  | Forest Stew | 2 wildroot, 1 emberberry | +110 RP, +25 HP |
+  | Miner's Meal | 1 frostcap, 1 eggplant | +100 RP, **+2 attack until sleep** |
+- **Buff food**: FoodData gains attack_bonus (0 default); eating sets
+  GameState.temp_attack (stacking replaced, not added; cleared on sleep/
+  collapse; shown as small HUD icon/label).
+- **Cooked gifts** (RF rule "handmade means more"): gifting any dish =
+  gift points ×1.5 (after preference lookup; dishes default to "liked"
+  for everyone unless the NPC's loved list says otherwise).
+
+## Forging (Sten's smithy becomes functional)
+- Sten dialog choice "Forge" during smithy blocks (6-17): Forge UI
+  (upgrade list, needs items + gold).
+- **Upgrades**: Steel Sword (from iron_sword + 3 goblin_fang + 800g,
+  ToolData dmg 16); **Fangsteel Blade** (from steel_sword + 5 goblin_fang
+  + 2 driftglass + 2000g, dmg 22) — GATED: recipe hidden until the
+  authored scene "Fang Steel" plays (Sten L7 heart event choice A seen +
+  own a steel_sword + enter smithy block 6-12 next day): Sten finishes
+  the masterwork WITH the player's fang steel — the blade he never
+  finished becomes the game's best weapon, forged for a farmer.
+  Scene ends: flag sten_masterwork_done, unlocks recipe, bond sten +50.
+- **Copper Watering Can** (from watering_can + 3 slime_gel + 500g):
+  waters the target cell PLUS the two cells flanking it (perpendicular
+  to facing), rp_cost 3.
+- Old tools consumed by upgrades (replaced in inventory).
+
+## Taming (Rune Factory's signature, Phase 2 scope: slimes only)
+- EnemyData: slime gets tameable=true, favorite_food="turnip" (fields
+  reserved since Plan 1). Wisp/goblin/boss stay untameable this phase.
+- **Feeding**: use_item with the favorite food held while facing a live
+  slime in the dungeon → it eats (item consumed, heart puff toast, slime
+  becomes passive for the day). 3 total feeds on ANY slimes (tracked
+  globally: world["taming"]["slime_feeds"]) → NEXT feed tames: slime
+  despawns with a toast — "It follows you home."
+- **Barn**: farm gains a small fenced pen + barn prop (prop_barn 32x24)
+  north of the field. Tamed slimes (max 2) live there: visible, wander
+  the pen, pettable (E → toast, +tiny flavor). Each morning, each barn
+  slime waters 8 random unwatered tilled cells (before rain check;
+  toast "Your slime helped water the field.").
+- Persistence: world["taming"] = {slime_feeds:int, barn:["slime", ...]}.
+- Willow hook: one new gated line (CLOSE+, requires a barn slime):
+  "You kept one. The woods sorted you into 'safe' years ago. Now the
+  slimes have too." (append to characters.md when implemented).
+
+## Out of Phase 2: marriage/dating, more tameable species, interiors,
+recipe discovery (all recipes known from start this phase), fishing.
