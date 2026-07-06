@@ -292,3 +292,27 @@ static func display_name(quest_id: String) -> String:
 			return "The King Below — defeat the Slime King"
 		_:
 			return quest_id
+
+
+func notice_board_hint(season: int) -> String:
+	## Bible: notice board "shows next festival + any active quest hints
+	## (flavor text, one-liner per season)". Picks the first active quest
+	## (sorted id order, same as active_quest_ids() — deterministic, not
+	## random) and returns ONE season-flavored line about it; "" when
+	## nothing is active so the notice board's own text stays just the
+	## festival line (see notice_board.gd — it appends this only when
+	## non-empty).
+	var active := active_quest_ids()
+	if active.is_empty():
+		return ""
+	var quest_id: String = active[0]
+	var season_word := String(Clock.SEASON_NAMES[clampi(season, 0, 3)]).to_lower()
+	match quest_id:
+		ID_NEW_ROOTS:
+			return "This %s, the town could use a familiar face at every door — %s." % [season_word, progress_text(quest_id)]
+		ID_PROVE_IT:
+			return "Word from the Delve this %s: floor two waits for the brave. %s." % [season_word, progress_text(quest_id)]
+		ID_KING_BELOW:
+			return "Talk still turns to the King Below, even in %s. %s." % [season_word, progress_text(quest_id)]
+		_:
+			return ""
