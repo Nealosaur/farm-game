@@ -126,6 +126,36 @@ func test_garrick_hands_in_prove_it_and_chains_king_below() -> void:
 	assert_true(Quests.is_active(Quests.ID_KING_BELOW))
 
 
+func test_garrick_hands_in_prove_it_and_king_below_same_talk_when_boss_already_defeated() -> void:
+	## If the player somehow beats the Slime King before ever handing in
+	## "Prove It" (e.g. speedran floor 3 without talking to Garrick again),
+	## the SAME conversation that hands in Prove It also grants AND
+	## instantly completes King Below (Quests.grant_king_below() checks the
+	## flag) — Garrick should hand in both rewards in one talk.
+	var town: Node2D = _make_town()
+	add_child_autofree(town)
+	await wait_process_frames(2)
+	Quests.grant_prove_it()
+	Quests.record_floor_entered("dungeon_2")
+	GameState.flags["boss_defeated"] = true  # boss beaten before the hand-in talk
+	assert_true(Quests.is_done(Quests.ID_PROVE_IT))
+
+	var dialog := get_tree().get_first_node_in_group("dialog_box") as DialogBox
+	GameState.gold = 0
+	town.npcs["garrick"].interact(town.player)
+	assert_true(dialog.is_open())
+	assert_eq(dialog.label.text, GarrickDialog.DATA["quests"]["prove_it_hand_in"],
+		"prove_it's hand-in line must show first")
+	dialog._advance()
+	assert_eq(dialog.label.text, GarrickDialog.DATA["quests"]["king_below_hand_in_already_defeated"],
+		"king_below's already-defeated hand-in line must show in the SAME conversation")
+	_force_close_if_open(dialog)
+
+	assert_eq(GameState.gold, 200 + 500, "both quests' rewards must be paid out in one talk")
+	assert_false(Quests.has_quest(Quests.ID_PROVE_IT))
+	assert_false(Quests.has_quest(Quests.ID_KING_BELOW))
+
+
 func test_garrick_hands_in_king_below_ordinary_line() -> void:
 	var town: Node2D = _make_town()
 	add_child_autofree(town)
