@@ -11,7 +11,7 @@ extends RefCounted
 ## needs the three script paths + the sprite path — everything else is read
 ## off NPCData/dialog data at call time.
 
-## id -> {"data": data script path, "dialog": dialog script path, "sprite": texture path, "has_shop": bool}
+## id -> {"data": data script path, "dialog": dialog script path, "sprite": texture path, "has_shop": bool, "has_forge": bool (optional)}
 const REGISTRY := {
 	"marta": {
 		"data": "res://data/npcs/marta.gd", "dialog": "res://data/dialog/marta.gd",
@@ -20,6 +20,7 @@ const REGISTRY := {
 	"sten": {
 		"data": "res://data/npcs/sten.gd", "dialog": "res://data/dialog/sten.gd",
 		"sprite": "res://assets/placeholder/char_sten.png", "has_shop": false,
+		"has_forge": true,  # Craft Stride 2: "Forge" dialog choice during smithy blocks 6-17
 	},
 	"bram": {
 		"data": "res://data/npcs/bram.gd", "dialog": "res://data/dialog/bram.gd",
@@ -67,6 +68,7 @@ static func make_npc(npc_id: String) -> NPC:
 	area.npc_data = build_data(npc_id)
 	area.dialog_data = dialog_data(npc_id)
 	area.has_shop = bool(cfg.get("has_shop", false))
+	area.has_forge = bool(cfg.get("has_forge", false))
 	var sprite := Sprite2D.new()
 	sprite.name = "Sprite2D"
 	sprite.texture = load(cfg["sprite"])

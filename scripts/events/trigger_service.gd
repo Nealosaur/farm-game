@@ -14,11 +14,27 @@ extends RefCounted
 ##   "min_hearts": {"npc": String, "level": int} — Relationships.level(npc) >= level
 ##   "season": int              — Clock.season() must equal this
 ##   "day_range": [int, int]    — Clock.day_of_season() in [min, max] inclusive
-##   "block/hours": String      — NPCRegistry.block_for(Clock.hour()) equals this
-##                                 (contract's "block/hours" key name, kept
-##                                 verbatim rather than renamed to "block")
+##   "block/hours": String OR Array — NPCRegistry.block_for(Clock.hour())
+##                                 equals this (contract's "block/hours" key
+##                                 name, kept verbatim rather than renamed to
+##                                 "block"). Craft Stride 2: an Array value
+##                                 means "any of these blocks" — "Fang Steel"
+##                                 spans 6-12, i.e. TWO registry blocks.
 ##   "map": String               — current map id (caller supplies, since this
 ##                                  file has no scene-tree access of its own)
+##   "has_item": String          — Inventory.count_of(id) >= 1 (Craft Stride 2:
+##                                  "Fang Steel" requires the steel_sword in
+##                                  the player's inventory)
+##   "next_day_after_flag": String — passes only when Clock.day is STRICTLY
+##                                  GREATER than the day the named flag was
+##                                  set. The flag-setter records that day as a
+##                                  companion "<flag>_day" int flag (see
+##                                  npc.gd's _on_heart_event_choice) — int()
+##                                  coercion on read per the JSON-float
+##                                  gotcha. A missing day record reads as 0,
+##                                  i.e. passes from day 1 on (documented:
+##                                  kinder to pre-record saves than locking
+##                                  the scene out forever).
 ##
 ## Once-per-day-per-id gate: `has_fired_today(seen, id)` / callers mark a
 ## fired id into world["events_seen"] (see save_manager.gd's sanctioned-keys
@@ -59,10 +75,23 @@ static func evaluate(preconditions: Dictionary, current_map: String = "") -> boo
 			if d < int(range_arr[0]) or d > int(range_arr[1]):
 				return false
 	if preconditions.has("block/hours"):
-		if NPCRegistry.block_for(Clock.hour()) != String(preconditions["block/hours"]):
+		var want = preconditions["block/hours"]
+		var current_block := NPCRegistry.block_for(Clock.hour())
+		if want is Array:
+			if not (current_block in want):
+				return false
+		elif current_block != String(want):
 			return false
 	if preconditions.has("map") and current_map != "":
 		if String(preconditions["map"]) != current_map:
+			return false
+	if preconditions.has("has_item"):
+		if Inventory.count_of(String(preconditions["has_item"])) < 1:
+			return false
+	if preconditions.has("next_day_after_flag"):
+		var flag_name := String(preconditions["next_day_after_flag"])
+		var set_day := int(GameState.flags.get(flag_name + "_day", 0))
+		if Clock.day <= set_day:
 			return false
 	return true
 

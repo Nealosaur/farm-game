@@ -133,14 +133,18 @@ func _ready() -> void:
 
 
 func _add_event_director() -> void:
-	## Alive Stride 2: authored scenes gated to the town map. "The Bench"
-	## (Garrick & Sten reconciliation) is the first and only candidate today —
-	## see data/events/garrick_sten_bench.gd. checked once immediately (in
-	## case its preconditions already held when this scene loaded) and again
-	## on every subsequent block change (see _on_time_ticked below).
+	## Alive Stride 2 / Craft Stride 2: authored scenes gated to the town map,
+	## in priority order — "The Bench" (Garrick & Sten reconciliation, see
+	## data/events/garrick_sten_bench.gd) then "Fang Steel" (Sten's masterwork,
+	## see data/events/sten_fang_steel.gd; unlocks the Fangsteel Blade forge
+	## recipe). Checked once immediately (in case preconditions already held
+	## when this scene loaded) and again on every subsequent block change (see
+	## _on_time_ticked below). If both ever became eligible the same day, the
+	## per-day cap fires The Bench first and Fang Steel waits for the next
+	## check on a later day (TriggerService.fires_at_most_once_per_day).
 	event_director = EventDirector.new()
 	event_director.current_map_id = "town"
-	event_director.candidates = [GarrickStenBenchEvent.DATA]
+	event_director.candidates = [GarrickStenBenchEvent.DATA, StenFangSteelEvent.DATA]
 	add_child(event_director)
 	event_director.check()
 

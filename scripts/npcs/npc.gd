@@ -176,6 +176,14 @@ func _on_heart_event_choice(index: int) -> void:
 		var flag_key := String(_HEART_EVENT_CHOICE_A_FLAGS.get(npc_data.id, {}).get(_heart_event_id, ""))
 		if flag_key != "":
 			GameState.flags[flag_key] = true
+			# Companion day record ("<flag>_day"): lets a follow-on scene gate
+			# on "next day or later" via TriggerService's next_day_after_flag
+			# precondition ("Fang Steel" needs it — Sten's L7 event can happen
+			# during the very smithy blocks the scene fires in, so unlike The
+			# Bench the next-day rule can't be left implicit). Recorded for
+			# BOTH table entries so the mechanism stays uniform; The Bench
+			# simply never reads Garrick's.
+			GameState.flags[flag_key + "_day"] = Clock.day
 	var response := String(event.get("response_a" if empathetic else "response_b", ""))
 	if response != "":
 		var dialog := get_tree().get_first_node_in_group("dialog_box") as DialogBox
@@ -385,7 +393,7 @@ func _build_choices(player: Node) -> Array[String]:
 
 ## ---- Forge (Craft Stride 2, Sten only) ----
 
-const _FORGE_BLOCKS := ["6-9", "9-12", "12-17"]  # bible: "smithy blocks (6-17)"
+const _FORGE_BLOCKS := [RP.BLOCK_6_9, RP.BLOCK_9_12, RP.BLOCK_12_17]  # bible: "smithy blocks (6-17)"
 
 
 func _forge_available() -> bool:
@@ -491,6 +499,8 @@ func _on_talk_choice(index: int) -> void:
 		_open_shop.call_deferred()
 	elif label == "Festival stall":
 		_open_sowing_stall.call_deferred()
+	elif label == "Forge":
+		_open_forge.call_deferred()
 	elif label.begins_with("Enter the contest with "):
 		_contest_item_id = _contest_eligible_selected_item()
 		_resolve_contest.call_deferred()

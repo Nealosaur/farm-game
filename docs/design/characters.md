@@ -100,6 +100,21 @@ Question is whether a thing half-made is a failure or just patient."
 [A] "Patient. Like its maker." → "...Get out before I say something soft.
 Come back tomorrow. Bring fang steel."
 [B] "It's been dust for years. Let it go." → "Maybe. Forge's cold today."
+**SCENE: "Fang Steel"** (event script `sten_fang_steel`; authored canon):
+Triggers once, the next day (or later) the player is in town during the
+morning blocks (6-12) after choosing [A] in Sten's L7 event "Masterwork",
+carrying the Steel Sword. Camera holds on Sten at the smithy — no walking,
+this one is a held shot.
+Sten: "You came. Good. Bench." / "Twenty years I let judges tell me what
+finished looks like." (beat) / "Watch. This part I only do once." (turns
+to the forge; beat) / "Folded steel remembers every hand that failed it.
+Today it gets one that didn't." / "Base is done. The edge is yours to
+earn — fang, glass, coin. Forge is open when you are."
+Toast: "Forging unlocked: Fangsteel Blade". Sten +50 bond; flag
+`sten_masterwork_done`.
+**Recipe gate:** the Fangsteel Blade upgrade (steel_sword + 5 goblin_fang
++ 2 driftglass + 2000g) stays HIDDEN in Sten's Forge list until this scene
+plays — `sten_masterwork_done` is what reveals it.
 
 ---
 
