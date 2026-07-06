@@ -7,26 +7,23 @@ extends RefCounted
 ## resource. Every other NPC added later should follow the same shape
 ## (data/npcs/<id>.gd exporting a static build() -> NPCData).
 ##
-## Town cell layout reference (scripts/maps/town.gd): plaza Rect2i(10,8,10,6),
-## shop floor Rect2i(20,6,6,5), counter (22,8), existing shopkeeper cell
-## (23,8). Marta's cells below reuse/extend that layout:
-##   - counter/store block -> the existing SHOPKEEPER_CELL (23,8): she
-##     replaces the old generic shopkeeper there.
-##   - plaza bench (17-20) -> (12,10): inside the plaza rect, south side,
-##     away from the through-road at y=10... NOTE the plaza road runs at
-##     y=10 (main east-west street) so the "bench" cell is placed at (12,9),
-##     just off the road on stone floor.
-##   - home (20-2) -> (4,3): "near mayor-house row" per her schedule note;
-##     town.gd's HOUSE_A_CELL is (3,3) (top-left of a 3x3 footprint), so
-##     (4,3) sits just beside House A on its stone/grass border, standing in
-##     for "mayor-house row" until a dedicated house exists for her.
+## Town cell layout reference (scripts/maps/town.gd, World Stride C
+## rebuild): STORE_FLOOR Rect2i(4,11,6,6) west side, PLAZA
+## Rect2i(16,10,12,8) center. Marta's cells below match that layout:
+##   - counter/store block -> town.gd's SHOPKEEPER_CELL (8,13): she replaces
+##     the old generic shopkeeper there.
+##   - plaza bench (17-20) -> (17,13): inside the plaza rect, off the
+##     CROSS_ROAD_X=21 and MAIN_ROAD_Y=14 spines, on stone floor.
+##   - home (20-2) -> (4,3): near the town's home row (matches the other
+##     NPCs' CELL_HOME cells in that same row, e.g. Sten (6,3), Bram (8,3)).
+##   - festival stall -> (18,11): plaza, near the notice board.
 
 const ID := "marta"
 
-const CELL_COUNTER := Vector2i(23, 8)   # store counter (matches town.gd's SHOPKEEPER_CELL)
-const CELL_PLAZA_BENCH := Vector2i(12, 9)
-const CELL_HOME := Vector2i(4, 3)       # beside HOUSE_A_CELL, standing in for "mayor-house row"
-const CELL_FESTIVAL_STALL := Vector2i(14, 9)  # plaza stall, near the bench spot
+const CELL_COUNTER := Vector2i(8, 13)    # store counter (matches town.gd's SHOPKEEPER_CELL)
+const CELL_PLAZA_BENCH := Vector2i(17, 13)
+const CELL_HOME := Vector2i(4, 3)        # town home row
+const CELL_FESTIVAL_STALL := Vector2i(18, 11)  # plaza stall, near the notice board
 
 
 static func build() -> NPCData:

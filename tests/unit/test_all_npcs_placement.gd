@@ -92,6 +92,28 @@ func test_every_npc_registered_in_npc_factory_matches_journal_roster() -> void:
 	assert_eq(journal_ids.size(), NPCFactory.ALL_IDS.size(), "Journal roster size must match NPCFactory")
 
 
+func test_shopkeeping_npcs_are_placed_inside_their_own_building_on_town() -> void:
+	## Generic walkability (any G/D/S/P/A tile) isn't enough to catch an NPC
+	## whose cell is walkable but sits in the WRONG building (e.g. a stale
+	## cell left over from an earlier town.gd layout revision) — cross-check
+	## against town.gd's own Rect2i building footprints directly.
+	var town: Node2D = (load("res://scripts/maps/town.gd") as GDScript).new()
+	var checks := [
+		["marta", NPCRegistry.BLOCK_9_12, town.STORE_FLOOR],
+		["sten", NPCRegistry.BLOCK_9_12, town.SMITHY_FLOOR],
+		["bram", NPCRegistry.BLOCK_9_12, town.CLINIC_FLOOR],
+	]
+	for check: Array in checks:
+		var npc_id: String = check[0]
+		var block: String = check[1]
+		var rect: Rect2i = check[2]
+		var data := NPCFactory.build_data(npc_id)
+		var cell: Vector2i = data.schedule[block]
+		assert_true(rect.has_point(cell),
+			"%s's %s cell %s must sit inside its building footprint %s" % [npc_id, block, cell, rect])
+	town.free()
+
+
 func test_garrick_farm_morning_blocks_resolve_to_farm_map() -> void:
 	var data := NPCFactory.build_data("garrick")
 	assert_eq(NPCRegistry.map_for(data, 7, false, false), "farm", "Garrick's 6-9 block is on the farm")
