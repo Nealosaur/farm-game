@@ -27,10 +27,49 @@ extends Area2D
 ## right now" query this node exposes for that caller to use — it does NOT
 ## listen to EventBus.time_ticked itself, matching the bible's "maps ask the
 ## registry" phrasing (one listener per map, not one per NPC instance).
+##
+## Walking (Alive Stride 1): refresh_schedule() now WALKS to the new block
+## cell instead of teleporting whenever ALL of the following hold: the NPC
+## was already visible/on this map, the new target is on the SAME map (no
+## per-block {"map":...} crossing), and the host map's PathGrid (found via
+## the "map_root" group — see _path_grid_for_map()) has a real path between
+## the current and target cell. Every other case (first placement, cross-map
+## target, unreachable path, no PathGrid on this map) keeps the original
+## instant-teleport behavior — documented, not a bug: catching up a walk
+## across a map load, or walking between two different map scenes, is out of
+## this stride's scope.
+##
+## Walk mechanics: _process(delta) advances _walk_queue (a queue of
+## cell-center world positions) at WALK_SPEED px/s, cardinal-only (the path
+## itself is already cardinal since PathGrid disables diagonals), updating
+## `facing` to the last nonzero movement direction. If the NEXT scheduled
+## block boundary arrives while a walk is still in flight, refresh_schedule()
+## SNAPS straight to the new target instead of queueing a second path on top
+## of the first (documented: prevents drift/lag stacking across fast block
+## changes).
+##
+## Idle wander: once a walk finishes (or an NPC never needed to walk this
+## block), _wander_timer counts down 4-8s; on expiry there's a 60% chance to
+## stroll to a random adjacent walkable cell and back (two short automatic
+## walks), otherwise the timer just re-rolls. Always on (no rain/indoor
+## suppression this stride — see contract).
+##
+## Interact pause/resume: interact() calls _pause_walk_for_dialog() up front
+## (before any dialog opens), which halts _walk_queue/wander processing and
+## faces the NPC at the player; the DialogBox's `finished` signal (connected
+## one-shot) calls _on_dialog_finished_resume_walk() to lift the pause. The
+## Area2D itself is never reparented/disabled, so its interact() monitor
+## keeps working mid-walk exactly like a stationary NPC's.
 
 signal gift_given(npc_id: String, item_id: String, reaction: String)
 
 const RP := preload("res://scripts/npcs/npc_registry.gd")
+
+const WALK_SPEED := 40.0  # px/s, per contract
+const WANDER_MIN_INTERVAL := 4.0
+const WANDER_MAX_INTERVAL := 8.0
+const WANDER_CHANCE := 0.6
+const CARDINAL_DIRS: Array[Vector2i] = [Vector2i.UP, Vector2i.DOWN, Vector2i.LEFT, Vector2i.RIGHT]
 
 var npc_data: NPCData
 var dialog_data: Dictionary = {}
@@ -51,9 +90,31 @@ var _rng := RandomNumberGenerator.new()
 var _choice_labels: Array[String] = []
 var _choice_player: Node
 
+## ---- walk state (Alive Stride 1) ----
+var facing := Vector2.DOWN           # last nonzero movement direction; drives sprite flip/tint
+var _host_map_id := ""               # last host_map_id passed to refresh_schedule(), for wander's PathGrid lookup
+var _current_cell := Vector2i(-1, -1)  # cell this NPC currently occupies (or is walking toward as its logical slot)
+var _walk_queue: Array[Vector2] = []   # remaining cell-center world positions to walk through, in order
+var _walking := false
+var _paused_for_dialog := false
+var _wander_timer := 0.0
+var _wander_home_cell := Vector2i(-1, -1)  # cell to return to after a wander stroll
+var _wandering_out := false           # true while walking OUT to a wander cell, false while walking back
+var _dialog_finished_connected := false
+
 
 func _ready() -> void:
 	sprite = get_node_or_null("Sprite2D") as Sprite2D
+	_wander_timer = _rng.randf_range(WANDER_MIN_INTERVAL, WANDER_MAX_INTERVAL)
+
+
+func _process(delta: float) -> void:
+	if npc_data == null or not visible or _paused_for_dialog:
+		return
+	if _walking:
+		_advance_walk(delta)
+		return
+	_update_wander(delta)
 
 
 func interact(player: Node) -> void:
@@ -62,6 +123,8 @@ func interact(player: Node) -> void:
 	var dialog := get_tree().get_first_node_in_group("dialog_box") as DialogBox
 	if dialog == null or dialog.is_open():
 		return
+
+	_pause_walk_for_dialog(player)
 
 	var pending := Relationships.pending_event(npc_data.id)
 	if pending != "":
@@ -443,14 +506,180 @@ func refresh_schedule(host_map_id: String = "") -> void:
 	## farm morning block, town/saloon otherwise) MUST pass the actual host
 	## map id so this hides the instance on blocks that belong to the OTHER
 	## map instead of showing it at a stale cell.
+	##
+	## Alive Stride 1: WALKS to the new cell (see class doc) when the NPC was
+	## already visible/placed on this map, the target is on the SAME map, and
+	## a real cardinal path exists between the current and target cell.
+	## Falls back to the original instant-teleport for every other case
+	## (first placement this map, cross-map target, unreachable path, or no
+	## PathGrid registered for this map).
 	if npc_data == null:
 		return
-	var map_id := host_map_id if host_map_id != "" else npc_data.home_map
+	_host_map_id = host_map_id if host_map_id != "" else npc_data.home_map
+	var map_id := _host_map_id
 	var hour := Clock.hour()
 	var raining := Clock.is_raining()
 	var festival := Festival.is_npc_at_festival(npc_data.id, hour)
 	if not RP.is_present_on_map(npc_data, map_id, hour, raining, festival):
 		visible = false
+		_cancel_walk()
+		_current_cell = Vector2i(-1, -1)
 		return
+
+	var target_cell := RP.cell_for(npc_data, hour, raining, festival)
+	var target_map := RP.map_for(npc_data, hour, raining, festival)
+	var was_visible := visible
+	# Contract: "if a walk is still in progress when the NEXT block boundary
+	# hits, teleport-snap to the new target" — a still-in-flight walk (a
+	# schedule walk OR an idle-wander stroll, both use _walking) never gets
+	# to chain into a second pathfind; it's cut short and snapped instead,
+	# same as any other teleport case below.
+	var mid_walk := _walking
 	visible = true
-	position = MapBuilder.cell_center(RP.cell_for(npc_data, hour, raining, festival))
+
+	if was_visible and not mid_walk and target_map == map_id and _current_cell != Vector2i(-1, -1) \
+			and _current_cell != target_cell:
+		if _try_start_walk(map_id, target_cell):
+			return
+	# Fallback: instant teleport (first placement, cross-map target,
+	# unreachable path, no PathGrid on this map, already-at-target, or a
+	# walk/wander was interrupted mid-flight by this very block change).
+	_cancel_walk()
+	_current_cell = target_cell
+	position = MapBuilder.cell_center(target_cell)
+
+
+func _path_grid_for_map(map_id: String) -> PathGrid:
+	var root := get_tree().get_first_node_in_group("map_root")
+	if root == null:
+		return null
+	# map scripts don't share a base class (each is a plain Node2D builder —
+	# see town.gd/farm.gd/etc.), so this reads `path_grid` via Godot's
+	# Object.get() property reflection rather than a static type. Also
+	# guards against the group holding a DIFFERENT map than `map_id` (only
+	# matters if two map roots were ever alive at once, which no scene in
+	# this game does today — see class doc).
+	var root_script: Script = root.get_script()
+	if root_script == null:
+		return null
+	var script_path: String = root_script.resource_path
+	if not script_path.ends_with("/%s.gd" % map_id):
+		return null
+	return root.get("path_grid") as PathGrid
+
+
+func _try_start_walk(map_id: String, target_cell: Vector2i) -> bool:
+	var grid := _path_grid_for_map(map_id)
+	if grid == null:
+		return false
+	var path := grid.find_path(_current_cell, target_cell)
+	if path.is_empty():
+		return false  # unreachable (or same cell, handled by the caller's equality check)
+	_walk_queue.clear()
+	for cell: Vector2 in path:
+		_walk_queue.append(MapBuilder.cell_center(Vector2i(cell)))
+	_walk_queue.remove_at(0)  # first entry is the NPC's own current cell-center
+	_current_cell = target_cell  # logical slot updates immediately; visual catches up over _process
+	_walking = true
+	_wandering_out = false
+	return true
+
+
+func _cancel_walk() -> void:
+	_walking = false
+	_walk_queue.clear()
+
+
+func _advance_walk(delta: float) -> void:
+	if _walk_queue.is_empty():
+		_walking = false
+		if not _wandering_out:
+			_wander_timer = _rng.randf_range(WANDER_MIN_INTERVAL, WANDER_MAX_INTERVAL)
+		else:
+			_finish_wander_leg()
+		return
+	var dest: Vector2 = _walk_queue[0]
+	var to_dest := dest - position
+	var dist := to_dest.length()
+	var step := WALK_SPEED * delta
+	if dist <= step:
+		position = dest
+		_walk_queue.remove_at(0)
+		if to_dest.length() > 0.01:
+			_update_facing(to_dest)
+	else:
+		var dir := to_dest / dist
+		_update_facing(dir)
+		position += dir * step
+
+
+func _update_facing(dir: Vector2) -> void:
+	# Cardinal-only (matches the path itself): snap to whichever axis
+	# dominates rather than storing a diagonal-looking vector.
+	if absf(dir.x) > absf(dir.y):
+		facing = Vector2.RIGHT if dir.x > 0 else Vector2.LEFT
+	else:
+		facing = Vector2.DOWN if dir.y > 0 else Vector2.UP
+	if sprite != null:
+		sprite.flip_h = facing == Vector2.LEFT
+
+
+## ---- idle wander (Alive Stride 1) ----
+
+func _update_wander(delta: float) -> void:
+	if _current_cell == Vector2i(-1, -1):
+		return
+	_wander_timer -= delta
+	if _wander_timer > 0.0:
+		return
+	_wander_timer = _rng.randf_range(WANDER_MIN_INTERVAL, WANDER_MAX_INTERVAL)
+	if _rng.randf() >= WANDER_CHANCE:
+		return  # 60% chance per contract; the other 40% just re-rolls the timer
+	_start_wander_stroll()
+
+
+func _start_wander_stroll() -> void:
+	var grid := _path_grid_for_map(_host_map_id)
+	if grid == null:
+		return
+	var candidates: Array[Vector2i] = []
+	for dir: Vector2i in CARDINAL_DIRS:
+		var cell := _current_cell + dir
+		if grid.is_walkable(cell):
+			candidates.append(cell)
+	if candidates.is_empty():
+		return
+	_wander_home_cell = _current_cell
+	var wander_cell: Vector2i = candidates[_rng.randi() % candidates.size()]
+	_walk_queue = [MapBuilder.cell_center(wander_cell)]
+	_walking = true
+	_wandering_out = true
+
+
+func _finish_wander_leg() -> void:
+	if _wandering_out:
+		# Walked out; now walk back home. _current_cell stays at the wander
+		# cell only for the instant between legs (never observable by
+		# schedule resolution, which only runs on block change).
+		_wandering_out = false
+		_walk_queue = [MapBuilder.cell_center(_wander_home_cell)]
+		_walking = true
+	else:
+		_wander_timer = _rng.randf_range(WANDER_MIN_INTERVAL, WANDER_MAX_INTERVAL)
+
+
+## ---- interact pause/resume (Alive Stride 1) ----
+
+func _pause_walk_for_dialog(player: Node) -> void:
+	_paused_for_dialog = true
+	if player is Node2D:
+		_update_facing((player as Node2D).global_position - global_position)
+	var dialog := get_tree().get_first_node_in_group("dialog_box") as DialogBox
+	if dialog != null and not _dialog_finished_connected:
+		dialog.finished.connect(_on_dialog_finished_resume_walk, CONNECT_ONE_SHOT)
+		_dialog_finished_connected = true
+
+
+func _on_dialog_finished_resume_walk() -> void:
+	_dialog_finished_connected = false
+	_paused_for_dialog = false

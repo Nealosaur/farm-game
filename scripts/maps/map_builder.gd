@@ -70,3 +70,20 @@ static func cell_of(pos: Vector2) -> Vector2i:
 
 static func cell_center(cell: Vector2i) -> Vector2:
 	return Vector2(cell) * TILE + Vector2(TILE / 2.0, TILE / 2.0)
+
+
+static func solid_rect_for(center_px: Vector2, size_px: Vector2) -> Rect2i:
+	## Alive Stride 1: converts a StaticBody2D-style centered collision box
+	## (position in PIXELS, RectangleShape2D.size in PIXELS) into the Rect2i
+	## of grid CELLS it overlaps — used by map scripts to feed PathGrid.build()
+	## the same prop footprints (house/counter/hut/boat-shed/notice-board)
+	## their own _add_props() already gives real collision to, so pathfinding
+	## routes around exactly what the player's body already collides with.
+	var top_left := center_px - size_px / 2.0
+	var bottom_right := center_px + size_px / 2.0
+	var start := cell_of(top_left)
+	# Subtract an epsilon before flooring the far edge so an exact multiple of
+	# TILE (e.g. a 32px-wide box starting on a tile boundary) doesn't pull in
+	# one extra empty cell past the box's true edge.
+	var end := cell_of(bottom_right - Vector2(0.01, 0.01))
+	return Rect2i(start, end - start + Vector2i.ONE)

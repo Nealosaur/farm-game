@@ -43,11 +43,13 @@ const MAP_ID := "riverwoods"
 
 var player: Player
 var npcs: Dictionary = {}
+var path_grid: PathGrid  # Alive Stride 1: walkable-grid for NPC pathfinding, read via the "map_root" group
 var _last_block := ""
 var _last_festival_phase := ""  # World Stride D: catches Willow's festival hour-window boundaries block-change alone would miss
 
 
 func _ready() -> void:
+	add_to_group("map_root")
 	var built := MapBuilder.build_tileset()
 	var ids: Dictionary = built.ids
 
@@ -63,6 +65,7 @@ func _ready() -> void:
 	world.y_sort_enabled = true
 	add_child(world)
 
+	path_grid = PathGrid.build(_layout(), _solid_prop_rects())
 	_add_props(world)
 	_add_npcs(world)
 	_add_forage(world)
@@ -127,6 +130,16 @@ func _add_farm_portal(world: Node2D) -> void:
 	})
 	portal.name = "FarmPortal"
 	world.add_child(portal)
+
+
+func _solid_prop_rects() -> Array[Rect2i]:
+	## Alive Stride 1: cell footprint of Willow's hut — the only prop with
+	## real (StaticBody2D) collision on this map.
+	var rects: Array[Rect2i] = []
+	rects.append(MapBuilder.solid_rect_for(
+		Vector2(HUT_CELL) * MapBuilder.TILE + Vector2(24, 24) + Vector2(0, 4),
+		Vector2(48, 40)))
+	return rects
 
 
 func _add_props(world: Node2D) -> void:

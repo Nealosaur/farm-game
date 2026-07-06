@@ -66,12 +66,14 @@ var npcs: Dictionary = {}  # npc_id -> NPC node, for every id with a town schedu
 var marta: NPC  # kept as a named alias (World Stride B call sites / tests reference town.marta)
 var notice_board: NoticeBoard
 var festival_decor: TileMapLayer  # World Stride D: reversible plaza accent cells while a festival is active
+var path_grid: PathGrid  # Alive Stride 1: walkable-grid for NPC pathfinding, read via the "map_root" group
 var _tile_ids: Dictionary = {}
 var _last_block := ""
 var _last_festival_phase := ""  # World Stride D: catches festival-hour boundaries block-change alone would miss
 
 
 func _ready() -> void:
+	add_to_group("map_root")
 	var built := MapBuilder.build_tileset()
 	var ids: Dictionary = built.ids
 	_tile_ids = ids
@@ -96,6 +98,7 @@ func _ready() -> void:
 	world.y_sort_enabled = true
 	add_child(world)
 
+	path_grid = PathGrid.build(_layout(), _solid_prop_rects())
 	_add_props(world)
 	_add_npcs(world)
 
@@ -176,6 +179,33 @@ func _add_beach_portal(world: Node2D) -> void:
 	})
 	portal.name = "BeachPortal"
 	world.add_child(portal)
+
+
+func _solid_prop_rects() -> Array[Rect2i]:
+	## Alive Stride 1: cell footprints of every prop with REAL collision
+	## (StaticBody2D) that _add_props() places — NOT the notice board (an
+	## Area2D trigger, walkable) and NOT the big STORE/CLINIC/SMITHY/SALOON/
+	## MAYOR floor Rect2i's (those are just stone-floor TILE PAINT, walkable
+	## in every non-prop cell — see _layout()). Feeds PathGrid.build() so
+	## pathfinding routes around exactly what the player's body collides
+	## with (mirrors each prop's own position/shape math above).
+	##
+	## KNOWN OVERLAP (documented, not fixed this stride): the counter's
+	## RectangleShape2D (32x16px, centered on COUNTER_CELL's cell-center) is
+	## not tile-aligned and spans THREE cell columns (6, 7, 8), which includes
+	## SHOPKEEPER_CELL (8,13) — the exact cell MartaData.CELL_COUNTER places
+	## her at. That makes Marta's own counter cell (and every path through
+	## it) register as solid, so her counter<->plaza-bench schedule
+	## transition always falls back to the pre-stride teleport instead of
+	## walking (see npc.gd's refresh_schedule — an unreachable/solid target
+	## is an explicit, documented fallback case). Every OTHER town NPC's
+	## schedule transitions (Sten, Bram, Rosa, Alden) path and walk cleanly.
+	var rects: Array[Rect2i] = []
+	rects.append(MapBuilder.solid_rect_for(
+		Vector2(HOUSE_DECOR_CELL) * MapBuilder.TILE + Vector2(24, 24) + Vector2(0, 4),
+		Vector2(48, 40)))
+	rects.append(MapBuilder.solid_rect_for(MapBuilder.cell_center(COUNTER_CELL), Vector2(32, 16)))
+	return rects
 
 
 func _add_props(world: Node2D) -> void:

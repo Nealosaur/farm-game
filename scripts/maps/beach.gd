@@ -43,10 +43,12 @@ const MAP_ID := "beach"
 
 var player: Player
 var npcs: Dictionary = {}
+var path_grid: PathGrid  # Alive Stride 1: walkable-grid for NPC pathfinding, read via the "map_root" group
 var _last_block := ""
 
 
 func _ready() -> void:
+	add_to_group("map_root")
 	var built := MapBuilder.build_tileset()
 	var ids: Dictionary = built.ids
 
@@ -62,6 +64,10 @@ func _ready() -> void:
 	world.y_sort_enabled = true
 	add_child(world)
 
+	# No solid_prop_rects() call: the boat shed is an Area2D interactable
+	# (walkable), not a StaticBody2D — this map has no real-collision props
+	# beyond the walls/water _layout() already encodes.
+	path_grid = PathGrid.build(_layout())
 	_add_props(world)
 	_add_npcs(world)
 	_add_forage(world)

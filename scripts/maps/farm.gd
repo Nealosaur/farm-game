@@ -43,10 +43,12 @@ var grid: FarmGrid
 var player: Player
 var garrick: NPC
 var alden_intro: Area2D  # World Stride D day-1 opening; null after day 1 (or once intro_done)
+var path_grid: PathGrid  # Alive Stride 1: walkable-grid for NPC pathfinding, read via the "map_root" group
 var _last_block := ""
 
 
 func _ready() -> void:
+	add_to_group("map_root")
 	var built := MapBuilder.build_tileset()
 	var ids: Dictionary = built.ids
 
@@ -78,6 +80,7 @@ func _ready() -> void:
 	world.add_child(renderer)
 	renderer.setup(grid, soil, ids)
 
+	path_grid = PathGrid.build(_layout(), _solid_prop_rects())
 	_add_props(world)
 	_add_garrick(world)
 	_add_alden_intro(world)
@@ -222,6 +225,17 @@ func _add_alden_intro(world: Node2D) -> void:
 	area.add_child(col)
 	world.add_child(area)
 	alden_intro = area
+
+
+func _solid_prop_rects() -> Array[Rect2i]:
+	## Alive Stride 1: cell footprint of the house — the only prop with real
+	## (StaticBody2D) collision on this map (Bed/ShippingBin are Area2D
+	## interactables, walkable like the notice board — see _make_interactable).
+	var rects: Array[Rect2i] = []
+	rects.append(MapBuilder.solid_rect_for(
+		Vector2(HOUSE_CELL) * MapBuilder.TILE + Vector2(24, 24) + Vector2(0, 4),
+		Vector2(48, 40)))
+	return rects
 
 
 func _add_props(world: Node2D) -> void:
