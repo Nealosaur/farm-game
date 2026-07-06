@@ -10,7 +10,7 @@ extends RefCounted
 ## data/dialog/garrick.gd's l7 event application — see npc.gd's
 ## _on_heart_event_choice, which now also sets this flag on that exact
 ## choice). This scene then fires the NEXT time the player enters town during
-## blocks 6-12 on any later day — preconditions below express "next day or
+## the 9-12 block on any later day — preconditions below express "next day or
 ## later" as simply NOT gating on day at all (the flag itself only exists
 ## starting the day the L7 event was seen, and TriggerService's callers only
 ## check for new scenes on map entry/block change, never mid-block, so the
