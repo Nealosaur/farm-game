@@ -75,9 +75,17 @@ func end_day(collapsed: bool) -> void:
 
 	var grid := get_tree().get_first_node_in_group("farm_grid") as FarmGrid
 	var wilted := 0
+	var slime_watered := 0
 	if grid != null:
 		# day_passed already grew + season-wilted the live grid; read the tally.
 		wilted = grid.last_wilt_count
+		# Craft Stride 3 (Taming — morning help): each barn slime waters 8
+		# random unwatered tilled cells, seeded by Clock.day for determinism,
+		# BEFORE the rain check (bible ordering). Works on-farm here; the
+		# else branch below mirrors it for the off-farm/stored-blob path —
+		# both read the SAME barn count so waking off-farm gets identical
+		# morning help to waking on it.
+		slime_watered = _barn_slime_water(grid)
 		if Clock.is_raining():
 			grid.water_all()  # rain day: wake to a fully watered field
 		grid.store()
@@ -85,8 +93,10 @@ func end_day(collapsed: bool) -> void:
 		# Farm scene not loaded (slept/collapsed elsewhere): the day_passed
 		# from Clock.end_day() had no live FarmGrid listener, so advance the
 		# saved blob directly — crops must never miss a growth night (nor a
-		# season-boundary wilt, nor an overnight rain watering).
+		# season-boundary wilt, nor an overnight rain watering, nor the barn
+		# slimes' morning watering — same stored-blob pattern as those two).
 		wilted = FarmGrid.advance_stored_day()
+		slime_watered = _barn_slime_water_stored()
 		if Clock.is_raining():
 			FarmGrid.water_all_stored()
 	SaveManager.save_game()
@@ -100,6 +110,12 @@ func end_day(collapsed: bool) -> void:
 		toasts.append("Shipped goods: +%dg" % earned)
 	if wilted > 0:
 		toasts.append("The season turned — %d crops wilted." % wilted)
+	if slime_watered > 0:
+		# One combined toast regardless of barn size (bible: "once per slime
+		# or combined — your call"; combined reads cleaner than a toast per
+		# slime when the pen holds 2). Shown even on a rain day: it's true
+		# that the slimes helped BEFORE the rain took over, factual either way.
+		toasts.append("Your slime helped water the field.")
 	if Clock.is_raining():
 		toasts.append("Rain overnight — the field is watered.")
 	var festival_id := Clock.is_festival_today()
@@ -126,3 +142,37 @@ func end_day(collapsed: bool) -> void:
 		GameFlow.cutscene_active = false
 		_busy = false
 		SceneChanger.swap_scene_while_black(FARM_SCENE, "wake", toasts)
+
+
+const _WATER_PER_SLIME := 8  # bible: "each barn slime waters 8 random unwatered tilled cells"
+
+
+func _barn_slime_water(grid: FarmGrid) -> int:
+	## On-farm path: waters _WATER_PER_SLIME cells per barn slime directly on
+	## the live grid. Seeded by Clock.day ONLY (not per-slime) so the total
+	## pick is deterministic per day regardless of barn size — two slimes
+	## each get their own water_random_unwatered() call (so the second
+	## slime's 8 picks are drawn from whatever the first slime's call left
+	## unwatered), but both calls share the day's seed plus an index offset
+	## so re-running the same day never reshuffles the result.
+	var barn_size := Taming.barn_count(SaveManager.world)
+	if barn_size == 0:
+		return 0
+	var total := 0
+	for i in barn_size:
+		total += grid.water_random_unwatered(_WATER_PER_SLIME, Clock.day * 1000 + i)
+	return total
+
+
+func _barn_slime_water_stored() -> int:
+	## Off-farm path companion (see class doc's "works when waking off-farm
+	## too" requirement) — same seeding rule, applied straight to the saved
+	## blob, mirroring how advance_stored_day()/water_all_stored() already
+	## handle the away-from-farm case.
+	var barn_size := Taming.barn_count(SaveManager.world)
+	if barn_size == 0:
+		return 0
+	var total := 0
+	for i in barn_size:
+		total += FarmGrid.water_random_unwatered_stored(_WATER_PER_SLIME, Clock.day * 1000 + i)
+	return total

@@ -68,7 +68,10 @@ func _init() -> void:
 	_crop("eggplant", [2, 2, 2], "eggplant", [2], 0)
 	_crop("amberleaf", [3, 3, 3], "amberleaf", [2], 0)
 
-	_enemy("slime", "Slime", 20, 4, 40.0, 8, 2, 5, "slime_gel", 0.5)
+	# Craft Stride 3 (Taming): slime is tameable, favorite food turnip (bible:
+	# "EnemyData: slime gets tameable=true, favorite_food='turnip'"). Wisp,
+	# goblin, and the boss stay untameable this phase (defaults apply).
+	_enemy("slime", "Slime", 20, 4, 40.0, 8, 2, 5, "slime_gel", 0.5, true, "turnip")
 	_enemy("wisp", "Wisp", 14, 6, 60.0, 12, 4, 8, "wisp_dust", 0.5)
 	_enemy("goblin", "Goblin", 35, 10, 45.0, 20, 8, 15, "goblin_fang", 0.4)
 	_enemy("slime_king", "Slime King", 300, 14, 30.0, 150, 200, 300, "slime_gel", 1.0)
@@ -205,7 +208,11 @@ func _crop(id: String, stages: Array[int], product: String,
 
 
 func _enemy(id: String, name: String, hp: int, dmg: int, speed: float, xp: int,
-		gmin: int, gmax: int, drop: String, chance: float) -> void:
+		gmin: int, gmax: int, drop: String, chance: float,
+		tameable: bool = false, favorite_food: String = "") -> void:
+	## Craft Stride 3 (Taming): tameable/favorite_food default false/"" so the
+	## three existing untameable calls (wisp/goblin/slime_king) don't need
+	## edits — only slime's call site below passes the taming pair.
 	var r := EnemyData.new()
 	r.id = id
 	r.display_name = name
@@ -217,4 +224,6 @@ func _enemy(id: String, name: String, hp: int, dmg: int, speed: float, xp: int,
 	r.gold_max = gmax
 	r.drop_item_id = drop
 	r.drop_chance = chance
+	r.tameable = tameable
+	r.favorite_food = favorite_food
 	_save(r, "enemies/%s.tres" % id)

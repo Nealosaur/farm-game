@@ -47,6 +47,10 @@ const SPRITES := {
 	"char_finn": [16, 32, "e0a838", KIND_HEADBAND],
 	"char_willow": [16, 32, "588858", KIND_HEADBAND],
 	"char_garrick": [16, 32, "605850", KIND_HEADBAND],
+	# Craft Stride 3 (Taming): friendlier tint of char_slime — lighter/warmer
+	# green than the dungeon slime's "50c050", same KIND_CIRCLE_CHAR
+	# silhouette so it reads as "a slime" at a glance but visibly gentler.
+	"char_barn_slime": [16, 16, "90e090", KIND_CIRCLE_CHAR],
 	"prop_bed": [16, 24, "b03030", ""],
 	"prop_shipping_bin": [16, 16, "8a5a2a", ""],
 	"prop_stairs_down": [16, 16, "222230", "chevron_down"],
@@ -56,6 +60,8 @@ const SPRITES := {
 	"prop_sign": [16, 24, "8a6a3a", ""],
 	"prop_boat_shed": [24, 16, "5a4a3a", ""],
 	"prop_kitchen": [24, 16, "8a6248", ""],  # Craft Stride 1: farm kitchen, beside the house
+	"prop_barn": [32, 24, "8a4a2a", ""],  # Craft Stride 3: farm barn, north of the field
+	"prop_fence": [16, 16, "6a5638", ""],  # Craft Stride 3: pen perimeter segment
 	"item_turnip": [16, 16, "e8e0d0", KIND_CIRCLE_ITEM],
 	"item_carrot": [16, 16, "e07820", KIND_CIRCLE_ITEM],
 	"item_pumpkin": [16, 16, "d06010", KIND_CIRCLE_ITEM],

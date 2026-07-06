@@ -100,6 +100,40 @@ func water_all() -> int:
 	return count
 
 
+func water_random_unwatered(count: int, seed_value: int) -> int:
+	## Craft Stride 3 (Taming — morning help): waters up to `count` random
+	## UNWATERED tilled cells, deterministic for a given seed_value (DayFlow
+	## seeds this with Clock.day so the same day always waters the same
+	## cells, even if replayed/re-simulated). Returns how many cells were
+	## actually newly watered (<=count if fewer unwatered cells exist).
+	## Runs BEFORE the rain check per the bible ("before rain check") — called
+	## from DayFlow ahead of its own is_raining() water_all() branch, so on a
+	## rain day the slime's 8 cells simply get overwritten as "already
+	## watered" by water_all() right after (harmless double-water, same as
+	## any other watered cell rolling into a rain morning).
+	var unwatered: Array[Vector2i] = []
+	for cell: Vector2i in plots:
+		if not plots[cell].watered:
+			unwatered.append(cell)
+	if unwatered.is_empty():
+		return 0
+	# Sort first so iteration order (a Dictionary's key order isn't
+	# guaranteed stable across runs) can't affect which cells the seeded RNG
+	# picks — same seed must always pick the same cells.
+	unwatered.sort_custom(func(a, b): return a.x < b.x or (a.x == b.x and a.y < b.y))
+	var rng := RandomNumberGenerator.new()
+	rng.seed = seed_value
+	var picked := 0
+	var pool := unwatered.duplicate()
+	while picked < count and not pool.is_empty():
+		var idx := rng.randi() % pool.size()
+		var cell: Vector2i = pool[idx]
+		pool.remove_at(idx)
+		if water(cell):
+			picked += 1
+	return picked
+
+
 func plant(cell: Vector2i, crop_id: String) -> bool:
 	var p = plots.get(cell)
 	var crop := ItemDB.get_crop(crop_id)
@@ -278,3 +312,16 @@ static func water_all_stored() -> void:
 	tmp.water_all()
 	SaveManager.world["farm_grid"] = tmp.to_dict()
 	tmp.free()
+
+
+static func water_random_unwatered_stored(count: int, seed_value: int) -> int:
+	## Morning-help watering while the farm scene isn't loaded (slept/
+	## collapsed away from the farm) — same "operate on the saved blob
+	## directly" pattern as advance_stored_day()/water_all_stored(). Returns
+	## how many cells were newly watered.
+	var tmp := FarmGrid.new()
+	tmp.from_dict(SaveManager.world.get("farm_grid", {}))
+	var watered := tmp.water_random_unwatered(count, seed_value)
+	SaveManager.world["farm_grid"] = tmp.to_dict()
+	tmp.free()
+	return watered

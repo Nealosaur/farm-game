@@ -66,6 +66,16 @@ var save_path := "user://save1.json"
 ##                     way "festival"/"forage" are read inline elsewhere. No
 ##                     int()/String() coercion beyond what TriggerService's
 ##                     own helpers already do internally.
+##   "taming"        — {"slime_feeds": int, "barn": ["slime", ...]}. Craft
+##                     Stride 3: global feed tally toward the next tame (any
+##                     tameable species) + the tamed roster living in the
+##                     farm's barn (max Taming.MAX_BARN). Owned by Taming
+##                     (scripts/util/taming.gd) — a stateless RefCounted
+##                     utility (same shape as DungeonState/Forage/
+##                     TriggerService): callers read/write world["taming"]
+##                     directly via Taming.read()/record_feed(), no autoload/
+##                     restore() step of its own. int()/String() coerced on
+##                     read like every other blob.
 var world := {}  # map-owned persistent blobs (farm grid etc.), set by scenes
 
 

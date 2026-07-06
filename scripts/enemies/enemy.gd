@@ -17,6 +17,7 @@ var spawn_position: Vector2
 var is_wisp := false
 var is_goblin := false
 var rng: RandomNumberGenerator
+var is_fed := false  # Craft Stride 3: true once feed() has taken effect this life
 
 @onready var sprite: AnimatedSprite2D = $Sprite
 @onready var collision: CollisionShape2D = $Collision
@@ -96,6 +97,25 @@ func _on_died() -> void:
 
 func player_node() -> Node2D:
 	return get_tree().get_first_node_in_group("player") as Node2D
+
+
+func is_feedable() -> bool:
+	## Craft Stride 3: a live, not-already-fed, tameable enemy the player can
+	## feed its favorite food to. Dead/Hurt-transitioning enemies fail the
+	## health.is_alive() check implicitly (Dead disables collisions but
+	## health.hp is already 0 by the time Dead.enter() runs).
+	return data != null and data.tameable and not is_fed and health.is_alive()
+
+
+func feed() -> void:
+	## Makes this enemy passive for the rest of its (in-scene) life — see
+	## EnemyPassive's class doc for what "passive" disables. Idempotent
+	## no-op if already fed or not feedable, so callers (player.gd) don't
+	## need their own extra guard beyond is_feedable() before calling this.
+	if not is_feedable():
+		return
+	is_fed = true
+	machine.transition("Passive")
 
 
 const ENEMY_SCENE := "res://scenes/enemies/enemy.tscn"

@@ -45,6 +45,12 @@ func _ready() -> void:
 	zone_shape.radius = 10.0
 	($InteractZone/ZoneShape as CollisionShape2D).shape = zone_shape
 	interact_zone.position = Vector2(facing) * 12.0
+	# Craft Stride 3 (Taming): interact_zone now also needs to detect enemy
+	# BODIES (Enemy is a CharacterBody2D, not an Area2D like NPCs/Bed/Kitchen)
+	# so _feedable_target_in_zone() can find a live tameable enemy to feed.
+	# monitorable stays false (set in the scene) — nothing needs to detect
+	# the zone itself, only the reverse.
+	interact_zone.collision_mask = Layers.bit(Layers.WORLD) | Layers.bit(Layers.ENEMY_BODY)
 
 	collision_layer = Layers.bit(Layers.PLAYER_BODY)
 	collision_mask = Layers.bit(Layers.WORLD) | Layers.bit(Layers.ENEMY_BODY)
@@ -161,7 +167,16 @@ func try_use_selected() -> void:
 	elif data is SeedData:
 		_plant(data)
 	elif data is FoodData:
-		_eat(data)
+		# Craft Stride 3 (Taming): feeding takes precedence over eating when a
+		# live tameable enemy that wants THIS held item is in the interact
+		# zone (bible: "feeding takes precedence over eating... eating still
+		# works otherwise" — mirrors the gift-vs-eat resolution NPCs already
+		# use: a more specific interaction wins over the generic fallback).
+		var target := _feedable_target_in_zone(data.id)
+		if target != null:
+			_feed(target, data)
+		else:
+			_eat(data)
 
 
 func _use_tool(tool_data: ToolData) -> void:
@@ -210,6 +225,46 @@ func _eat(food: FoodData) -> void:
 	if food.attack_bonus > 0:
 		msg += " (+%d ATK until sleep)" % food.attack_bonus
 	EventBus.toast_requested.emit(msg)
+
+
+## ---- Taming (Craft Stride 3) ----
+
+func _feedable_target_in_zone(held_item_id: String) -> Enemy:
+	## A live, not-yet-fed, tameable enemy in the interact zone whose
+	## favorite_food matches the currently held item. Returns null if none
+	## (the caller falls back to ordinary eating) — mirrors NPC's giftable-
+	## item lookup pattern (a specific match wins, anything else no-ops here).
+	for body in interact_zone.get_overlapping_bodies():
+		if body is Enemy:
+			var enemy := body as Enemy
+			if enemy.is_feedable() and enemy.data.favorite_food == held_item_id:
+				return enemy
+	return null
+
+
+func _feed(target: Enemy, food: FoodData) -> void:
+	## Consumes 1 of the held favorite food, makes the target passive for the
+	## rest of the day, and resolves the taming threshold (Taming.record_feed)
+	## on top of the ordinary feed — see Taming's class doc for the
+	## fed-vs-tamed-vs-barn-full result shape. Species id is read off
+	## EnemyData.id ("slime") rather than hardcoded, so a future second
+	## tameable species falls out of this same call for free.
+	if not Inventory.remove_item(food.id, 1):
+		return
+	var species_id := target.data.id
+	var outcome := Taming.record_feed(SaveManager.world, species_id)
+	SaveManager.world["taming"] = outcome["blob"]
+	match String(outcome["result"]):
+		Taming.RESULT_TAMED:
+			target.feed()  # still consumed/passive-flagged, then despawns below
+			target.queue_free()
+			EventBus.toast_requested.emit("It follows you home.")
+		Taming.RESULT_BARN_FULL:
+			target.feed()
+			EventBus.toast_requested.emit("Your pen is full.")
+		_:
+			target.feed()
+			EventBus.toast_requested.emit("The slime bounces happily.")
 
 
 func try_interact() -> void:

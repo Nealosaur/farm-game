@@ -12,3 +12,5 @@ xp = 8
 gold_min = 2
 gold_max = 5
 drop_item_id = "slime_gel"
+tameable = true
+favorite_food = "turnip"

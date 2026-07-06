@@ -43,11 +43,23 @@ const GARRICK_DELVE_CELL := Vector2i(38, 12)
 ## leaving the house.
 const ALDEN_INTRO_CELL := Vector2i(10, 7)
 
+## Craft Stride 3 (Taming): barn + fenced pen, north of the tillable field
+## (bible: "small fenced pen + barn prop... north of the field"). TILLABLE is
+## Rect2i(24,10,14,10) (x:24-37, y:10-19); the pen sits directly above it at
+## y:2-6 — clear of the house/kitchen (x:2-6), the west path row (y=7, x:1-14
+## only), and every portal/NPC cell on this map. PEN_RECT is the WALKABLE
+## interior (fence sits on its border, one cell wide, via _pen_fence_cells());
+## PEN_ENTRANCE_CELL is the single south-wall gap the player walks through.
+const PEN_RECT := Rect2i(25, 2, 8, 5)  # interior cells x:25-32, y:2-6
+const PEN_ENTRANCE_CELL := Vector2i(28, 6)  # gap in the south fence wall
+const BARN_CELL := Vector2i(27, 3)  # top-left cell of the 2x2-cell (32x24px) barn footprint
+
 var grid: FarmGrid
 var player: Player
 var garrick: NPC
 var alden_intro: Area2D  # World Stride D day-1 opening; null after day 1 (or once intro_done)
 var path_grid: PathGrid  # Alive Stride 1: walkable-grid for NPC pathfinding, read via the "map_root" group
+var barn_slimes: Array[BarnSlime] = []  # Craft Stride 3: live pettable slimes rendered from world["taming"].barn
 var _last_block := ""
 
 
@@ -236,11 +248,38 @@ func _solid_prop_rects() -> Array[Rect2i]:
 	## Alive Stride 1: cell footprint of the house — the only prop with real
 	## (StaticBody2D) collision on this map (Bed/ShippingBin are Area2D
 	## interactables, walkable like the notice board — see _make_interactable).
+	## Craft Stride 3 adds the barn (also StaticBody2D, same treatment) and
+	## the pen's fence-line cells (solid so the player can't clip through the
+	## fence — only PEN_ENTRANCE_CELL stays open).
 	var rects: Array[Rect2i] = []
 	rects.append(MapBuilder.solid_rect_for(
 		Vector2(HOUSE_CELL) * MapBuilder.TILE + Vector2(24, 24) + Vector2(0, 4),
 		Vector2(48, 40)))
+	rects.append(MapBuilder.solid_rect_for(
+		Vector2(BARN_CELL) * MapBuilder.TILE + Vector2(16, 12), Vector2(32, 24)))
+	for cell in _pen_fence_cells():
+		rects.append(Rect2i(cell, Vector2i.ONE))
 	return rects
+
+
+func _pen_fence_cells() -> Array[Vector2i]:
+	## Every border cell of PEN_RECT (one cell wide, around the interior),
+	## excluding PEN_ENTRANCE_CELL — the single walkable gap the player enters
+	## through. Interior cells themselves are left walkable (barn slimes and
+	## the player, if he steps in, wander freely inside).
+	var cells: Array[Vector2i] = []
+	var r := PEN_RECT
+	for x in range(r.position.x - 1, r.position.x + r.size.x + 1):
+		for y in [r.position.y - 1, r.position.y + r.size.y]:
+			var cell := Vector2i(x, y)
+			if cell != PEN_ENTRANCE_CELL:
+				cells.append(cell)
+	for y in range(r.position.y - 1, r.position.y + r.size.y + 1):
+		for x in [r.position.x - 1, r.position.x + r.size.x]:
+			var cell := Vector2i(x, y)
+			if cell != PEN_ENTRANCE_CELL and not (cell in cells):
+				cells.append(cell)
+	return cells
 
 
 func _add_props(world: Node2D) -> void:
@@ -266,6 +305,68 @@ func _add_props(world: Node2D) -> void:
 	world.add_child(_make_interactable(
 		"Kitchen", "res://scripts/farm/kitchen.gd",
 		"res://assets/placeholder/prop_kitchen.png", KITCHEN_CELL))
+
+	_add_barn_and_pen(world)
+
+
+func _add_barn_and_pen(world: Node2D) -> void:
+	## Craft Stride 3 (Taming): barn prop (solid, StaticBody2D like the house)
+	## plus a fence perimeter around PEN_RECT with a single walkable gap at
+	## PEN_ENTRANCE_CELL. Fence posts are plain Sprite2D + StaticBody2D (no
+	## interact()), matching the house's "just a solid prop" treatment.
+	var barn := StaticBody2D.new()
+	barn.name = "Barn"
+	# BARN_CELL is the footprint's top-left cell; the 32x24px sprite is
+	# centered like prop_house's placement convention above (top-left corner
+	# in pixels + half the sprite's own width/height).
+	barn.position = Vector2(BARN_CELL) * MapBuilder.TILE + Vector2(16, 12)
+	var barn_sprite := Sprite2D.new()
+	barn_sprite.texture = load("res://assets/placeholder/prop_barn.png")
+	barn.add_child(barn_sprite)
+	var barn_col := CollisionShape2D.new()
+	var barn_shape := RectangleShape2D.new()
+	barn_shape.size = Vector2(32, 24)
+	barn_col.shape = barn_shape
+	barn.add_child(barn_col)
+	world.add_child(barn)
+
+	for cell in _pen_fence_cells():
+		var post := StaticBody2D.new()
+		post.position = MapBuilder.cell_center(cell)
+		var post_sprite := Sprite2D.new()
+		post_sprite.texture = load("res://assets/placeholder/prop_fence.png")
+		post.add_child(post_sprite)
+		var post_col := CollisionShape2D.new()
+		var post_shape := RectangleShape2D.new()
+		post_shape.size = Vector2(16, 16)
+		post_col.shape = post_shape
+		post.add_child(post_col)
+		world.add_child(post)
+
+	_spawn_barn_slimes(world)
+
+
+func _spawn_barn_slimes(world: Node2D) -> void:
+	## Renders one BarnSlime per entry in world["taming"].barn — called at
+	## map build (fresh farm.gd _ready()) so a load/scene-swap always matches
+	## the persisted roster. barn_slimes is cleared/rebuilt each call so a
+	## future re-render (e.g. after a same-scene tame) can call this again
+	## without leaking duplicate nodes — no caller does that yet (taming only
+	## ever happens in the dungeon, a different scene), but it's a cheap
+	## safety property to keep.
+	barn_slimes.clear()
+	var blob := Taming.read(SaveManager.world)
+	var barn: Array = blob.get("barn", [])
+	for i in barn.size():
+		var slime := BarnSlime.new()
+		slime.name = "BarnSlime%d" % i
+		slime.setup(PEN_RECT)
+		# Spread starting positions across the pen interior so two slimes
+		# don't spawn stacked on the exact same cell.
+		var start_cell := PEN_RECT.position + Vector2i(1 + i * 2, 1)
+		slime.position = MapBuilder.cell_center(start_cell)
+		world.add_child(slime)
+		barn_slimes.append(slime)
 
 
 func _make_interactable(node_name: String, script_path: String, texture_path: String, cell: Vector2i) -> Area2D:

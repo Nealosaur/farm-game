@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=3]
+[gd_scene load_steps=12 format=3]
 
 [ext_resource type="Script" path="res://scripts/enemies/enemy.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/components/health_component.gd" id="2"]
@@ -11,6 +11,7 @@
 [ext_resource type="Script" path="res://scripts/enemies/states/enemy_dead.gd" id="9"]
 [ext_resource type="Script" path="res://scripts/enemies/states/enemy_windup.gd" id="10"]
 [ext_resource type="Script" path="res://scripts/enemies/states/enemy_lunge.gd" id="11"]
+[ext_resource type="Script" path="res://scripts/enemies/states/enemy_passive.gd" id="12"]
 
 [node name="Enemy" type="CharacterBody2D"]
 script = ExtResource("1")
@@ -56,3 +57,6 @@ script = ExtResource("10")
 
 [node name="Lunge" type="Node" parent="StateMachine"]
 script = ExtResource("11")
+
+[node name="Passive" type="Node" parent="StateMachine"]
+script = ExtResource("12")
