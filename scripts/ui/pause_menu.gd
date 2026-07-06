@@ -12,6 +12,19 @@ extends CanvasLayer
 ## ever opens from the unpaused gameplay state, and only ever closes itself
 ## (never another menu's). See is_pause_allowed() for the pure decision.
 ##
+## C1 fix: also refuses to OPEN while GameFlow.cutscene_active is true (an
+## EventRunner scene is mid-play — dialog/wait/move in flight but the tree
+## itself isn't paused yet, since EventRunner drives its own frame-based
+## wait/move via Clock.paused, not get_tree().paused). Without this gate,
+## Quit to Title during a non-dialog cutscene moment (mid `wait`/`move`/
+## `camera`, i.e. NOT the DialogBox's own Esc-blocking modal) would free the
+## map/EventRunner out from under a live scene; see event_runner.gd's
+## _exit_tree() for the matching backstop on the OTHER side of that same bug.
+## is_pause_allowed() only decides "who does this Esc belong to" between
+## menus already paused/showing — it doesn't know about cutscenes, so this
+## check is a separate, earlier gate in open()/_unhandled_input(), not folded
+## into that pure function's signature.
+##
 ## Save: stores the live FarmGrid (if present — dungeon/town scenes have
 ## none) then SaveManager.save_game(), then toasts "Saved." Quit to Title:
 ## unpauses and travels to the title scene with NO autosave — the contract is
@@ -83,6 +96,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if not is_pause_allowed(get_tree().paused, is_open()):
 		return
+	if GameFlow.cutscene_active and not is_open():
+		return  # C1: never OPEN mid-cutscene; still allow closing ourselves
 	toggle()
 	get_viewport().set_input_as_handled()
 
@@ -97,6 +112,8 @@ func toggle() -> void:
 func open() -> void:
 	if is_open():
 		return
+	if GameFlow.cutscene_active:
+		return  # C1: refuse to open mid-cutscene (see class doc)
 	visible = true
 	get_tree().paused = true
 

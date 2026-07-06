@@ -70,6 +70,7 @@ var world := {}  # map-owned persistent blobs (farm grid etc.), set by scenes
 
 
 func new_game() -> void:
+	GameFlow.cutscene_active = false  # C1: stuck-gate insurance (see event_runner.gd's _exit_tree() doc)
 	Clock.day = 1
 	Clock.minutes = Clock.DAY_START_MINUTES
 	Clock.reset_day_timers()
@@ -110,6 +111,7 @@ func has_save() -> bool:
 
 
 func load_game() -> bool:
+	GameFlow.cutscene_active = false  # C1: stuck-gate insurance (see event_runner.gd's _exit_tree() doc)
 	if not has_save():
 		return false
 	var json := JSON.new()

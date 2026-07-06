@@ -15,6 +15,19 @@ func before_each() -> void:
 	Clock.day = 1
 	Clock.minutes = 10 * 60  # 9-12 block
 	Clock.paused = false
+	# Flake fix: pin weather explicitly. Without this, a "rain" value LEAKED
+	# from another test file (Clock.weather has no autofree/reset of its own)
+	# flips Garrick's 9-12 schedule block from "farm" (his normal map override
+	# for that block — see data/npcs/garrick.gd) to "town" (his rain_schedule
+	# has no map override, so NPCRegistry.map_for() falls back to home_map,
+	# which IS "town"). That puts a LIVE Garrick on this test's own town map,
+	# which _find_live_npc()/resolve_actor() then finds instead of returning
+	# null / instead of leaving him for a temp-spawn — exactly the failure
+	# test_resolve_actor_returns_null_for_temp_when_no_scene_running and
+	# test_temp_spawned_actor_is_freed_once_the_scene_ends depend on NOT
+	# happening. Pinning "clear" here makes every test in this file
+	# independent of whatever some other file's Clock.weather left behind.
+	Clock.weather = "clear"
 	GameState.flags = {}
 
 	_map_root = (load("res://scripts/maps/town.gd") as GDScript).new()
@@ -41,6 +54,7 @@ func after_each() -> void:
 	Clock.paused = false
 	Clock.minutes = Clock.DAY_START_MINUTES
 	Clock.day = 1
+	Clock.weather = "clear"  # restore, so no OTHER file inherits a leak from this one
 	GameState.flags = {}
 	GameFlow.cutscene_active = false
 	get_tree().paused = false
@@ -315,6 +329,43 @@ func test_temp_spawned_actor_is_freed_once_the_scene_ends() -> void:
 	simulate(runner, 5, 0.1)
 	await wait_process_frames(2)
 	assert_true(not is_instance_valid(garrick) or garrick.is_queued_for_deletion())
+
+
+## ---- soft-lock backstop (C1: quit-to-title mid-cutscene) ----
+
+func test_runner_freed_mid_scene_restores_gate_and_clock() -> void:
+	## Simulates "Quit to Title" during a non-dialog cutscene moment (mid
+	## `wait`): the real bug froze the MAP's whole subtree (this runner
+	## included) without ever reaching _end_scene(). Here we put the runner
+	## under a temp node standing in for that subtree and free THAT instead
+	## of the runner directly, since freeing the runner's own parent is what
+	## actually exercises _exit_tree() the way a scene change would.
+	var temp_node := Node.new()
+	add_child_autofree(temp_node)
+	var doomed_runner := EventRunner.new()
+	temp_node.add_child(doomed_runner)
+	Clock.paused = false
+	doomed_runner.play(_script(["wait 60", "end"]))
+	await wait_process_frames(1)
+	assert_true(GameFlow.cutscene_active, "precondition: scene is mid-play")
+	assert_true(Clock.paused, "precondition: scene has frozen the clock")
+	temp_node.free()  # tears down the runner WITHOUT _end_scene() ever running
+	await wait_process_frames(1)
+	assert_false(GameFlow.cutscene_active, "_exit_tree() backstop must clear the stuck gate")
+	assert_false(Clock.paused, "_exit_tree() backstop must restore Clock.paused")
+
+
+func test_runner_freed_after_normal_end_does_not_double_restore_wrongly() -> void:
+	## _end_scene() already cleared everything and set _running = false —
+	## _exit_tree() must be a no-op in that case (idempotent), not stomp a
+	## Clock.paused state some OTHER system set in the meantime.
+	runner.play(_script(["end"]))
+	await wait_process_frames(2)
+	assert_false(GameFlow.cutscene_active)
+	Clock.paused = true  # something else (e.g. another system) paused it after scene end
+	runner.free()
+	await wait_process_frames(1)
+	assert_true(Clock.paused, "_exit_tree() must NOT touch Clock.paused once _end_scene() already ran")
 
 
 ## ---- camera ----

@@ -12,6 +12,7 @@ func after_each() -> void:
 	SaveManager.save_path = "user://save1.json"
 	if FileAccess.file_exists(TEST_PATH):
 		DirAccess.remove_absolute(TEST_PATH)
+	GameFlow.cutscene_active = false
 
 
 func test_new_game_starting_kit() -> void:
@@ -65,6 +66,24 @@ func test_version_mismatch_warns_but_loads() -> void:
 	f.close()
 	assert_true(SaveManager.load_game())
 	assert_eq(Clock.day, 4)
+
+
+## ---- C1: stuck-gate insurance ----
+
+func test_new_game_clears_a_stuck_cutscene_gate() -> void:
+	## Regression for the soft-lock: if GameFlow.cutscene_active somehow got
+	## stuck true (e.g. an old save from before event_runner.gd's _exit_tree()
+	## backstop existed), new_game() must not carry that forward.
+	GameFlow.cutscene_active = true
+	SaveManager.new_game()
+	assert_false(GameFlow.cutscene_active)
+
+
+func test_load_game_clears_a_stuck_cutscene_gate() -> void:
+	assert_true(SaveManager.save_game())
+	GameFlow.cutscene_active = true
+	assert_true(SaveManager.load_game())
+	assert_false(GameFlow.cutscene_active)
 
 
 func test_quests_and_festival_blobs_survive_save_and_load() -> void:

@@ -156,6 +156,28 @@ func _end_scene() -> void:
 	finished.emit()
 
 
+func _exit_tree() -> void:
+	## Soft-lock backstop (C1): if this runner is freed WHILE still `_running`
+	## — the map/scene tree it lives under gets torn down mid-scene (e.g.
+	## "Quit to Title" during a mid-wait/mid-move cutscene moment, before
+	## _end_scene ever gets to run) — the gameplay-freeze gate and Clock.paused
+	## would otherwise stay stuck true FOREVER, since _end_scene() is the only
+	## place that normally clears them and it never gets called on this path.
+	## Idempotent with _end_scene(): that method sets _running = false FIRST,
+	## so a normal end-of-scene teardown (which frees this node afterward, e.g.
+	## EventDirector's queue_free()) sees _running already false here and
+	## no-ops. Deliberately minimal — no camera/temp-actor cleanup here: the
+	## whole map subtree (camera, temp NPCs, everything) is being freed by the
+	## SAME scene-change that is freeing this node, so there is nothing left
+	## to reparent or queue_free() by the time this runs; touching those nodes
+	## from _exit_tree() would risk operating on already-freed instances.
+	if not _running:
+		return
+	_running = false
+	Clock.paused = _clock_was_paused
+	GameFlow.cutscene_active = false
+
+
 func _process(delta: float) -> void:
 	match _busy_command:
 		"wait":

@@ -13,6 +13,7 @@ func before_each() -> void:
 
 func after_each() -> void:
 	get_tree().paused = false
+	GameFlow.cutscene_active = false
 
 
 # ---- pure policy ----
@@ -61,6 +62,37 @@ func test_pause_action_ignored_when_tree_already_paused_by_other_menu() -> void:
 	ev.pressed = true
 	menu._unhandled_input(ev)
 	assert_false(menu.is_open(), "pause menu must not open over another already-open menu")
+
+
+# ---- C1: refuse to open mid-cutscene ----
+
+func test_open_refuses_while_cutscene_active() -> void:
+	GameFlow.cutscene_active = true
+	menu.open()
+	assert_false(menu.is_open(), "must not open a pause menu mid-cutscene")
+	assert_false(get_tree().paused)
+
+
+func test_unhandled_input_refuses_to_open_while_cutscene_active() -> void:
+	GameFlow.cutscene_active = true
+	var ev := InputEventAction.new()
+	ev.action = "pause"
+	ev.pressed = true
+	menu._unhandled_input(ev)
+	assert_false(menu.is_open(), "Esc must not open the pause menu mid-cutscene")
+
+
+func test_unhandled_input_still_allows_closing_if_somehow_already_open_during_cutscene() -> void:
+	# Defensive: if the menu were already open and a cutscene then started
+	# (shouldn't happen in practice), Esc must still be able to CLOSE it, not
+	# get stuck open forever.
+	menu.open()
+	GameFlow.cutscene_active = true
+	var ev := InputEventAction.new()
+	ev.action = "pause"
+	ev.pressed = true
+	menu._unhandled_input(ev)
+	assert_false(menu.is_open(), "closing must still work even if cutscene_active flips true while open")
 
 
 # ---- save ----
