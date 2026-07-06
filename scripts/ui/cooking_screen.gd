@@ -8,8 +8,6 @@ extends CanvasLayer
 ## thin display over the testable helper — zero code change needed when
 ## ItemDB recipes grow.
 
-const ROW_HEIGHT := 40
-
 var recipe_list: VBoxContainer
 var _rows: Dictionary = {}  # recipe.id -> row Control, for targeted refresh
 
