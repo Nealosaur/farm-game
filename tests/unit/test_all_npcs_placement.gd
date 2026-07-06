@@ -150,3 +150,107 @@ func test_willow_home_map_is_riverwoods_for_every_ordinary_block() -> void:
 		var hour: int = ALL_HOURS_BY_BLOCK[block]
 		assert_eq(NPCRegistry.map_for(data, hour, false, false), "riverwoods",
 			"Willow's %s block must be on riverwoods" % block)
+
+
+## ---- Alive Stride 1: walk-target footprint checks ----
+
+## Two DOCUMENTED exceptions (see town.gd/riverwoods.gd's _solid_prop_rects
+## doc notes): each building's own schedule cell doubles as that same prop's
+## collision footprint, so those two specific (npc_id, cell) pairs are
+## EXPECTED to sit inside a solid_prop_rects footprint — every OTHER cell for
+## that same NPC (e.g. Marta's plaza bench, Willow's riverbank) must not.
+const _DOCUMENTED_FOOTPRINT_QUIRKS := [
+	["marta", "town", Vector2i(8, 13)],        # MartaData.CELL_COUNTER == town.gd SHOPKEEPER_CELL, inside the counter's footprint
+	["willow", "riverwoods", Vector2i(6, 5)],  # WillowData.CELL_HUT == riverwoods.gd HUT_CELL, inside the hut's own footprint
+]
+
+var _map_grids := {}  # map_id -> PathGrid, lazily built (layout + solid_prop_rects)
+
+
+func _grid_for(map_id: String) -> PathGrid:
+	if _map_grids.has(map_id):
+		return _map_grids[map_id]
+	var script_path := "res://scripts/maps/%s.gd" % map_id
+	var m: Node2D = (load(script_path) as GDScript).new()
+	var rects: Array[Rect2i] = m._solid_prop_rects()
+	var grid := PathGrid.build(m._layout(), rects)
+	m.free()
+	_map_grids[map_id] = grid
+	return grid
+
+
+func _is_documented_quirk(npc_id: String, map_id: String, cell: Vector2i) -> bool:
+	for triple: Array in _DOCUMENTED_FOOTPRINT_QUIRKS:
+		if triple[0] == npc_id and triple[1] == map_id and triple[2] == cell:
+			return true
+	return false
+
+
+func test_no_npc_schedule_cell_sits_inside_a_solid_prop_footprint() -> void:
+	## Extends the walkable-tile check above (test_every_npc_has_a_walkable_
+	## cell_for_every_schedule_block) to also rule out the SOLID PROP
+	## footprints (house/counter/hut) PathGrid marks non-walkable —
+	## everything a walking NPC would actually need to path through or stand
+	## on, not just the raw tile character.
+	for npc_id: String in NPCFactory.ALL_IDS:
+		var data := NPCFactory.build_data(npc_id)
+		for block: String in NPCRegistry.BLOCKS:
+			var hour: int = ALL_HOURS_BY_BLOCK[block]
+			if not NPCRegistry.is_present(data, hour, false, false):
+				continue
+			var cell := NPCRegistry.cell_for(data, hour, false, false)
+			var map_id := NPCRegistry.map_for(data, hour, false, false)
+			var grid := _grid_for(map_id)
+			if _is_documented_quirk(npc_id, map_id, cell):
+				assert_false(grid.is_walkable(cell),
+					"%s's documented quirk cell %s on '%s' was expected to be solid — quirk may be stale" % [npc_id, cell, map_id])
+				continue
+			assert_true(grid.is_walkable(cell),
+				"%s block %s: cell %s on map '%s' must not sit inside a solid prop footprint" % [npc_id, block, cell, map_id])
+
+
+func test_no_npc_rain_cell_sits_inside_a_solid_prop_footprint() -> void:
+	for npc_id: String in NPCFactory.ALL_IDS:
+		var data := NPCFactory.build_data(npc_id)
+		for block: String in NPCRegistry.BLOCKS:
+			var hour: int = ALL_HOURS_BY_BLOCK[block]
+			if not NPCRegistry.is_present(data, hour, true, false):
+				continue
+			var cell := NPCRegistry.cell_for(data, hour, true, false)
+			var map_id := NPCRegistry.map_for(data, hour, true, false)
+			var grid := _grid_for(map_id)
+			if _is_documented_quirk(npc_id, map_id, cell):
+				continue
+			assert_true(grid.is_walkable(cell),
+				"%s rain block %s: cell %s on map '%s' must not sit inside a solid prop footprint" % [npc_id, block, cell, map_id])
+
+
+func test_no_npc_festival_cell_sits_inside_a_solid_prop_footprint() -> void:
+	var grid := _grid_for("town")  # every festival is on the plaza (FESTIVAL_MAP)
+	for npc_id: String in NPCFactory.ALL_IDS:
+		var data := NPCFactory.build_data(npc_id)
+		if data.festival_cell == Vector2i(-1, -1):
+			continue
+		assert_true(grid.is_walkable(data.festival_cell),
+			"%s's festival cell %s must not sit inside a solid prop footprint on town" % [npc_id, data.festival_cell])
+
+
+func test_no_npc_extra_schedule_cell_sits_inside_a_solid_prop_footprint() -> void:
+	## Covers the priority-key proof entries (Sten's "winter", Finn's
+	## "weekend") — every cell in every extra_schedules table must be as
+	## walkable as an ordinary schedule cell. Both proof NPCs' extra cells
+	## happen to live on "town"; resolved generically in case a future NPC's
+	## extra table targets a different map via the {"map","cell"} shape.
+	for npc_id: String in NPCFactory.ALL_IDS:
+		var data := NPCFactory.build_data(npc_id)
+		for table_key: String in data.extra_schedules:
+			var table: Dictionary = data.extra_schedules[table_key]
+			for block: String in table:
+				var raw = table[block]
+				var cell: Vector2i = raw.get("cell", Vector2i(-1, -1)) if raw is Dictionary else raw
+				var map_id: String = String(raw.get("map", data.home_map)) if raw is Dictionary else data.home_map
+				var grid := _grid_for(map_id)
+				if _is_documented_quirk(npc_id, map_id, cell):
+					continue
+				assert_true(grid.is_walkable(cell),
+					"%s's extra_schedules['%s']['%s'] cell %s on '%s' must not sit inside a solid prop footprint" % [npc_id, table_key, block, cell, map_id])

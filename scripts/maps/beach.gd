@@ -64,10 +64,7 @@ func _ready() -> void:
 	world.y_sort_enabled = true
 	add_child(world)
 
-	# No solid_prop_rects() call: the boat shed is an Area2D interactable
-	# (walkable), not a StaticBody2D — this map has no real-collision props
-	# beyond the walls/water _layout() already encodes.
-	path_grid = PathGrid.build(_layout())
+	path_grid = PathGrid.build(_layout(), _solid_prop_rects())
 	_add_props(world)
 	_add_npcs(world)
 	_add_forage(world)
@@ -128,6 +125,15 @@ func _add_town_portal(world: Node2D) -> void:
 	})
 	portal.name = "TownPortal"
 	world.add_child(portal)
+
+
+func _solid_prop_rects() -> Array[Rect2i]:
+	## Alive Stride 1: no solid props on this map — the boat shed is an
+	## Area2D interactable (walkable), not a StaticBody2D. Kept as a real
+	## method (not just omitted) so callers (PathGrid setup, tests) can treat
+	## every map script the same way rather than special-casing beach.
+	var rects: Array[Rect2i] = []
+	return rects
 
 
 func _add_props(world: Node2D) -> void:
