@@ -32,6 +32,25 @@ var save_path := "user://save1.json"
 ##                     live in Forage (scripts/util/forage.gd) — same
 ##                     ensure_day()-before-query pattern as "dungeon_state".
 ##                     int()/String() coerced on read like every other blob.
+##   "quests"        — quest_id -> {"state": "active"|"done", "met":
+##                     [String], "already_met_king": bool}. Owned by the
+##                     Quests autoload (scripts/quests/quests.gd); call
+##                     Quests.restore() after new_game()/load_game() (no
+##                     signal fires on load — same sequencing rule as
+##                     Clock.restore_calendar()/Relationships.restore()).
+##   "festival"      — {"decor_day": int, "contest_year": int}. Owned by the
+##                     Festival helper (scripts/world/festival.gd): tracks
+##                     which day the plaza decor was last applied (so it can
+##                     be cleared the following day) and the last year the
+##                     Harvest Fair contest was entered (once-per-year gate).
+##                     int() coerced on read like every other blob.
+##   "intro"         — {"done": bool}. Owned by GameState.flags in practice
+##                     (see GameState.flags["intro_done"] — flags already
+##                     round-trips via GameState.to_dict()/from_dict(), so
+##                     Day-1 intro state does NOT need its own top-level
+##                     world key; this entry documents that choice so a
+##                     future reader doesn't go looking for a "world.intro"
+##                     key that was never created).
 var world := {}  # map-owned persistent blobs (farm grid etc.), set by scenes
 
 
@@ -50,6 +69,7 @@ func new_game() -> void:
 	Inventory.add_item("wooden_sword")
 	Inventory.add_item("turnip_seeds", 5)
 	Relationships.restore()  # empty world["relationships"] -> fresh state for every NPC
+	Quests.restore()  # empty world["quests"] -> no quests granted yet (fresh Day 1)
 
 
 func save_game() -> bool:
@@ -97,7 +117,22 @@ func load_game() -> bool:
 	world = data.get("world", {})
 	Clock.restore_calendar()  # weather back from world["calendar"] (or defaults)
 	Relationships.restore()  # bond state back from world["relationships"] (or defaults)
+	Quests.restore()  # quest state back from world["quests"] (or defaults)
+	_migrate_intro_flag()
 	return true
+
+
+func _migrate_intro_flag() -> void:
+	## World Stride D: saves from before the Day-1 opening existed have no
+	## "intro_done" flag at all. Bible-documented migration choice: treat the
+	## intro as already done for any such save PAST day 1 (a returning player
+	## should never have Alden's intro ambush them retroactively on the farm);
+	## only a save that's somehow still ON day 1 with the flag missing (e.g.
+	## a same-session Continue immediately after a pre-Stride-D new_game())
+	## is left to actually play the intro.
+	if GameState.flags.has("intro_done"):
+		return
+	GameState.flags["intro_done"] = Clock.day > 1
 
 
 func delete_save() -> void:

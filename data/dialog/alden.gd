@@ -4,15 +4,24 @@ extends RefCounted
 ## docs/design/characters.md (typos and all — they're voice). Do not
 ## paraphrase; if a line needs to change, change characters.md first.
 ##
-## EXCLUDED by contract: characters.md's "INTRO (Day 1, on the farm,
-## one-time — quest grant 'New Roots')" block — that's World Stride D scope
-## (quests aren't implemented yet). Only the ordinary tier-pool/seasonal/
-## rain/birthday/gift/heart-event data below ships this stride.
+## World Stride D adds the "intro" block below: Alden's Day-1 farm-intro
+## lines (verbatim, characters.md's INTRO block) plus his New Roots hand-in
+## line, both consumed by npc.gd's day-1/quest-hook methods, NOT by
+## DialogResolver.pick() (pick() only ever resolves the ordinary ambient-
+## talk line; intro/hand-in are their own dedicated flows).
 ##
 ## Shape consumed by DialogResolver.pick() — see data/dialog/marta.gd's
 ## header comment for the full documented shape.
 
 const DATA := {
+	"intro": {
+		"lines": [
+			"Ah — you made it. Welcome to Hearthstead. Your grandmother worked this soil forty years; the town ate from it for most of them.",
+			"I'll be plain: Emberhollow is fading. Shops quiet, plaza empty, and something old has soured in the Delve east of here.",
+			"But a lit window on this farm is the best news we've had in years. Meet the town — all eight of us worth meeting, I'm afraid I'm counted. Come find me after. There's a fund.",
+		],
+	},
+	"new_roots_hand_in": "The town fund thanks you. Marta insisted on the seeds.",
 	"tier_pools": {
 		"STRANGER": [
 			"Good day. The notice board is current — I see to it personally.",

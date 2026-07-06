@@ -111,8 +111,11 @@ func _play_talk(dialog: DialogBox, player: Node) -> void:
 	if String(result.get("source", "")) == "tier_pool":
 		Relationships.mark_line_shown(npc_data.id, context["tier"], int(result["pool_index"]))
 	Relationships.talk(npc_data.id)  # no-ops (returns false) if already talked today
+	Quests.record_talk(npc_data.id)  # New Roots progress (no-ops off-quest/already-met)
 
 	var lines: Array[String] = []
+	var quest_lines := _quest_hand_in_lines_if_any()
+	lines.append_array(quest_lines)
 	var perk_line := _grant_pending_perk_if_any()
 	if perk_line != "":
 		lines.append(perk_line)
@@ -126,6 +129,45 @@ func _play_talk(dialog: DialogBox, player: Node) -> void:
 	_choice_labels = choices
 	_choice_player = player
 	dialog.show_choices(lines, choices)
+
+
+## ---- quests (World Stride D) ----
+
+func _quest_hand_in_lines_if_any() -> Array[String]:
+	## Prepended before the ordinary resolved line (same slot perk lines use —
+	## a quest hand-in and a level perk never collide in practice since perks
+	## gate on Relationships level and quests gate on Quests state, but if
+	## both landed on the same talk the quest line takes precedence,
+	## appearing first). Alden and Garrick are the only two NPCs with any
+	## quest hooks (bible: New Roots hands in via Alden, Prove It/King Below
+	## via Garrick) — every other NPC's id simply matches no case below and
+	## this returns empty, a no-op.
+	var lines: Array[String] = []
+	match npc_data.id:
+		"alden":
+			if Quests.hand_in_new_roots():
+				lines.append(String(dialog_data.get("new_roots_hand_in", "")))
+		"garrick":
+			_grant_and_hand_in_garrick_quests(lines)
+	return lines
+
+
+func _grant_and_hand_in_garrick_quests(lines: Array[String]) -> void:
+	# "Prove It" grants on first-ever Garrick talk (any level) — grant_prove_it()
+	# is idempotent (no-ops once already granted), so calling it every talk is safe.
+	Quests.grant_prove_it()
+	if Quests.hand_in_prove_it():
+		# hand_in_prove_it() also grants king_below (bible: "Q3... after Q2");
+		# if the boss was ALREADY defeated by this point, king_below completes
+		# instantly inside that call, so the SAME talk can also hand in Q3 —
+		# check immediately after, below.
+		var quests_data: Dictionary = dialog_data.get("quests", {})
+		lines.append(String(quests_data.get("prove_it_hand_in", "")))
+	var king_result := Quests.hand_in_king_below()
+	if king_result["handed_in"]:
+		var quests_data: Dictionary = dialog_data.get("quests", {})
+		var key := "king_below_hand_in_already_defeated" if king_result["already_met_king"] else "king_below_hand_in"
+		lines.append(String(quests_data.get(key, "")))
 
 
 ## ---- level perks (World Stride C) ----

@@ -94,13 +94,15 @@ func test_bram_and_garrick_l8_perks_carry_the_documented_max_hp_flag() -> void:
 	assert_eq(int(garrick_l8.get("max_hp", 0)), 10, "Garrick's L8 perk must grant +10 max HP")
 
 
-func test_alden_intro_and_garrick_quests_are_excluded_this_stride() -> void:
-	## Explicit scope guard: Alden's day-1 INTRO block and Garrick's QUESTS
-	## block are stride D content and must NOT appear in the shipped data.
+func test_alden_intro_and_garrick_quests_are_present() -> void:
+	## World Stride D: Alden's day-1 INTRO block and Garrick's QUESTS block
+	## are now shipped (previously explicitly excluded in Stride C).
 	var alden := _data("alden")
-	assert_false(alden.has("intro"), "Alden's INTRO block is stride D scope, not this stride")
+	assert_true(alden.has("intro"), "Alden's INTRO block must be present (World Stride D)")
+	assert_gt((alden["intro"].get("lines", []) as Array).size(), 0,
+		"Alden's INTRO must have at least one line")
 	var garrick := _data("garrick")
-	assert_false(garrick.has("quests"), "Garrick's QUESTS block is stride D scope, not this stride")
+	assert_true(garrick.has("quests"), "Garrick's QUESTS block must be present (World Stride D)")
 
 
 ## ---- per-NPC verbatim spot-checks (one representative string each) ----

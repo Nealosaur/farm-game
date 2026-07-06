@@ -33,9 +33,16 @@ const RIVERWOODS_PORTAL_CELL := Vector2i(17, 24)
 ## itself so he isn't standing on its trigger area.
 const GARRICK_DELVE_CELL := Vector2i(38, 12)
 
+## Day-1 opening (World Stride D): Alden stands "near the player, in the
+## walking path" per the bible — a few cells south-east of SPAWNS["wake"]
+## (8,8), on the open path row (y=7) so the player naturally walks past him
+## leaving the house.
+const ALDEN_INTRO_CELL := Vector2i(10, 7)
+
 var grid: FarmGrid
 var player: Player
 var garrick: NPC
+var alden_intro: Area2D  # World Stride D day-1 opening; null after day 1 (or once intro_done)
 var _last_block := ""
 
 
@@ -73,6 +80,7 @@ func _ready() -> void:
 
 	_add_props(world)
 	_add_garrick(world)
+	_add_alden_intro(world)
 
 	player = (load("res://scenes/player/player.tscn") as PackedScene).instantiate()
 	player.global_position = MapBuilder.cell_center(
@@ -114,6 +122,8 @@ func _ready() -> void:
 	_last_block = NPCRegistry.block_for(Clock.hour())
 	if garrick != null:
 		garrick.refresh_schedule("farm")
+	if alden_intro != null:
+		alden_intro.refresh_for_block()
 	EventBus.time_ticked.connect(_on_time_ticked)
 
 
@@ -190,6 +200,30 @@ func _add_garrick(world: Node2D) -> void:
 	world.add_child(garrick)
 
 
+func _add_alden_intro(world: Node2D) -> void:
+	## Day-1 opening (World Stride D, see scripts/components/alden_intro.gd):
+	## only ever instanced when the intro hasn't played yet AND it's still
+	## day 1 — on day 2+ (or once intro_done is true) this is a no-op, so
+	## every farm.gd _ready() after the intro plays builds nothing extra.
+	if Clock.day != 1 or GameState.flags.get("intro_done", false):
+		return
+	var area := Area2D.new()
+	area.name = "AldenIntro"
+	area.set_script(load("res://scripts/components/alden_intro.gd"))
+	area.position = MapBuilder.cell_center(ALDEN_INTRO_CELL)
+	var sprite := Sprite2D.new()
+	sprite.name = "Sprite2D"
+	sprite.texture = load(NPCFactory.REGISTRY["alden"]["sprite"])
+	area.add_child(sprite)
+	var col := CollisionShape2D.new()
+	var shape := RectangleShape2D.new()
+	shape.size = Vector2(16, 32)
+	col.shape = shape
+	area.add_child(col)
+	world.add_child(area)
+	alden_intro = area
+
+
 func _add_props(world: Node2D) -> void:
 	var house := StaticBody2D.new()
 	house.position = Vector2(HOUSE_CELL) * MapBuilder.TILE + Vector2(24, 24)
@@ -234,3 +268,5 @@ func _on_time_ticked(_hour, _minute) -> void:
 		_last_block = block
 		if garrick != null:
 			garrick.refresh_schedule("farm")
+		if alden_intro != null:
+			alden_intro.refresh_for_block()

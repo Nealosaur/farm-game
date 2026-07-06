@@ -18,3 +18,4 @@ signal boss_defeated
 signal toast_requested(message)
 signal camera_shake(strength)
 signal relationship_changed(npc_id)
+signal quest_updated(quest_id)

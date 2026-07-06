@@ -4,15 +4,21 @@ extends RefCounted
 ## docs/design/characters.md (typos and all — they're voice). Do not
 ## paraphrase; if a line needs to change, change characters.md first.
 ##
-## EXCLUDED by contract: characters.md's "QUESTS" block (Q2 "Prove It", Q3
-## "The King Below") — that's World Stride D scope (quests aren't
-## implemented yet). Only the ordinary tier-pool/seasonal/rain/birthday/gift/
-## heart-event data below ships this stride.
+## World Stride D adds the "quests" block below: Garrick's hand-in lines for
+## Q2 "Prove It" and Q3 "The King Below" (verbatim, characters.md's QUESTS
+## block), consumed by npc.gd's quest-hook methods, NOT DialogResolver.pick()
+## (pick() only resolves the ordinary ambient-talk line; quest grant/hand-in
+## are their own dedicated flow).
 ##
 ## Shape consumed by DialogResolver.pick() — see data/dialog/marta.gd's
 ## header comment for the full documented shape.
 
 const DATA := {
+	"quests": {
+		"prove_it_hand_in": "Delve salvage, and a hint worth more: iron holds where steel folds. Floor two taught you that, didn't it.",
+		"king_below_hand_in": "The King's down. Knew you had it in you, farmer.",
+		"king_below_hand_in_already_defeated": "Heard the King's already met you. Ha! Money's still money.",
+	},
 	"tier_pools": {
 		"STRANGER": [
 			"Farmer with a blade. The Delve's eaten better. ...Prove me wrong, actually. Please.",
