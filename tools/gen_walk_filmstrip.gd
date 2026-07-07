@@ -25,7 +25,7 @@ const LABEL_W := 70  # left margin per row for a text-free color tick + spacing
 
 const CHAR_FRAME_W := 16
 const CHAR_FRAME_H := 32
-const CHAR_ROW_DOWN := 0  # SpriteSheets.CHAR_ROWS: down=0
+const CHAR_ROW_DOWN := 0  # SpriteSheets.CHAR_ROW_DIRS: down=0 (still row 0 after the 8-row farmer-format alignment)
 const CHAR_COLS := 4      # idle, walk1, walk2, walk3
 
 
