@@ -7,7 +7,7 @@ extends Area2D
 ## the exact impact frame (punchier read than the blink alone — the blink
 ## communicates "still invincible", the flash communicates "you got hit").
 
-signal hit_taken(damage: int, knockback: Vector2)
+signal hit_taken(damage: int, knockback: Vector2, is_heavy: bool)
 
 @export var iframe_duration: float = 0.4
 const FLASH_DURATION := 0.08
@@ -54,7 +54,7 @@ func _register_hit(hitbox: HitboxComponent) -> void:
 		var dir := from - hitbox.global_position
 		if dir != Vector2.ZERO:
 			knockback = dir.normalized() * hitbox.knockback_force
-	hit_taken.emit(hitbox.damage, knockback)
+	hit_taken.emit(hitbox.damage, knockback, hitbox.is_heavy)
 	trigger_iframes(iframe_duration)
 	_flash_white()
 

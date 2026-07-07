@@ -95,7 +95,13 @@ func _add_ground_shadow(single_tex: Texture2D) -> void:
 	GroundShadow.attach(self, Vector2(0, feet_y - 2), Vector2(w * 0.7, h * 0.28))
 
 
-func _on_hurtbox_hit_taken(damage: int, knockback: Vector2) -> void:
+func _on_hurtbox_hit_taken(damage: int, knockback: Vector2, _is_heavy: bool = false) -> void:
+	# FEEL Stride 2: hit-stop on every LANDED player sword hit (this hurtbox
+	# only ever receives hits from the player's sword hitbox — see its
+	# collision_mask in setup() — so any hit landing here IS a landed sword
+	# hit; no is_heavy gate needed on this side, unlike the player's own
+	# handler which reserves hit-stop for the boss's heavy slam).
+	HitStop.trigger()
 	if machine.current != null and machine.current.name == "Dead":
 		return
 	health.take_damage(damage)

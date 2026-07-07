@@ -26,6 +26,7 @@ Relationships="*res://scripts/autoload/relationships.gd"
 Quests="*res://scripts/quests/quests.gd"
 SceneChanger="*res://scripts/autoload/scene_changer.gd"
 GameFlow="*res://scripts/autoload/game_flow.gd"
+HitStop="*res://scripts/autoload/hit_stop.gd"
 
 [display]
 

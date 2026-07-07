@@ -85,9 +85,15 @@ func _ready() -> void:
 	_position_facing_indicator()
 
 
-func _on_hurtbox_hit_taken(damage: int, knockback: Vector2) -> void:
+func _on_hurtbox_hit_taken(damage: int, knockback: Vector2, is_heavy: bool = false) -> void:
 	GameState.take_damage(damage)
-	EventBus.camera_shake.emit(CameraShake.DEFAULT_STRENGTH)
+	# FEEL Stride 4 (screen shake retune): small shake on ordinary damage,
+	# medium on a heavy hit (currently only the boss slam sets is_heavy).
+	EventBus.camera_shake.emit(CameraShake.DEFAULT_STRENGTH * (1.5 if is_heavy else 1.0))
+	# FEEL Stride 2: hit-stop on the boss slam landing on the player — a brief
+	# global time_scale dip so the impact reads as heavy, not a tickle.
+	if is_heavy:
+		HitStop.trigger()
 	var hurt := machine.get_node_or_null("Hurt") as PlayerHurt
 	if hurt != null:
 		hurt.incoming_knockback = knockback

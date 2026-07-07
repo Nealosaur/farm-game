@@ -83,7 +83,11 @@ func spawn_minions(world: Node) -> void:
 		Enemy.spawn_enemy("slime", cell, world)
 
 
-func _on_hurtbox_hit_taken(damage: int, knockback: Vector2) -> void:
+func _on_hurtbox_hit_taken(damage: int, knockback: Vector2, _is_heavy: bool = false) -> void:
+	# FEEL Stride 2: same "every landed player sword hit" hit-stop rule as the
+	# base Enemy — this override exists for the boss's own Hurt/Dead wiring,
+	# not to change when hit-stop fires.
+	HitStop.trigger()
 	if machine.current != null and machine.current.name == "Dead":
 		return
 	health.take_damage(damage)

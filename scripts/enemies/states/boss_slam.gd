@@ -71,6 +71,7 @@ func _spawn_slam_hitbox() -> void:
 	_slam_hitbox = HitboxComponent.new()
 	_slam_hitbox.damage = boss.data.damage
 	_slam_hitbox.knockback_force = KNOCKBACK
+	_slam_hitbox.is_heavy = true  # FEEL Stride 2: hit-stop + medium shake on landing
 	_slam_hitbox.collision_layer = Layers.bit(Layers.ENEMY_HITBOX)
 	_slam_hitbox.collision_mask = Layers.bit(Layers.PLAYER_HURTBOX)
 	var shape := CollisionShape2D.new()
