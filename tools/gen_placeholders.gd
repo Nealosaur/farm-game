@@ -387,20 +387,35 @@ func _tile_sand() -> Image:
 
 
 ## =====================================================================
-## CHARACTERS (player + 8 NPCs) — 16x32 single-frame + 64x128 sheet
+## CHARACTERS (player + 8 NPCs) — 16x32 single-frame + 64x256 farmer sheet
 ## =====================================================================
+## SPRITE FORMAT ALIGNMENT: the sheet now matches the Stardew-farmer-style
+## extended format documented in assets/placeholder/char_frames.json — 4
+## cols x 8 rows, direction order Down/Right/Up/Left (NOT the old ad-hoc
+## D/U/L/R), rows 0-3 = walk cycles (col0 idle + 3 walk frames), rows 4-7 =
+## a shared "action" cycle (tool-use AND sword swing) per direction. This is
+## the CONTRACT the user authors real hand-drawn art against, so the row
+## order/dims here must match the manifest exactly.
+
+const CHAR_ROW_DIRS := ["down", "right", "up", "left"]  # Stardew order
+
 
 func _write_characters() -> int:
 	var n := 0
 	for def: CharDef in _char_defs():
-		var idle_down := _draw_character(def, "down", 0)
+		var idle_down := _draw_character(def, "down", 0, false)
 		_save(OUT + "char_%s.png" % def.id, idle_down)
 		n += 1
 
 		var frames: Array = []
-		for row_dir in ["down", "up", "left", "right"]:
+		# rows 0-3: walk cycles, D/R/U/L
+		for row_dir in CHAR_ROW_DIRS:
 			for frame_i in 4:  # idle, walk1, walk2, walk3
-				frames.append(_draw_character(def, row_dir, frame_i))
+				frames.append(_draw_character(def, row_dir, frame_i, false))
+		# rows 4-7: action cycles (tool-use + sword swing share these), D/R/U/L
+		for row_dir in CHAR_ROW_DIRS:
+			for frame_i in 4:  # windup, swing/strike, follow-through, recover
+				frames.append(_draw_character(def, row_dir, frame_i, true))
 		var sheet := PixelArt.build_sheet(frames, 16, 32, 4)
 		_save(OUT + "char_%s_sheet.png" % def.id, sheet)
 		n += 1
@@ -408,35 +423,55 @@ func _write_characters() -> int:
 
 
 ## Draws one 16x32 character frame. `facing`: down/up/left/right.
-## `frame_i`: 0 = idle, 1..3 = walk cycle (contact/passing/contact-ish via a
-## small leg/arm offset — deterministic, no interpolation library needed).
-func _draw_character(def: CharDef, facing: String, frame_i: int) -> Image:
+## `frame_i`: for a WALK row, 0 = idle, 1..3 = walk cycle (contact/passing/
+## contact-ish via a small leg/arm offset). For an ACTION row (`is_action`
+## true), 0..3 = windup/swing/follow-through/recover — a simple arm-raised/
+## tool-forward variant of the idle pose, placeholder-grade but visually
+## distinct from the walk cycle so the animation reads as "doing something"
+## rather than walking in place. Deterministic, no interpolation library.
+func _draw_character(def: CharDef, facing: String, frame_i: int, is_action: bool) -> Image:
 	var img := PixelArt.blank(16, 32)
 	var eyes := Color("2a2030")
 
 	# ground shadow first (not outlined)
 	PixelArt.ground_shadow(img, 8, 30, 4)
 
-	# walk-cycle leg offset: frame 1/3 step one leg forward/back by 1px,
-	# frame 2 is the "passing" pose (legs together, slight bob up).
 	var leg_off := 0
 	var bob := 0
-	match frame_i:
-		1:
-			leg_off = 1
-		2:
-			bob = -1
-		3:
-			leg_off = -1
+	var arm_raise := 0  # action cycle: how far the leading/front arm lifts (px, up = negative)
+	if is_action:
+		# windup (0): arm draws back/up slightly; swing (1): arm fully
+		# extended/raised, small forward body bob; follow-through (2): arm
+		# still extended, easing back; recover (3): arm most of the way home.
+		match frame_i:
+			0:
+				arm_raise = -1
+			1:
+				arm_raise = -3
+				bob = -1
+			2:
+				arm_raise = -2
+			3:
+				arm_raise = -1
+	else:
+		# walk-cycle leg offset: frame 1/3 step one leg forward/back by 1px,
+		# frame 2 is the "passing" pose (legs together, slight bob up).
+		match frame_i:
+			1:
+				leg_off = 1
+			2:
+				bob = -1
+			3:
+				leg_off = -1
 
 	var leg_y := 22 + bob
 	var torso_y := 15 + bob
 	var head_y := 8 + bob
 
 	if facing == "left" or facing == "right":
-		_draw_character_side(img, def, facing, leg_y, torso_y, head_y, leg_off, eyes)
+		_draw_character_side(img, def, facing, leg_y, torso_y, head_y, leg_off, arm_raise, eyes)
 	else:
-		_draw_character_front_back(img, def, facing, leg_y, torso_y, head_y, leg_off, eyes)
+		_draw_character_front_back(img, def, facing, leg_y, torso_y, head_y, leg_off, arm_raise, eyes)
 
 	# per-character accent (apron/scarf/hat trim) — a horizontal band on the
 	# torso so Sten/Rosa read as apron-wearing, Alden as coated, etc. Skipped
@@ -450,7 +485,7 @@ func _draw_character(def: CharDef, facing: String, frame_i: int) -> Image:
 
 ## Down (front) / up (back) silhouette — same blocky body, differing only in
 ## face (both eyes visible from the front, none from the back).
-func _draw_character_front_back(img: Image, def: CharDef, facing: String, leg_y: int, torso_y: int, head_y: int, leg_off: int, eyes: Color) -> void:
+func _draw_character_front_back(img: Image, def: CharDef, facing: String, leg_y: int, torso_y: int, head_y: int, leg_off: int, arm_raise: int, eyes: Color) -> void:
 	# legs + boots (offset for walk cycle)
 	PixelArt.rect(img, 5 - leg_off, leg_y, 2, 6, def.pants)
 	PixelArt.rect(img, 9 + leg_off, leg_y, 2, 6, def.pants)
@@ -460,9 +495,10 @@ func _draw_character_front_back(img: Image, def: CharDef, facing: String, leg_y:
 	# torso (shirt) with shaded right side for volume
 	PixelArt.rect(img, 5, torso_y, 6, 7, def.shirt)
 	PixelArt.shade_right(img, 5, torso_y, 6, 7, def.shirt_shade, 2)
-	# arms (skin)
+	# arms (skin) — action cycle raises the right (front-worn-tool) arm by
+	# arm_raise px so a tool-use/swing pose reads distinctly from idle/walk.
 	PixelArt.rect(img, 4, torso_y, 1, 5, def.skin)
-	PixelArt.rect(img, 11, torso_y, 1, 5, def.skin_shade)
+	PixelArt.rect(img, 11, torso_y + arm_raise, 1, 5, def.skin_shade)
 
 	# head + shaded side
 	PixelArt.rect(img, 5, head_y, 6, 7, def.skin)
@@ -480,7 +516,7 @@ func _draw_character_front_back(img: Image, def: CharDef, facing: String, leg_y:
 ## Left/right (side profile) silhouette: head + torso shifted toward the
 ## facing edge, a single trailing arm, one eye near the leading edge, and a
 ## visible nose/chin bump so the profile doesn't read as a mirrored front.
-func _draw_character_side(img: Image, def: CharDef, facing: String, leg_y: int, torso_y: int, head_y: int, leg_off: int, eyes: Color) -> void:
+func _draw_character_side(img: Image, def: CharDef, facing: String, leg_y: int, torso_y: int, head_y: int, leg_off: int, arm_raise: int, eyes: Color) -> void:
 	var dir := 1 if facing == "right" else -1  # +1 = leading edge is the right side
 
 	# legs: near leg forward (leading), far leg trails — walk cycle offsets
@@ -499,8 +535,12 @@ func _draw_character_side(img: Image, def: CharDef, facing: String, leg_y: int, 
 		PixelArt.shade_right(img, torso_x, torso_y, 4, 7, def.shirt_shade, 1)
 	else:
 		PixelArt.rect(img, torso_x, torso_y, 1, 7, def.shirt_shade)
-	# single trailing arm
-	PixelArt.rect(img, torso_x - dir * 3, torso_y + 1, 1, 5, def.skin_shade)
+	# single trailing arm — action cycle raises/extends it forward (toward
+	# the facing edge) instead of trailing, so a tool-use/swing pose reads.
+	var arm_x := torso_x - dir * 3
+	if arm_raise != 0:
+		arm_x = torso_x + dir * 2  # swing the arm out in front instead of behind
+	PixelArt.rect(img, arm_x, torso_y + 1 + arm_raise, 1, 5, def.skin_shade)
 
 	# head: shifted toward the facing side, with a small nose/chin bump on
 	# the leading edge so left vs right reads as a profile, not a mirror.
