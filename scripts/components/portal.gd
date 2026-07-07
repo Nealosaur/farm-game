@@ -24,6 +24,13 @@ const ARM_DELAY := 0.5
 @export var target_spawn: String = ""
 @export var label: String = ""
 
+## DEPTH stride (mine descend/ascend): optional side-effect invoked right
+## before SceneChanger.travel() fires, e.g. writing the target depth into
+## SaveManager.world["mine"] so the reloaded mine_floor.tscn picks it up in
+## its own _ready(). Unset ("" Callable) for every ordinary portal — this is
+## purely additive, no existing portal behavior changes.
+var pre_travel: Callable = Callable()
+
 var _armed := false
 
 
@@ -58,6 +65,8 @@ func _on_body_entered(body: Node2D) -> void:
 		return
 	if label != "":
 		EventBus.toast_requested.emit(label)
+	if pre_travel.is_valid():
+		pre_travel.call()
 	SceneChanger.travel(target_scene, target_spawn)
 
 

@@ -26,6 +26,13 @@ const SIZE := Vector2i(34, 22)
 ## Where the boss stands when spawned. Keep inside the boss room rect below.
 const BOSS_CELL := Vector2i(27, 10)
 
+## DEPTH stride: the "deep delve" ladder down into the procedural mine, only
+## reachable once the boss is defeated (GameState.flags["boss_defeated"]) —
+## carved into the entrance room, away from ASCEND (3,10) and DEFAULT (5,11)
+## so it never collides with those tiles (layout sanity test enforces this
+## the same way it does for every other portal on this floor).
+const MINE_ENTRANCE_CELL := Vector2i(6, 9)
+
 ## The corridor cells connecting the guard room to the boss room — sealed by
 ## ArenaGate once the player crosses in, for the duration of the fight.
 const ARENA_GATE_CELLS := [Vector2i(20, 10), Vector2i(20, 11)]
@@ -46,6 +53,7 @@ const FLOOR_RECTS := [
 const SPAWNS := {
 	"default": Vector2i(5, 11),
 	"entrance": Vector2i(5, 11),  # arriving from Floor 2 (stairs up at 3,10)
+	"from_below": Vector2i(5, 8),  # arriving back from the mine (ascend from depth 1)
 }
 
 const PORTALS := [
@@ -123,11 +131,41 @@ func _ready() -> void:
 		_health_bar = BossHealthBar.new()
 		add_child(_health_bar)
 		_health_bar.track(_boss)
+	else:
+		# DEPTH stride: the deep-delve ladder only appears once the boss is
+		# beaten (matches the design doc's "a deep delve ladder on floor 3
+		# after the boss" placement) — carved into the entrance room, see
+		# MINE_ENTRANCE_CELL's doc.
+		_add_mine_entrance(world)
 
 	var victory := VictorySequence.new()
 	victory.name = "VictorySequence"
 	add_child(victory)
 	EventBus.boss_defeated.connect(_on_boss_defeated)
+
+
+func _add_mine_entrance(world: Node2D) -> void:
+	var portal := Portal.make({
+		"cell": MINE_ENTRANCE_CELL,
+		"target_scene": "res://scenes/maps/mine_floor.tscn",
+		"target_spawn": "entrance",
+		"sprite": "res://assets/placeholder/prop_stairs_down.png",
+		"label": "Deep Delve",
+	})
+	portal.name = "MineEntrancePortal"
+	# Every fresh entry from Floor 3 starts a NEW dive (bible: "new seed each
+	# fresh dive") — reroll run_seed from an engine-random source ONLY here
+	# (the one place a dive begins); every subsequent depth transition inside
+	# the mine reuses the same run_seed via MineFloor._write_depth().
+	portal.pre_travel = _start_new_dive
+	world.add_child(portal)
+
+
+func _start_new_dive() -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.randomize()
+	var blob := MineState.ensure_run(SaveManager.world.get("mine", {}), rng.randi())
+	SaveManager.world["mine"] = blob
 
 
 func _on_boss_defeated() -> void:

@@ -8,6 +8,7 @@ var gold_label: Label
 var clock_label: Label
 var day_label: Label
 var buff_label: Label
+var depth_label: Label
 var toast_label: Label
 var slot_panels: Array[Panel] = []
 var slot_icons: Array[TextureRect] = []
@@ -42,6 +43,15 @@ func _ready() -> void:
 	buff_label.add_theme_color_override("font_color", Color("e0a838"))
 	buff_label.visible = false
 	top_left.add_child(buff_label)
+
+	# DEPTH stride: mine descent counter, shown only while a MineFloor is the
+	# current scene (see mine_floor.gd's "mine_floor" group) — hidden on
+	# every other map, including the hand-authored dungeon_1/2/3 floors.
+	depth_label = Label.new()
+	depth_label.add_theme_font_size_override("font_size", 10)
+	depth_label.add_theme_color_override("font_color", Color("c8b878"))
+	depth_label.visible = false
+	top_left.add_child(depth_label)
 
 	# UI skin pass: dark backing panel behind the day/clock/gold labels so
 	# they stay legible over busy world art (contract: backing only, no
@@ -186,6 +196,14 @@ func _refresh_stats() -> void:
 	buff_label.visible = GameState.temp_attack > 0
 	if buff_label.visible:
 		buff_label.text = "+%d ATK" % GameState.temp_attack
+	_refresh_depth_label()
+
+
+func _refresh_depth_label() -> void:
+	var mine := get_tree().get_first_node_in_group("mine_floor")
+	depth_label.visible = mine != null
+	if mine != null:
+		depth_label.text = "Depth %d" % int(mine.depth)
 
 
 func _refresh_clock() -> void:

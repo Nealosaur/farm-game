@@ -138,3 +138,39 @@ func _find_player(floor_node: Node) -> Player:
 		if child is Player:
 			return child
 	return null
+
+
+## ---- DEPTH stride: deep-delve mine entrance gate ----
+
+func test_mine_entrance_absent_while_boss_alive() -> void:
+	var f := _make_floor()
+	add_child_autofree(f)
+	await wait_process_frames(2)
+	assert_null(f.get_node_or_null("World/MineEntrancePortal"),
+		"the deep-delve ladder must not appear until the boss is beaten")
+
+
+func test_mine_entrance_appears_once_boss_defeated() -> void:
+	GameState.flags["boss_defeated"] = true
+	var f := _make_floor()
+	add_child_autofree(f)
+	await wait_process_frames(2)
+	var portal := f.get_node_or_null("World/MineEntrancePortal") as Portal
+	assert_not_null(portal)
+	assert_eq(portal.target_scene, "res://scenes/maps/mine_floor.tscn")
+	assert_eq(portal.target_spawn, "entrance")
+	assert_true(portal.pre_travel.is_valid())
+
+
+func test_mine_entrance_starts_a_fresh_dive_each_entry() -> void:
+	GameState.flags["boss_defeated"] = true
+	SaveManager.world["mine"] = {"run_seed": 123, "depth": 5, "deepest": 5, "killed": {"5": [0]}}
+	var f := _make_floor()
+	add_child_autofree(f)
+	await wait_process_frames(2)
+	var portal := f.get_node_or_null("World/MineEntrancePortal") as Portal
+	portal.pre_travel.call()
+	var blob: Dictionary = SaveManager.world["mine"]
+	assert_ne(int(blob["run_seed"]), 123, "each entry from Floor 3 rolls a NEW run_seed")
+	assert_eq(int(blob["depth"]), MineState.ENTRY_DEPTH, "a fresh dive starts at depth 1")
+	assert_eq(int(blob["deepest"]), 5, "deepest is a permanent record, unaffected by a fresh dive")

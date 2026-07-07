@@ -66,6 +66,16 @@ var save_path := "user://save1.json"
 ##                     way "festival"/"forage" are read inline elsewhere. No
 ##                     int()/String() coercion beyond what TriggerService's
 ##                     own helpers already do internally.
+##   "mine"          — {"run_seed": int, "depth": int, "deepest": int,
+##                     "killed": {"<depth>": [spawn_index, ...]}}. DEPTH
+##                     stride: the procedural mine's per-dive descent ledger,
+##                     shape + rules live in MineState (scripts/util/
+##                     mine_state.gd) — same ensure_*()-before-query pattern
+##                     as "dungeon_state"/"forage", but per RUN (a fresh dive
+##                     rerolls run_seed and resets depth/killed) rather than
+##                     per calendar day. "deepest" is a permanent high-water
+##                     mark across every dive, never reset. int() coerced on
+##                     read like every other blob.
 ##   "taming"        — {"slime_feeds": int, "barn": ["slime", ...]}. Craft
 ##                     Stride 3: global feed tally toward the next tame (any
 ##                     tameable species) + the tamed roster living in the
