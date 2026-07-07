@@ -114,7 +114,101 @@ func _write_tiles() -> int:
 	_save(OUT + "tile_path.png", _tile_path())
 	_save(OUT + "tile_sand.png", _tile_sand())
 	n += 9
+	n += _write_tile_variants()
 	return n
+
+
+## LOOK V3 (World/tile/UI polish): cosmetic-only variant textures for
+## MapBuilder.VARIANTS — same base silhouette + palette as their base tile
+## (so a field reads as "one kind of grass", not a patchwork of different
+## greens), plus ONE small deterministic decorative detail per variant
+## (flower fleck / pebble / darker tuft / stone crack / sand shell etc.).
+## Collision is never affected — MapBuilder shares the base tile's SOLID
+## membership for every variant of it.
+func _write_tile_variants() -> int:
+	var n := 0
+	_save(OUT + "tile_grass_var1.png", _tile_grass_variant_flower())
+	_save(OUT + "tile_grass_var2.png", _tile_grass_variant_pebble())
+	_save(OUT + "tile_grass_var3.png", _tile_grass_variant_tuft())
+	_save(OUT + "tile_soil_tilled_var1.png", _tile_soil_variant())
+	_save(OUT + "tile_stone_floor_var1.png", _tile_stone_variant())
+	_save(OUT + "tile_sand_var1.png", _tile_sand_variant())
+	n += 6
+	return n
+
+
+## Base grass + a single tiny wildflower fleck (3px cross: petals + center).
+func _tile_grass_variant_flower() -> Image:
+	var img := _tile_grass("tile_grass", Color("4a7a3a"), Color("3f6a31"), 0)
+	var petal := Color("e8d868")
+	var center := Color("d8883a")
+	var pos: Vector2i = _det_positions(PixelArt.hash_seed("tile_grass_var1"), 1, 12, 12)[0] + Vector2i(2, 2)
+	PixelArt.px(img, pos.x, pos.y, petal)
+	PixelArt.px(img, pos.x - 1, pos.y, petal)
+	PixelArt.px(img, pos.x + 1, pos.y, petal)
+	PixelArt.px(img, pos.x, pos.y - 1, petal)
+	PixelArt.px(img, pos.x, pos.y + 1, petal)
+	PixelArt.px(img, pos.x, pos.y, center)
+	return img
+
+
+## Base grass + one or two small grey pebbles.
+func _tile_grass_variant_pebble() -> Image:
+	var img := _tile_grass("tile_grass", Color("4a7a3a"), Color("3f6a31"), 0)
+	var pebble := Color("8a8a7a")
+	var pebble_shade := Color("6a6a5c")
+	var positions := _det_positions(PixelArt.hash_seed("tile_grass_var2"), 2, 12, 12)
+	for p: Vector2i in positions:
+		var pos := p + Vector2i(2, 2)
+		PixelArt.px(img, pos.x, pos.y, pebble)
+		PixelArt.px(img, pos.x + 1, pos.y, pebble_shade)
+	return img
+
+
+## Base grass + an extra darker tuft cluster (denser than the base tile's own
+## sparse ticks), reading as a slightly overgrown patch.
+func _tile_grass_variant_tuft() -> Image:
+	var img := _tile_grass("tile_grass", Color("4a7a3a"), Color("3f6a31"), 0)
+	var tuft := Color("2f5624")
+	var positions := _det_positions(PixelArt.hash_seed("tile_grass_var3"), 4, 14, 14)
+	for p: Vector2i in positions:
+		var pos := p + Vector2i(1, 1)
+		PixelArt.px(img, pos.x, pos.y, tuft)
+		PixelArt.px(img, pos.x, pos.y - 1, tuft)
+	return img
+
+
+## Tilled soil + a couple of small stone/root flecks breaking up the furrows.
+func _tile_soil_variant() -> Image:
+	var img := _tile_soil(false)
+	var fleck := Color("8a7458")
+	var positions := _det_positions(PixelArt.hash_seed("tile_soil_tilled_var1"), 2, 14, 6)
+	for p: Vector2i in positions:
+		PixelArt.px(img, p.x + 1, p.y + 4, fleck)
+	return img
+
+
+## Stone floor + a single hairline crack (reads as worn/aged flagstone).
+func _tile_stone_variant() -> Image:
+	var img := _tile_stone()
+	var crack := Color("48484f")
+	PixelArt.px(img, 6, 3, crack)
+	PixelArt.px(img, 7, 4, crack)
+	PixelArt.px(img, 7, 5, crack)
+	PixelArt.px(img, 8, 6, crack)
+	return img
+
+
+## Sand + a tiny shell/shard fleck.
+func _tile_sand_variant() -> Image:
+	var img := _tile_sand()
+	var shell := Color("e8e0c8")
+	var shell_shade := Color("c8b898")
+	var pos: Vector2i = _det_positions(PixelArt.hash_seed("tile_sand_var1"), 1, 12, 12)[0] + Vector2i(2, 2)
+	PixelArt.px(img, pos.x, pos.y, shell)
+	PixelArt.px(img, pos.x + 1, pos.y, shell_shade)
+	PixelArt.px(img, pos.x, pos.y + 1, shell_shade)
+	return img
 
 
 func _tile_grass(name: String, base: Color, dark: Color, variant: int) -> Image:
@@ -1228,8 +1322,10 @@ func _write_characters_preview() -> void:
 ## Tiles + props, side by side at 6x.
 func _write_tiles_and_props_preview() -> void:
 	var names := [
-		"tile_grass", "tile_grass_dark", "tile_soil_tilled", "tile_soil_watered",
-		"tile_stone_floor", "tile_wall", "tile_water", "tile_path", "tile_sand",
+		"tile_grass", "tile_grass_var1", "tile_grass_var2", "tile_grass_var3",
+		"tile_grass_dark", "tile_soil_tilled", "tile_soil_tilled_var1",
+		"tile_soil_watered", "tile_stone_floor", "tile_stone_floor_var1",
+		"tile_wall", "tile_water", "tile_path", "tile_sand", "tile_sand_var1",
 		"prop_house", "prop_barn", "prop_fence", "prop_bed", "prop_shipping_bin",
 		"prop_kitchen", "prop_counter", "prop_stairs_up", "prop_stairs_down",
 		"prop_sign", "prop_boat_shed",
