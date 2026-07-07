@@ -98,24 +98,39 @@ func _build_rows() -> void:
 	_refresh_rows()
 
 
+## UI skin pass structural note: the row is now a PanelContainer (was a bare
+## VBoxContainer) so it can carry the slot ninepatch background —
+## PanelContainer is the only Container type with a "panel" stylebox slot.
+## Header/CostLabel move one level deeper (into an inner unnamed "VBox")
+## since PanelContainer stacks/overlaps multiple direct children instead of
+## flowing them vertically. Behavior unchanged; test_forge_screen.gd's
+## row-lookup path was updated to match (mirrors cooking_screen.gd's
+## identical fix).
 func _make_row(upgrade: Dictionary) -> Control:
-	var box := VBoxContainer.new()
+	var box := PanelContainer.new()
 	box.name = "Row_" + String(upgrade["id"])
+	box.add_theme_stylebox_override("panel", UITheme.slot_stylebox())
+
+	var inner := VBoxContainer.new()
+	inner.name = "VBox"
+	box.add_child(inner)
 
 	var header := HBoxContainer.new()
 	header.name = "Header"
-	box.add_child(header)
+	inner.add_child(header)
 
 	var result := ItemDB.get_item(String(upgrade["result_id"]))
 	var name_label := Label.new()
 	name_label.name = "NameLabel"
 	name_label.text = result.display_name if result != null else String(upgrade["result_id"])
 	name_label.custom_minimum_size = Vector2(140, 0)
+	name_label.add_theme_color_override("font_color", UITheme.TEXT_LIGHT)
 	header.add_child(name_label)
 
 	var forge_btn := Button.new()
 	forge_btn.name = "ForgeButton"
 	forge_btn.text = "Forge"
+	forge_btn.theme = UITheme.button_theme()
 	forge_btn.pressed.connect(_on_forge_pressed.bind(String(upgrade["id"])))
 	header.add_child(forge_btn)
 
@@ -125,7 +140,8 @@ func _make_row(upgrade: Dictionary) -> Control:
 	cost_label.fit_content = true
 	cost_label.scroll_active = false
 	cost_label.add_theme_font_size_override("normal_font_size", 10)
-	box.add_child(cost_label)
+	cost_label.add_theme_color_override("default_color", UITheme.TEXT_MUTED)
+	inner.add_child(cost_label)
 
 	return box
 
@@ -133,12 +149,12 @@ func _make_row(upgrade: Dictionary) -> Control:
 func _refresh_rows() -> void:
 	for upgrade: Dictionary in ForgeLogic.visible_upgrades():
 		var id := String(upgrade["id"])
-		var row: VBoxContainer = _rows.get(id)
+		var row: PanelContainer = _rows.get(id)
 		if row == null:
 			continue
-		var forge_btn := row.get_node("Header/ForgeButton") as Button
+		var forge_btn := row.get_node("VBox/Header/ForgeButton") as Button
 		forge_btn.disabled = not ForgeLogic.can_afford(upgrade)
-		var cost_label := row.get_node("CostLabel") as RichTextLabel
+		var cost_label := row.get_node("VBox/CostLabel") as RichTextLabel
 		cost_label.text = _cost_bbcode(upgrade)
 
 

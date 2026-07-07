@@ -49,29 +49,39 @@ func _ready() -> void:
 	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(dim)
 
+	var frame := PanelContainer.new()
+	frame.set_anchors_preset(Control.PRESET_CENTER)
+	frame.position = Vector2(-58, -48)
+	frame.add_theme_stylebox_override("panel", UITheme.panel_stylebox())
+	add_child(frame)
+
 	var vbox := VBoxContainer.new()
-	vbox.set_anchors_preset(Control.PRESET_CENTER)
-	vbox.position = Vector2(-50, -40)
 	vbox.custom_minimum_size = Vector2(100, 0)
-	add_child(vbox)
+	frame.add_child(vbox)
 
 	var title_label := Label.new()
 	title_label.text = "Paused"
 	title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title_label.add_theme_color_override("font_color", UITheme.TEXT_LIGHT)
 	vbox.add_child(title_label)
+
+	var btn_theme := UITheme.button_theme()
 
 	resume_btn = Button.new()
 	resume_btn.text = "Resume"
+	resume_btn.theme = btn_theme
 	resume_btn.pressed.connect(close)
 	vbox.add_child(resume_btn)
 
 	save_btn = Button.new()
 	save_btn.text = "Save"
+	save_btn.theme = btn_theme
 	save_btn.pressed.connect(_on_save_pressed)
 	vbox.add_child(save_btn)
 
 	quit_btn = Button.new()
 	quit_btn.text = "Quit to Title"
+	quit_btn.theme = btn_theme
 	quit_btn.pressed.connect(_on_quit_pressed)
 	vbox.add_child(quit_btn)
 

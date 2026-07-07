@@ -27,6 +27,7 @@ func _ready() -> void:
 	panel.set_anchors_preset(Control.PRESET_CENTER)
 	panel.position = Vector2(-160, -130)
 	panel.size = Vector2(320, 260)
+	panel.add_theme_stylebox_override("panel", UITheme.panel_stylebox())
 	add_child(panel)
 
 	var vbox := VBoxContainer.new()
@@ -36,6 +37,7 @@ func _ready() -> void:
 
 	var title := Label.new()
 	title.text = "Cooking"
+	title.add_theme_color_override("font_color", UITheme.TEXT_LIGHT)
 	vbox.add_child(title)
 
 	var scroll := ScrollContainer.new()
@@ -49,6 +51,7 @@ func _ready() -> void:
 	var hint_label := Label.new()
 	hint_label.text = "Esc/Tab: close"
 	hint_label.add_theme_font_size_override("font_size", 10)
+	hint_label.add_theme_color_override("font_color", UITheme.TEXT_MUTED)
 	vbox.add_child(hint_label)
 
 	EventBus.inventory_changed.connect(_on_inventory_changed)
@@ -98,19 +101,33 @@ func _build_rows() -> void:
 	_refresh_rows()
 
 
+## UI skin pass structural note: the row is now a PanelContainer (was a bare
+## VBoxContainer) so it can carry the slot ninepatch background — PanelContainer
+## is the only Container type with a "panel" stylebox slot (VBoxContainer/
+## HBoxContainer have none). `Header`/`IngredientsLabel` move one level deeper
+## (into an inner unnamed VBoxContainer) since PanelContainer stacks/overlaps
+## multiple direct children instead of flowing them vertically. Behavior is
+## unchanged; test_cooking_screen.gd's row-lookup path was updated to match
+## (Row_x/VBox/Header/CookButton instead of Row_x/Header/CookButton).
 func _make_row(recipe: RecipeData) -> Control:
-	var box := VBoxContainer.new()
+	var box := PanelContainer.new()
 	box.name = "Row_" + recipe.id
+	box.add_theme_stylebox_override("panel", UITheme.slot_stylebox())
+
+	var inner := VBoxContainer.new()
+	inner.name = "VBox"
+	box.add_child(inner)
 
 	var header := HBoxContainer.new()
 	header.name = "Header"
-	box.add_child(header)
+	inner.add_child(header)
 
 	var result := ItemDB.get_item(recipe.result_id)
 	var name_label := Label.new()
 	name_label.name = "NameLabel"
 	name_label.text = result.display_name if result != null else recipe.result_id
 	name_label.custom_minimum_size = Vector2(110, 0)
+	name_label.add_theme_color_override("font_color", UITheme.TEXT_LIGHT)
 	header.add_child(name_label)
 
 	var effect_label := Label.new()
@@ -118,11 +135,13 @@ func _make_row(recipe: RecipeData) -> Control:
 	effect_label.text = _effect_summary(result as FoodData)
 	effect_label.add_theme_font_size_override("font_size", 10)
 	effect_label.custom_minimum_size = Vector2(100, 0)
+	effect_label.add_theme_color_override("font_color", UITheme.TEXT_MUTED)
 	header.add_child(effect_label)
 
 	var cook_btn := Button.new()
 	cook_btn.name = "CookButton"
 	cook_btn.text = "Cook"
+	cook_btn.theme = UITheme.button_theme()
 	cook_btn.pressed.connect(_on_cook_pressed.bind(recipe.id))
 	header.add_child(cook_btn)
 
@@ -132,7 +151,8 @@ func _make_row(recipe: RecipeData) -> Control:
 	ing_label.fit_content = true
 	ing_label.scroll_active = false
 	ing_label.add_theme_font_size_override("normal_font_size", 10)
-	box.add_child(ing_label)
+	ing_label.add_theme_color_override("default_color", UITheme.TEXT_MUTED)
+	inner.add_child(ing_label)
 
 	return box
 
@@ -152,12 +172,12 @@ func _effect_summary(food: FoodData) -> String:
 
 func _refresh_rows() -> void:
 	for recipe: RecipeData in CookingLogic.all_recipes():
-		var row: VBoxContainer = _rows.get(recipe.id)
+		var row: PanelContainer = _rows.get(recipe.id)
 		if row == null:
 			continue
-		var cook_btn := row.get_node("Header/CookButton") as Button
+		var cook_btn := row.get_node("VBox/Header/CookButton") as Button
 		cook_btn.disabled = not CookingLogic.can_cook(recipe)
-		var ing_label := row.get_node("IngredientsLabel") as RichTextLabel
+		var ing_label := row.get_node("VBox/IngredientsLabel") as RichTextLabel
 		ing_label.text = _ingredients_bbcode(recipe)
 
 

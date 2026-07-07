@@ -26,14 +26,15 @@ func _ready() -> void:
 	label = Label.new()
 	label.text = "Slime King"
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.add_theme_color_override("font_color", UITheme.TEXT_LIGHT)
 	box.add_child(label)
 
 	bar = ProgressBar.new()
 	bar.custom_minimum_size = Vector2(200, 14)
 	bar.show_percentage = false
-	var fill := StyleBoxFlat.new()
-	fill.bg_color = Color("60c060")
-	bar.add_theme_stylebox_override("fill", fill)
+	var styles := UITheme.bar_styleboxes(Color("60c060"))
+	bar.add_theme_stylebox_override("background", styles["bg"])
+	bar.add_theme_stylebox_override("fill", styles["fill"])
 	box.add_child(bar)
 
 	visible = false

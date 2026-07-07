@@ -38,8 +38,11 @@ func test_recipe_rows_match_all_recipes() -> void:
 
 func test_cook_button_disabled_when_missing_ingredients() -> void:
 	screen.open()
+	# UI skin pass: row is now a PanelContainer (carries the slot ninepatch
+	# background) wrapping an inner "VBox" so Header/IngredientsLabel can
+	# still stack vertically — see cooking_screen.gd's _make_row() comment.
 	var row := screen.recipe_list.get_node("Row_roast_turnip")
-	var btn := row.get_node("Header/CookButton") as Button
+	var btn := row.get_node("VBox/Header/CookButton") as Button
 	assert_true(btn.disabled)
 
 
@@ -47,7 +50,7 @@ func test_cook_button_enabled_when_ingredients_present() -> void:
 	Inventory.add_item("turnip", 2)
 	screen.open()
 	var row := screen.recipe_list.get_node("Row_roast_turnip")
-	var btn := row.get_node("Header/CookButton") as Button
+	var btn := row.get_node("VBox/Header/CookButton") as Button
 	assert_false(btn.disabled)
 
 
@@ -64,7 +67,7 @@ func test_cooking_refreshes_button_state_after_consuming() -> void:
 	screen.open()
 	screen._on_cook_pressed("roast_turnip")
 	var row := screen.recipe_list.get_node("Row_roast_turnip")
-	var btn := row.get_node("Header/CookButton") as Button
+	var btn := row.get_node("VBox/Header/CookButton") as Button
 	assert_true(btn.disabled, "ingredients now gone, button should re-disable")
 
 

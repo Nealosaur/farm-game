@@ -52,6 +52,7 @@ func _ready() -> void:
 	panel.set_anchors_preset(Control.PRESET_CENTER)
 	panel.position = Vector2(-140, -110)
 	panel.size = Vector2(280, 220)
+	panel.add_theme_stylebox_override("panel", UITheme.panel_stylebox())
 	add_child(panel)
 
 	var vbox := VBoxContainer.new()
@@ -62,21 +63,26 @@ func _ready() -> void:
 	var header := HBoxContainer.new()
 	vbox.add_child(header)
 
+	var tab_theme := UITheme.button_theme()
+
 	buy_tab_btn = Button.new()
 	buy_tab_btn.text = "Buy"
 	buy_tab_btn.toggle_mode = true
+	buy_tab_btn.theme = tab_theme
 	buy_tab_btn.pressed.connect(_on_buy_tab_pressed)
 	header.add_child(buy_tab_btn)
 
 	sell_tab_btn = Button.new()
 	sell_tab_btn.text = "Sell"
 	sell_tab_btn.toggle_mode = true
+	sell_tab_btn.theme = tab_theme
 	sell_tab_btn.pressed.connect(_on_sell_tab_pressed)
 	header.add_child(sell_tab_btn)
 
 	gold_label = Label.new()
 	gold_label.custom_minimum_size = Vector2(100, 0)
 	gold_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	gold_label.add_theme_color_override("font_color", UITheme.TEXT_LIGHT)
 	header.add_child(gold_label)
 
 	var scroll := ScrollContainer.new()
@@ -95,6 +101,7 @@ func _ready() -> void:
 	hint_label.text = "Click: buy/sell 1   Shift+Click (Sell tab): sell whole stack   Esc/Tab: close"
 	hint_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	hint_label.add_theme_font_size_override("font_size", 10)
+	hint_label.add_theme_color_override("font_color", UITheme.TEXT_MUTED)
 	vbox.add_child(hint_label)
 
 	EventBus.money_changed.connect(_on_money_changed)
@@ -202,6 +209,7 @@ func _make_row(icon: Texture2D, text: String) -> Button:
 	btn.icon = icon
 	btn.custom_minimum_size = Vector2(260, ROW_HEIGHT)
 	btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	btn.theme = UITheme.button_theme()
 	return btn
 
 

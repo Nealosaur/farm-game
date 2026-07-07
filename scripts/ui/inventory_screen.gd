@@ -19,16 +19,22 @@ func _ready() -> void:
 	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(dim)
 
+	var frame := PanelContainer.new()
+	frame.set_anchors_preset(Control.PRESET_CENTER)
+	frame.position = Vector2(-Inventory.HOTBAR * 24 / 2.0 - 8, -48)
+	frame.add_theme_stylebox_override("panel", UITheme.panel_stylebox())
+	add_child(frame)
+
 	grid_box = GridContainer.new()
 	grid_box.columns = Inventory.HOTBAR
-	grid_box.set_anchors_preset(Control.PRESET_CENTER)
-	grid_box.position = Vector2(-Inventory.HOTBAR * 24 / 2.0, -40)
-	add_child(grid_box)
+	frame.add_child(grid_box)
 
+	var slot_theme := UITheme.button_theme()
 	for i in Inventory.SIZE:
 		var b := Button.new()
 		b.custom_minimum_size = Vector2(22, 22)
 		b.expand_icon = true
+		b.theme = slot_theme
 		b.pressed.connect(_on_slot_pressed.bind(i))
 		grid_box.add_child(b)
 		buttons.append(b)

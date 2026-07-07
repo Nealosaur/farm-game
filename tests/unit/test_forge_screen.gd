@@ -50,7 +50,9 @@ func test_fangsteel_row_appears_once_masterwork_flag_set() -> void:
 func test_forge_button_disabled_when_unaffordable() -> void:
 	screen.open()
 	var row := screen.upgrade_list.get_node("Row_steel_sword")
-	var btn := row.get_node("Header/ForgeButton") as Button
+	# UI skin pass: row is now a PanelContainer (carries the slot ninepatch
+	# background) wrapping an inner "VBox" — see forge_screen.gd's _make_row().
+	var btn := row.get_node("VBox/Header/ForgeButton") as Button
 	assert_true(btn.disabled)
 
 
@@ -60,7 +62,9 @@ func test_forge_button_enabled_when_everything_present() -> void:
 	GameState.gold = 800
 	screen.open()
 	var row := screen.upgrade_list.get_node("Row_steel_sword")
-	var btn := row.get_node("Header/ForgeButton") as Button
+	# UI skin pass: row is now a PanelContainer (carries the slot ninepatch
+	# background) wrapping an inner "VBox" — see forge_screen.gd's _make_row().
+	var btn := row.get_node("VBox/Header/ForgeButton") as Button
 	assert_false(btn.disabled)
 
 
@@ -83,7 +87,9 @@ func test_forging_refreshes_button_state_after_consuming() -> void:
 	screen.open()
 	screen._on_forge_pressed("steel_sword")
 	var row := screen.upgrade_list.get_node("Row_steel_sword")
-	var btn := row.get_node("Header/ForgeButton") as Button
+	# UI skin pass: row is now a PanelContainer (carries the slot ninepatch
+	# background) wrapping an inner "VBox" — see forge_screen.gd's _make_row().
+	var btn := row.get_node("VBox/Header/ForgeButton") as Button
 	assert_true(btn.disabled, "materials now gone, button should re-disable")
 
 

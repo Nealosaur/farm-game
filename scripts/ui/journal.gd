@@ -60,6 +60,7 @@ func _ready() -> void:
 	panel.set_anchors_preset(Control.PRESET_CENTER)
 	panel.position = Vector2(-140, -110)
 	panel.size = Vector2(280, 220)
+	panel.add_theme_stylebox_override("panel", UITheme.panel_stylebox())
 	add_child(panel)
 
 	tab_container = TabContainer.new()
@@ -82,6 +83,7 @@ func _ready() -> void:
 	quests_scroll.add_child(quests_list)
 	quests_label = Label.new()
 	quests_label.text = "No active quests"
+	quests_label.add_theme_color_override("font_color", UITheme.TEXT_MUTED)
 	quests_list.add_child(quests_label)
 
 	EventBus.relationship_changed.connect(_on_relationship_changed)
@@ -152,11 +154,15 @@ func _refresh_social() -> void:
 
 
 func _make_npc_row(npc: NPCData) -> Control:
+	# UI skin pass: child order/indices are load-bearing (test_journal.gd
+	# indexes row.get_child(0)/get_child(2) directly) — only color/stylebox
+	# overrides on the SAME nodes in the SAME order, no new siblings inserted.
 	var row := VBoxContainer.new()
 
 	var header := Label.new()
 	var tier := Relationships.tier_name(npc.id)
 	header.text = "%s — %s (Lv %d)" % [npc.display_name, tier, Relationships.level(npc.id)]
+	header.add_theme_color_override("font_color", UITheme.TEXT_LIGHT)
 	row.add_child(header)
 
 	var bar := ProgressBar.new()
@@ -165,6 +171,9 @@ func _make_npc_row(npc: NPCData) -> Control:
 	bar.value = clampi(Relationships.points(npc.id), 0, Relationships.MAX_POINTS)
 	bar.show_percentage = false
 	bar.custom_minimum_size = Vector2(220, 12)
+	var bar_styles := UITheme.bar_styleboxes(Color("d8a848"))
+	bar.add_theme_stylebox_override("background", bar_styles["bg"])
+	bar.add_theme_stylebox_override("fill", bar_styles["fill"])
 	row.add_child(bar)
 
 	var detail := Label.new()
@@ -175,6 +184,7 @@ func _make_npc_row(npc: NPCData) -> Control:
 		season_name, npc.birthday_day, talked, gifted,
 	]
 	detail.add_theme_font_size_override("font_size", 10)
+	detail.add_theme_color_override("font_color", UITheme.TEXT_MUTED)
 	row.add_child(detail)
 
 	var spacer := Control.new()
@@ -192,6 +202,7 @@ func _refresh_quests() -> void:
 		var winter_star_label := Label.new()
 		winter_star_label.text = WinterStar.journal_text()
 		winter_star_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		winter_star_label.add_theme_color_override("font_color", UITheme.TEXT_LIGHT)
 		quests_list.add_child(winter_star_label)
 		var winter_star_spacer := Control.new()
 		winter_star_spacer.custom_minimum_size = Vector2(0, 6)
@@ -202,12 +213,14 @@ func _refresh_quests() -> void:
 	if active.is_empty() and done.is_empty():
 		quests_label = Label.new()
 		quests_label.text = "No active quests"
+		quests_label.add_theme_color_override("font_color", UITheme.TEXT_MUTED)
 		quests_list.add_child(quests_label)
 		return
 
 	if not active.is_empty():
 		var active_header := Label.new()
 		active_header.text = "Active"
+		active_header.add_theme_color_override("font_color", UITheme.TEXT_LIGHT)
 		quests_list.add_child(active_header)
 		for quest_id: String in active:
 			quests_list.add_child(_make_quest_row(quest_id, false))
@@ -215,6 +228,7 @@ func _refresh_quests() -> void:
 	if not done.is_empty():
 		var done_header := Label.new()
 		done_header.text = "Completed"
+		done_header.add_theme_color_override("font_color", UITheme.TEXT_LIGHT)
 		quests_list.add_child(done_header)
 		for quest_id: String in done:
 			quests_list.add_child(_make_quest_row(quest_id, true))
@@ -226,12 +240,14 @@ func _make_quest_row(quest_id: String, done: bool) -> Control:
 	var name_label := Label.new()
 	name_label.text = Quests.display_name(quest_id)
 	name_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	name_label.add_theme_color_override("font_color", UITheme.TEXT_LIGHT)
 	row.add_child(name_label)
 
 	var detail := Label.new()
 	var progress := Quests.progress_text(quest_id)
 	detail.text = ("Complete — " + progress) if done else progress
 	detail.add_theme_font_size_override("font_size", 10)
+	detail.add_theme_color_override("font_color", UITheme.TEXT_MUTED)
 	row.add_child(detail)
 
 	var spacer := Control.new()

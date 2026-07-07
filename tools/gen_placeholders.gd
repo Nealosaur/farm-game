@@ -90,10 +90,12 @@ func _init() -> void:
 	count += _write_crops()
 	count += _write_items()
 	count += _write_props()
+	count += _write_ui()
 
 	_write_contact_sheet()
 	_write_characters_preview()
 	_write_tiles_and_props_preview()
+	_write_ui_preview()
 
 	print("placeholders written: ", count)
 	quit(0)
@@ -1327,6 +1329,80 @@ func _draw_boat_shed() -> Image:
 	PixelArt.rect(img, 9, wall_top + 4, 6, 16 - wall_top - 5, water_hint)
 	PixelArt.outline(img, OUTLINE)
 	return img
+
+
+## =====================================================================
+## UI SKIN (V3) — bordered panel / recessed slot / selected-slot highlight /
+## bar background+fill / button ninepatches, consumed by scripts/ui/
+## ui_theme.gd. All ninepatches are 24x24 with an 8px margin (documented here
+## AND in ui_theme.gd's header, since that's the single source that turns
+## these PNGs into StyleBoxTexture margins — keep both in sync if this
+## changes). Warm wood/parchment palette so panels read as a cozy farm-game
+## frame, not a debug gray box.
+## =====================================================================
+
+const UI_NINEPATCH_SIZE := 24
+const UI_NINEPATCH_MARGIN := 8
+
+## Bar pieces are wider rectangles (not square ninepatches) since HP/RP bars
+## stretch horizontally only; margin is still 8px so StyleBoxTexture reuses
+## the same texture_margin_* on left/right, 0 stretch region needed vertically
+## at the bar's fixed 10px-tall usage.
+const UI_BAR_W := 32
+const UI_BAR_H := 16
+
+
+func _write_ui() -> int:
+	var n := 0
+	# Panel: warm wood frame + darker parchment-ish inset fill + subtle bevel.
+	_save(OUT + "ui_panel.png", PixelArt.ninepatch_panel(
+		UI_NINEPATCH_SIZE, UI_NINEPATCH_MARGIN,
+		Color("6b4a2f"), Color("3a2a1e"), Color("8a6242")))
+	n += 1
+
+	# Slot: recessed dark square with a bevel (pressed-in look).
+	_save(OUT + "ui_slot.png", PixelArt.ninepatch_slot(
+		UI_NINEPATCH_SIZE, UI_NINEPATCH_MARGIN,
+		Color("6b4a2f"), Color("2a1f18"), Color("1a1210"), Color("4a3626")))
+	n += 1
+
+	# Selected-slot highlight: bright ring overlay drawn on transparency.
+	_save(OUT + "ui_slot_selected.png", PixelArt.ninepatch_highlight_ring(
+		UI_NINEPATCH_SIZE, 2, Color("f0d878")))
+	n += 1
+
+	# Bar background: dark recessed frame (same family as the slot bevel).
+	_save(OUT + "ui_bar_bg.png", PixelArt.ninepatch_slot(
+		UI_BAR_W, 8, Color("6b4a2f"), Color("241a14"), Color("140e0b"), Color("40301f")))
+	n += 1
+
+	# Bar fill: flat bright piece, tinted per-bar (HP red / RP green) at
+	# runtime via StyleBoxTexture modulate — see UITheme.bar_styleboxes().
+	# Generated neutral white here so modulate multiplies cleanly.
+	_save(OUT + "ui_bar_fill.png", PixelArt.ninepatch_panel(
+		UI_BAR_W, 6, Color("e8e0d0"), Color("f8f4ea"), Color(0, 0, 0, 0)))
+	n += 1
+
+	# Button: wood-toned raised ninepatch (normal state); hover/pressed done
+	# via modulate tint in UITheme, not separate art, per the contract.
+	_save(OUT + "ui_button.png", PixelArt.ninepatch_panel(
+		UI_NINEPATCH_SIZE, UI_NINEPATCH_MARGIN,
+		Color("8a5a34"), Color("a8703e"), Color("c8905a")))
+	n += 1
+
+	return n
+
+
+## Every generated UI piece at 4x for the mandatory review loop.
+func _write_ui_preview() -> void:
+	var names := ["ui_panel", "ui_slot", "ui_slot_selected", "ui_bar_bg", "ui_bar_fill", "ui_button"]
+	var entries: Array = []
+	for n: String in names:
+		var img := Image.load_from_file(OUT + n + ".png")
+		if img != null:
+			entries.append({"image": img, "tick_color": PixelArt.average_color(img)})
+	var sheet := PixelArt.compose_contact_sheet(entries, 6, 4)
+	sheet.save_png(PROTO_OUT + "ui_panels_4x.png")
 
 
 ## =====================================================================

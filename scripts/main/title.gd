@@ -36,34 +36,54 @@ func _ready() -> void:
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
 	root.add_child(bg)
 
-	var vbox := VBoxContainer.new()
-	vbox.set_anchors_preset(Control.PRESET_CENTER)
-	vbox.position = Vector2(-70, -60)
-	vbox.custom_minimum_size = Vector2(140, 0)
-	root.add_child(vbox)
+	# Title banner: framed panel behind the game name (UI skin pass) so the
+	# code-built title screen reads as a designed menu, not a debug list.
+	var banner := PanelContainer.new()
+	banner.set_anchors_preset(Control.PRESET_CENTER)
+	banner.position = Vector2(-90, -110)
+	banner.custom_minimum_size = Vector2(180, 40)
+	banner.add_theme_stylebox_override("panel", UITheme.panel_stylebox())
+	root.add_child(banner)
 
 	var title_label := Label.new()
 	title_label.text = "FARM-RPG (working title)"
 	title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	title_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	vbox.add_child(title_label)
+	title_label.add_theme_color_override("font_color", UITheme.TEXT_LIGHT)
+	banner.add_child(title_label)
+
+	var frame := PanelContainer.new()
+	frame.set_anchors_preset(Control.PRESET_CENTER)
+	frame.position = Vector2(-70, -50)
+	frame.add_theme_stylebox_override("panel", UITheme.panel_stylebox())
+	root.add_child(frame)
+
+	var vbox := VBoxContainer.new()
+	vbox.custom_minimum_size = Vector2(140, 0)
+	frame.add_child(vbox)
 
 	var spacer := Control.new()
-	spacer.custom_minimum_size = Vector2(0, 16)
+	spacer.custom_minimum_size = Vector2(0, 4)
 	vbox.add_child(spacer)
+
+	var btn_theme := UITheme.button_theme()
 
 	new_game_btn = Button.new()
 	new_game_btn.text = "New Game"
+	new_game_btn.theme = btn_theme
 	new_game_btn.pressed.connect(_on_new_game_pressed)
 	vbox.add_child(new_game_btn)
 
 	continue_btn = Button.new()
 	continue_btn.text = "Continue"
+	continue_btn.theme = btn_theme
 	continue_btn.pressed.connect(_on_continue_pressed)
 	vbox.add_child(continue_btn)
 
 	quit_btn = Button.new()
 	quit_btn.text = "Quit"
+	quit_btn.theme = btn_theme
 	quit_btn.pressed.connect(_on_quit_pressed)
 	vbox.add_child(quit_btn)
 

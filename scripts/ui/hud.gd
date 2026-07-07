@@ -12,6 +12,7 @@ var toast_label: Label
 var slot_panels: Array[Panel] = []
 var slot_icons: Array[TextureRect] = []
 var slot_counts: Array[Label] = []
+var _slot_highlights: Array[Panel] = []
 
 var _toast_queue: PackedStringArray = []
 var _toast_busy := false
@@ -29,8 +30,8 @@ func _ready() -> void:
 	var top_left := VBoxContainer.new()
 	top_left.position = Vector2(8, 8)
 	root.add_child(top_left)
-	hp_bar = _bar(Color("c03030"))
-	rp_bar = _bar(Color("30a060"))
+	hp_bar = _bar(Color("d84040"))
+	rp_bar = _bar(Color("40b070"))
 	top_left.add_child(hp_bar)
 	top_left.add_child(rp_bar)
 
@@ -42,17 +43,24 @@ func _ready() -> void:
 	buff_label.visible = false
 	top_left.add_child(buff_label)
 
-	var top_right := VBoxContainer.new()
+	# UI skin pass: dark backing panel behind the day/clock/gold labels so
+	# they stay legible over busy world art (contract: backing only, no
+	# layout/anchor change — top_right keeps the same position/size).
+	var top_right := PanelContainer.new()
 	top_right.set_anchors_preset(Control.PRESET_TOP_RIGHT)
 	top_right.position = Vector2(-120, 8)
 	top_right.custom_minimum_size = Vector2(112, 0)
+	top_right.add_theme_stylebox_override("panel", UITheme.panel_stylebox())
 	root.add_child(top_right)
+	var top_right_box := VBoxContainer.new()
+	top_right.add_child(top_right_box)
 	day_label = Label.new()
 	clock_label = Label.new()
 	gold_label = Label.new()
 	for l in [day_label, clock_label, gold_label]:
 		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-		top_right.add_child(l)
+		l.add_theme_color_override("font_color", UITheme.TEXT_LIGHT)
+		top_right_box.add_child(l)
 
 	var hotbar := HBoxContainer.new()
 	hotbar.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
@@ -61,6 +69,7 @@ func _ready() -> void:
 	for i in Inventory.HOTBAR:
 		var panel := Panel.new()
 		panel.custom_minimum_size = Vector2(20, 20)
+		panel.add_theme_stylebox_override("panel", UITheme.slot_stylebox())
 		var icon := TextureRect.new()
 		icon.set_anchors_preset(Control.PRESET_FULL_RECT)
 		icon.stretch_mode = TextureRect.STRETCH_KEEP_CENTERED
@@ -69,11 +78,23 @@ func _ready() -> void:
 		count.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
 		count.position = Vector2(-12, -12)
 		count.add_theme_font_size_override("font_size", 8)
+		count.add_theme_color_override("font_color", UITheme.TEXT_LIGHT)
 		panel.add_child(count)
+		# Selected-slot highlight ring: a transparent overlay Panel sitting on
+		# top of icon/count, shown only for the currently-selected hotbar slot
+		# (see _refresh_hotbar). Added last so it doesn't shift icon/count's
+		# child indices.
+		var highlight := Panel.new()
+		highlight.set_anchors_preset(Control.PRESET_FULL_RECT)
+		highlight.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		highlight.add_theme_stylebox_override("panel", UITheme.selected_ring_stylebox())
+		highlight.visible = false
+		panel.add_child(highlight)
 		hotbar.add_child(panel)
 		slot_panels.append(panel)
 		slot_icons.append(icon)
 		slot_counts.append(count)
+		_slot_highlights.append(highlight)
 
 	toast_label = Label.new()
 	toast_label.set_anchors_preset(Control.PRESET_CENTER_TOP)
@@ -127,9 +148,9 @@ func _bar(color: Color) -> ProgressBar:
 	var bar := ProgressBar.new()
 	bar.custom_minimum_size = Vector2(90, 10)
 	bar.show_percentage = false
-	var fill := StyleBoxFlat.new()
-	fill.bg_color = color
-	bar.add_theme_stylebox_override("fill", fill)
+	var styles := UITheme.bar_styleboxes(color)
+	bar.add_theme_stylebox_override("background", styles["bg"])
+	bar.add_theme_stylebox_override("fill", styles["fill"])
 	return bar
 
 
@@ -159,7 +180,9 @@ func _refresh_hotbar() -> void:
 			var item := ItemDB.get_item(s.id)
 			slot_icons[i].texture = item.icon if item != null else null
 			slot_counts[i].text = str(s.count) if s.count > 1 else ""
-		slot_panels[i].modulate = Color(1.4, 1.4, 0.9) if i == Inventory.selected else Color.WHITE
+		# Selected slot shows the bright-ring overlay (V3 skin pass); the base
+		# recessed slot stylebox stays the same for every slot.
+		_slot_highlights[i].visible = i == Inventory.selected
 
 
 func _unhandled_input(event: InputEvent) -> void:

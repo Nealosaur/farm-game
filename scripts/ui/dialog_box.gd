@@ -56,6 +56,7 @@ func _ready() -> void:
 	panel.offset_top = -84
 	panel.offset_bottom = -16
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.add_theme_stylebox_override("panel", UITheme.panel_stylebox())
 	root.add_child(panel)
 
 	label = Label.new()
@@ -64,6 +65,7 @@ func _ready() -> void:
 	label.offset_top = 10
 	label.offset_right = -12
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.add_theme_color_override("font_color", UITheme.TEXT_LIGHT)
 	panel.add_child(label)
 
 	hint_label = Label.new()
@@ -71,6 +73,7 @@ func _ready() -> void:
 	hint_label.position = Vector2(12, 46)
 	hint_label.modulate = Color(1, 1, 1, 0.6)
 	hint_label.add_theme_font_size_override("font_size", 10)
+	hint_label.add_theme_color_override("font_color", UITheme.TEXT_MUTED)
 	panel.add_child(hint_label)
 
 	choice_box = VBoxContainer.new()
@@ -134,6 +137,7 @@ func _show_choice_buttons() -> void:
 	for i in _choices.size():
 		var btn := Button.new()
 		btn.text = _choices[i]
+		btn.theme = UITheme.button_theme()
 		btn.pressed.connect(_on_choice_pressed.bind(i))
 		choice_box.add_child(btn)
 

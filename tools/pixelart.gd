@@ -236,6 +236,55 @@ static func average_color(img: Image) -> Color:
 	return Color(r / n, g / n, b / n)
 
 
+## ---- UI ninepatch primitives (V3 UI skin pass) ----
+##
+## A "ninepatch" here is just a small square PNG with a symmetric border
+## (`margin` px on all four sides) meant to be stretched via
+## StyleBoxTexture.texture_margin_* / NinePatchRect so the border pixels stay
+## crisp corners/edges while the middle tiles/stretches to fill any panel
+## size. These helpers only draw the raw pixels; UITheme (scripts/ui/
+## ui_theme.gd) wraps the saved PNGs in actual StyleBoxTexture resources.
+
+## Flat bordered panel: `frame_c` for the `margin`-px border ring, `fill_c`
+## for the inset interior, optional 1px `hi_c` bevel just inside the frame's
+## top/left edge for a slight raised/warm look. Used for the wood/parchment
+## window panel and (with different colors) the button ninepatch.
+static func ninepatch_panel(size: int, margin: int, frame_c: Color, fill_c: Color, hi_c: Color = Color(0, 0, 0, 0)) -> Image:
+	var img := blank(size, size)
+	img.fill(frame_c)
+	rect(img, margin, margin, size - margin * 2, size - margin * 2, fill_c)
+	if hi_c.a > 0.0:
+		hline(img, margin, margin, size - margin * 2, hi_c)
+		vline(img, margin, margin, size - margin * 2, hi_c)
+	return img
+
+
+## Recessed slot ninepatch: darker inset fill with a dark top/left bevel and
+## a lighter bottom/right bevel, so it reads as "pressed into" the panel
+## rather than sitting flush on top of it (inventory/hotbar/recipe slots).
+static func ninepatch_slot(size: int, margin: int, frame_c: Color, fill_c: Color, dark_bevel: Color, light_bevel: Color) -> Image:
+	var img := blank(size, size)
+	img.fill(frame_c)
+	rect(img, margin, margin, size - margin * 2, size - margin * 2, fill_c)
+	hline(img, margin, margin, size - margin * 2, dark_bevel)
+	vline(img, margin, margin, size - margin * 2, dark_bevel)
+	hline(img, margin, size - margin - 1, size - margin * 2, light_bevel)
+	vline(img, size - margin - 1, margin, size - margin * 2, light_bevel)
+	return img
+
+
+## Bright full-ring border used as a selected-slot highlight overlay (drawn
+## on a transparent canvas so it composites ON TOP of a normal slot piece).
+static func ninepatch_highlight_ring(size: int, thickness: int, ring_c: Color) -> Image:
+	var img := blank(size, size)
+	for t in thickness:
+		hline(img, t, t, size - t * 2, ring_c)
+		hline(img, t, size - 1 - t, size - t * 2, ring_c)
+		vline(img, t, t, size - t * 2, ring_c)
+		vline(img, size - 1 - t, t, size - t * 2, ring_c)
+	return img
+
+
 ## ---- sheet assembly (characters / enemies) ----
 
 ## Lays a list of frame Images (already same size) into a grid PNG:
