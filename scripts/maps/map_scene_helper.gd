@@ -49,3 +49,30 @@ static func spawn_cell(spawns: Dictionary, default_key: String) -> Vector2i:
 	if spawns.has(name):
 		return spawns[name]
 	return spawns.get(default_key, Vector2i.ZERO)
+
+
+## V3: shared "eligible cell" scan for MapDecoration — grass/dark-grass/sand
+## cells only (never path/water/wall/stone/soil, per MapBuilder.CHAR_TILES),
+## excluding anything inside `avoid_rects` (props, portals, tillable fields,
+## spawn cells wrapped in a 1x1 Rect2i by the caller). Shared here so every
+## outdoor map (farm/town/riverwoods/beach) builds its candidate list the same
+## way instead of four near-duplicate scans.
+const _DECORATABLE_CHARS := ["G", "D", "A"]
+
+
+static func decoration_candidate_cells(rows: PackedStringArray, avoid_rects: Array) -> Array:
+	var out: Array = []
+	for y in rows.size():
+		var row := rows[y]
+		for x in row.length():
+			if not (row[x] in _DECORATABLE_CHARS):
+				continue
+			var cell := Vector2i(x, y)
+			var blocked := false
+			for rect: Rect2i in avoid_rects:
+				if rect.has_point(cell):
+					blocked = true
+					break
+			if not blocked:
+				out.append(cell)
+	return out

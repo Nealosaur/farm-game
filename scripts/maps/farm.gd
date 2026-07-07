@@ -75,6 +75,13 @@ func _ready() -> void:
 	MapBuilder.fill_layer(ground, _layout(), ids)
 	MapSceneHelper.attach_season_palette(self, ground)  # outdoor: seasonal recolor
 
+	# V3: sparse scatter decoration (tufts/flowers/pebbles) — sits above Ground,
+	# below Soil/World, so it never affects collision/pathfinding and is never
+	# y-sorted against the player. See _decoration_avoid_rects() for what's
+	# excluded (tillable field, house/barn/pen, portals, spawn cells).
+	add_child(MapDecoration.build_layer(built.tileset, ids,
+		MapSceneHelper.decoration_candidate_cells(_layout(), _decoration_avoid_rects()), 0))
+
 	var soil := TileMapLayer.new()
 	soil.name = "Soil"
 	soil.tile_set = built.tileset
@@ -242,6 +249,26 @@ func _add_alden_intro(world: Node2D) -> void:
 	area.add_child(col)
 	world.add_child(area)
 	alden_intro = area
+
+
+func _decoration_avoid_rects() -> Array:
+	## V3: cells the scatter-decoration pass must never touch — the tillable
+	## field (decor would visually clash with tilled/watered soil overlay
+	## tiles), every solid prop footprint (house/barn/fence), the walkable
+	## pen interior (keep it clear for the barn slimes' wander area), the
+	## bed/bin/kitchen interactables, both portals, Garrick's/Alden's spot,
+	## and the player's own spawn cells (never obscure the tile the player
+	## first appears on).
+	var rects: Array = _solid_prop_rects().duplicate()
+	rects.append(TILLABLE)
+	rects.append(PEN_RECT)
+	for cell in [BED_CELL, BIN_CELL, KITCHEN_CELL, DUNGEON_PORTAL_CELL,
+			TOWN_PORTAL_CELL, RIVERWOODS_PORTAL_CELL, GARRICK_DELVE_CELL,
+			ALDEN_INTRO_CELL]:
+		rects.append(Rect2i(cell, Vector2i.ONE))
+	for spawn_cell: Vector2i in SPAWNS.values():
+		rects.append(Rect2i(spawn_cell, Vector2i.ONE))
+	return rects
 
 
 func _solid_prop_rects() -> Array[Rect2i]:

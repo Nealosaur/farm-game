@@ -84,6 +84,7 @@ func _init() -> void:
 	var count := 0
 
 	count += _write_tiles()
+	count += _write_decals()
 	count += _write_characters()
 	count += _write_enemies()
 	count += _write_crops()
@@ -208,6 +209,60 @@ func _tile_sand_variant() -> Image:
 	PixelArt.px(img, pos.x, pos.y, shell)
 	PixelArt.px(img, pos.x + 1, pos.y, shell_shade)
 	PixelArt.px(img, pos.x, pos.y + 1, shell_shade)
+	return img
+
+
+## =====================================================================
+## SCATTER-DECORATION DECALS (V3) — small transparent-background overlays
+## MapDecoration paints sparsely on top of Ground, matching
+## MapBuilder.DECAL_TEXTURES. Drawn on a fully transparent 16x16 canvas (NOT
+## filled like the ground tiles) so they composite over whichever grass/sand
+## tile happens to be underneath.
+## =====================================================================
+
+func _write_decals() -> int:
+	_save(OUT + "decal_tuft.png", _decal_tuft())
+	_save(OUT + "decal_flower.png", _decal_flower())
+	_save(OUT + "decal_pebble.png", _decal_pebble())
+	return 3
+
+
+func _decal_tuft() -> Image:
+	var img := PixelArt.blank(16, 16)
+	var blade := Color("3f6a31")
+	var blade_hi := Color("5a9048")
+	# three short blades fanning from a common base, centered in the tile.
+	PixelArt.vline(img, 7, 9, 4, blade)
+	PixelArt.vline(img, 8, 8, 5, blade_hi)
+	PixelArt.vline(img, 9, 10, 3, blade)
+	PixelArt.px(img, 6, 10, blade)
+	PixelArt.px(img, 10, 9, blade)
+	return img
+
+
+func _decal_flower() -> Image:
+	var img := PixelArt.blank(16, 16)
+	var stem := Color("3f6a31")
+	var petal := Color("e8d868")
+	var center := Color("d8883a")
+	PixelArt.vline(img, 8, 10, 3, stem)
+	PixelArt.px(img, 7, 8, petal)
+	PixelArt.px(img, 9, 8, petal)
+	PixelArt.px(img, 8, 7, petal)
+	PixelArt.px(img, 8, 9, petal)
+	PixelArt.px(img, 8, 8, center)
+	return img
+
+
+func _decal_pebble() -> Image:
+	var img := PixelArt.blank(16, 16)
+	var pebble := Color("8a8a7a")
+	var pebble_shade := Color("6a6a5c")
+	var pebble_hi := Color("a8a898")
+	PixelArt.rect(img, 6, 9, 4, 2, pebble)
+	PixelArt.px(img, 9, 9, pebble_shade)
+	PixelArt.px(img, 9, 10, pebble_shade)
+	PixelArt.px(img, 6, 9, pebble_hi)
 	return img
 
 
@@ -1326,6 +1381,7 @@ func _write_tiles_and_props_preview() -> void:
 		"tile_grass_dark", "tile_soil_tilled", "tile_soil_tilled_var1",
 		"tile_soil_watered", "tile_stone_floor", "tile_stone_floor_var1",
 		"tile_wall", "tile_water", "tile_path", "tile_sand", "tile_sand_var1",
+		"decal_tuft", "decal_flower", "decal_pebble",
 		"prop_house", "prop_barn", "prop_fence", "prop_bed", "prop_shipping_bin",
 		"prop_kitchen", "prop_counter", "prop_stairs_up", "prop_stairs_down",
 		"prop_sign", "prop_boat_shed",

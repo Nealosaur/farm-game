@@ -86,6 +86,14 @@ func _ready() -> void:
 	MapBuilder.fill_layer(ground, _layout(), ids)
 	MapSceneHelper.attach_season_palette(self, ground)  # outdoor: seasonal recolor
 
+	# V3: sparse scatter decoration on the grass border ringing the plaza/
+	# buildings/roads (those tiles are 'S'/'P', never decoratable — see
+	# MapSceneHelper's DECORATABLE_CHARS — so this naturally only touches the
+	# green margins of the map). Avoid the decorative house footprint, the
+	# notice board, and both portals.
+	add_child(MapDecoration.build_layer(built.tileset, ids,
+		MapSceneHelper.decoration_candidate_cells(_layout(), _decoration_avoid_rects()), 1))
+
 	# World Stride D: a SEPARATE layer (not painted into Ground) for festival
 	# plaza decor — trivially reversible via clear()/erase_cell(), and never
 	# risks corrupting the base layout's stone-floor tiles underneath.
@@ -198,6 +206,19 @@ func _add_beach_portal(world: Node2D) -> void:
 	})
 	portal.name = "BeachPortal"
 	world.add_child(portal)
+
+
+func _decoration_avoid_rects() -> Array:
+	## V3: keep scatter decor off the decorative house's footprint, the
+	## notice board (walkable but shouldn't be visually cluttered), and both
+	## portal cells + their spawn cells.
+	var rects: Array = _solid_prop_rects().duplicate()
+	rects.append(Rect2i(NOTICE_BOARD_CELL, Vector2i.ONE))
+	rects.append(Rect2i(FARM_PORTAL_CELL, Vector2i.ONE))
+	rects.append(Rect2i(BEACH_PORTAL_CELL, Vector2i.ONE))
+	for spawn_cell: Vector2i in SPAWNS.values():
+		rects.append(Rect2i(spawn_cell, Vector2i.ONE))
+	return rects
 
 
 func _solid_prop_rects() -> Array[Rect2i]:

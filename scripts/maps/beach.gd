@@ -67,7 +67,12 @@ func _ready() -> void:
 	path_grid = PathGrid.build(_layout(), _solid_prop_rects())
 	_add_props(world)
 	_add_npcs(world)
-	_add_forage(world)
+	var forage_cells := _add_forage(world)
+
+	# V3: sparse scatter decoration on sand ('A'), excluding the boat shed,
+	# the town portal, spawn cells, and this run's forage cells.
+	add_child(MapDecoration.build_layer(built.tileset, ids,
+		MapSceneHelper.decoration_candidate_cells(_layout(), _decoration_avoid_rects(forage_cells)), 3))
 
 	player = (load("res://scenes/player/player.tscn") as PackedScene).instantiate()
 	player.global_position = MapBuilder.cell_center(
@@ -185,10 +190,12 @@ func _hour_for_block(block: String) -> int:
 		_: return 21
 
 
-func _add_forage(world: Node2D) -> void:
+func _add_forage(world: Node2D) -> Array:
+	## Returns the cells this call rolled for forage — see riverwoods.gd's
+	## identical contract note on why this is used by the V3 decoration pass.
 	var pool := Forage.item_pool_for_season(Clock.season(), FORAGE_NORMAL, FORAGE_WINTER)
 	if pool.is_empty():
-		return
+		return []
 	var blob: Dictionary = SaveManager.world.get("forage", {})
 	var map_blob := Forage.ensure_day(blob.get(MAP_ID, {}), Clock.day)
 	blob[MAP_ID] = map_blob
@@ -204,6 +211,18 @@ func _add_forage(world: Node2D) -> void:
 			continue
 		var item_id: String = pool[rng.randi() % pool.size()]
 		world.add_child(ForagePickup.make(MAP_ID, item_id, cell))
+	return cells
+
+
+func _decoration_avoid_rects(forage_cells: Array) -> Array:
+	var rects: Array = _solid_prop_rects().duplicate()
+	rects.append(Rect2i(BOAT_SHED_CELL - Vector2i(1, 1), Vector2i(3, 3)))
+	rects.append(Rect2i(TOWN_PORTAL_CELL, Vector2i.ONE))
+	for spawn_cell: Vector2i in SPAWNS.values():
+		rects.append(Rect2i(spawn_cell, Vector2i.ONE))
+	for cell: Vector2i in forage_cells:
+		rects.append(Rect2i(cell, Vector2i.ONE))
+	return rects
 
 
 func _forage_candidate_cells() -> Array:

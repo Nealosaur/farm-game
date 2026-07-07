@@ -42,6 +42,19 @@ const VARIANTS := {
 	],
 }
 
+## V3 scatter decoration: small transparent-background decal textures for
+## MapDecoration's non-colliding overlay pass (grass tufts/flowers/pebbles
+## scattered sparsely over outdoor maps — see map_decoration.gd). These are
+## NOT in TILE_TEXTURES/VARIANTS (no ground tile fills them, no solidity, no
+## variant_for() involvement) — a separate small source group on the SAME
+## TileSet so DecalLayer can share build_tileset()'s output instead of
+## building its own TileSet.
+const DECAL_TEXTURES := {
+	"decal_tuft": "res://assets/placeholder/decal_tuft.png",
+	"decal_flower": "res://assets/placeholder/decal_flower.png",
+	"decal_pebble": "res://assets/placeholder/decal_pebble.png",
+}
+
 const SOLID := ["tile_wall", "tile_water"]
 
 const CHAR_TILES := {
@@ -75,6 +88,8 @@ static func build_tileset() -> Dictionary:
 				extra_ids.append(_add_tile_source(ts, tile_name, variant_path))
 			variant_ids[tile_name] = extra_ids
 	ids["__variants__"] = variant_ids
+	for decal_name: String in DECAL_TEXTURES:
+		ids[decal_name] = _add_tile_source(ts, decal_name, DECAL_TEXTURES[decal_name])
 	return {"tileset": ts, "ids": ids}
 
 
