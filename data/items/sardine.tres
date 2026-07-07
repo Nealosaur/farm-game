@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="FoodData" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/placeholder/item_sardine.png" id="1_t2o13"]
+[ext_resource type="Script" path="res://scripts/resources/food_data.gd" id="2_4pc1o"]
+
+[resource]
+script = ExtResource("2_4pc1o")
+rp_restore = 30
+id = "sardine"
+display_name = "Sardine"
+icon = ExtResource("1_t2o13")
+sell_price = 60

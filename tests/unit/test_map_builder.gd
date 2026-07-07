@@ -32,6 +32,38 @@ func test_fill_layer_places_cells() -> void:
 	assert_eq(layer.get_cell_source_id(Vector2i(2, 1)), built.ids["tile_path"])
 
 
+## ---- DEPTH stride: is_water_at (fishing's "facing water" gate) ----
+
+func test_is_water_at_true_for_water_tile() -> void:
+	var built := MapBuilder.build_tileset()
+	var layer := TileMapLayer.new()
+	layer.tile_set = built.tileset
+	add_child_autofree(layer)
+	MapBuilder.fill_layer(layer, PackedStringArray(["G~"]), built.ids)
+	assert_true(MapBuilder.is_water_at(layer, Vector2i(1, 0)))
+
+
+func test_is_water_at_false_for_non_water_tile() -> void:
+	var built := MapBuilder.build_tileset()
+	var layer := TileMapLayer.new()
+	layer.tile_set = built.tileset
+	add_child_autofree(layer)
+	MapBuilder.fill_layer(layer, PackedStringArray(["G~"]), built.ids)
+	assert_false(MapBuilder.is_water_at(layer, Vector2i(0, 0)))
+
+
+func test_is_water_at_false_for_unset_cell() -> void:
+	var built := MapBuilder.build_tileset()
+	var layer := TileMapLayer.new()
+	layer.tile_set = built.tileset
+	add_child_autofree(layer)
+	assert_false(MapBuilder.is_water_at(layer, Vector2i(99, 99)), "no cell placed here at all")
+
+
+func test_is_water_at_false_for_null_ground() -> void:
+	assert_false(MapBuilder.is_water_at(null, Vector2i(0, 0)))
+
+
 func test_solid_tiles_have_collision() -> void:
 	var built := MapBuilder.build_tileset()
 	var src := built.tileset.get_source(built.ids["tile_wall"]) as TileSetAtlasSource

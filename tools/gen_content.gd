@@ -63,9 +63,27 @@ func _init() -> void:
 	_tool_hoe("copper_hoe", "Copper Hoe", 4, 3)
 	_tool_hoe("golden_hoe", "Golden Hoe", 4, 5)
 
+	# DEPTH stride: Fishing Rod — sold at Marta's (buy_price > 0, unlike the
+	# forge-only tiers above), rp_cost 0 (bible: "fail loses nothing but the
+	# cast" — the RP cost model is for farm-tool/combat actions, casting a
+	# line isn't one).
+	_tool("fishing_rod", "Fishing Rod", ToolData.ToolType.FISHING_ROD, 0, 0, 300)
+
 	_material("slime_gel", "Slime Gel", 15)
 	_material("wisp_dust", "Wisp Dust", 25)
 	_material("goblin_fang", "Goblin Fang", 40)
+
+	# DEPTH stride: fish species (FoodData — sellable, most edible). River
+	# (Riverwoods) vs sea (Beach) pools, rarity-weighted in FishingLogic's
+	# RIVER_POOL/SEA_POOL (common -> uncommon -> rare, matching the sell-price
+	# ladder below). Pufferfish is sell-only (hp_restore/rp_restore 0 — a fugu
+	# joke fish, matches the "some edible" bible wording implying not all are).
+	_food("rivertrout", "Rivertrout", 70, 35, 0)
+	_food("bluegill", "Bluegill", 90, 40, 0)
+	_food("eel", "Eel", 180, 60, 10)
+	_food("sardine", "Sardine", 60, 30, 0)
+	_food("bass", "Bass", 100, 45, 0)
+	_food("pufferfish", "Pufferfish", 220, 0, 0)
 
 	# Crops: stage_days sums to the bible's grow time (3-stage convention,
 	# split roughly even with the remainder on later stages, matching the

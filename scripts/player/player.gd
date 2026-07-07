@@ -296,6 +296,44 @@ func _use_tool(tool_data: ToolData) -> void:
 				GameState.spend_rp(tool_data.rp_cost)
 				swing.begin_swing(tool_data)
 				machine.transition("Swing")
+		ToolData.ToolType.FISHING_ROD:
+			_try_cast(tool_data)
+
+
+## ---- Fishing (DEPTH stride) ----
+
+func _current_ground() -> TileMapLayer:
+	var root := get_tree().get_first_node_in_group("map_root")
+	if root == null:
+		return null
+	return root.get_node_or_null("Ground") as TileMapLayer
+
+
+func _water_body_at(_cell: Vector2i) -> String:
+	## Riverwoods' river vs Beach/every other water tile defaults to "sea" —
+	## the only fresh-water map this stride is Riverwoods (see riverwoods.gd's
+	## MAP_ID), so a simple map-id check is enough without threading a new
+	## per-tile "which body of water" concept through MapBuilder. get() on a
+	## script constant that doesn't exist on the object returns null (not an
+	## error) in Godot 4 GDScript, so this is safe to call on any map_root.
+	var root := get_tree().get_first_node_in_group("map_root")
+	if root != null:
+		var map_id = root.get("MAP_ID")
+		if map_id != null and String(map_id) == "riverwoods":
+			return FishingLogic.WATER_RIVER
+	return FishingLogic.WATER_SEA
+
+
+func _try_cast(tool_data: ToolData) -> void:
+	var ground := _current_ground()
+	var is_water := ground != null and MapBuilder.is_water_at(ground, target_cell())
+	if not FishingLogic.can_fish_at(true, is_water):
+		EventBus.toast_requested.emit("Need to face water to fish")
+		return
+	var screen := get_tree().get_first_node_in_group("fishing_screen")
+	if screen == null:
+		return
+	screen.call("start_cast", _water_body_at(target_cell()))
 
 
 func _plant(seed_data: SeedData) -> void:

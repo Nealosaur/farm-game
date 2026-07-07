@@ -166,7 +166,8 @@ func test_buyable_items_includes_seeds_and_iron_sword_only() -> void:
 	assert_true(ids.has("carrot_seeds"))
 	assert_true(ids.has("strawberry_seeds"), "strawberry is a spring crop")
 	assert_true(ids.has("iron_sword"))
-	assert_eq(ids.size(), 4, "3 spring seeds + iron sword are buyable in Spring")
+	assert_true(ids.has("fishing_rod"), "DEPTH stride: fishing rod is Marta stock, season-blind")
+	assert_eq(ids.size(), 5, "3 spring seeds + iron sword + fishing rod are buyable in Spring")
 	assert_false(ids.has("pumpkin_seeds"), "pumpkin is fall-only, excluded in spring")
 	assert_false(ids.has("tomato_seeds"), "tomato is summer-only, excluded in spring")
 	assert_false(ids.has("wooden_sword"), "wooden_sword has no buy_price")
@@ -197,7 +198,8 @@ func test_buyable_items_excludes_all_seeds_in_winter() -> void:
 	for item: ItemData in ShopLogic.buyable_items():
 		ids.append(item.id)
 	assert_true(ids.has("iron_sword"), "tools are season-blind")
-	assert_eq(ids.size(), 1, "no seeds are plantable in winter — only the iron sword")
+	assert_true(ids.has("fishing_rod"), "tools are season-blind")
+	assert_eq(ids.size(), 2, "no seeds are plantable in winter — only the iron sword + fishing rod")
 
 
 func test_sellable_stacks_merges_across_slots_and_sorts() -> void:

@@ -971,6 +971,17 @@ func _write_items() -> int:
 	_save(OUT + "item_iridium_blade.png", _draw_sword(Color("7868c8"), Color("d8d0f0"), true))
 	n += 4
 
+	# DEPTH stride: fishing rod + fish species — see _draw_fish()'s shape
+	# families (classic/long/round) for why each of the 6 reads distinct.
+	_save(OUT + "item_fishing_rod.png", _draw_fishing_rod())
+	_save(OUT + "item_rivertrout.png", _draw_fish(Color("889858"), "classic"))
+	_save(OUT + "item_bluegill.png", _draw_fish(Color("6898b0"), "classic"))
+	_save(OUT + "item_eel.png", _draw_fish(Color("4a5848"), "long"))
+	_save(OUT + "item_sardine.png", _draw_fish(Color("a8b8c8"), "classic"))
+	_save(OUT + "item_bass.png", _draw_fish(Color("507858"), "classic"))
+	_save(OUT + "item_pufferfish.png", _draw_fish(Color("d8c878"), "round"))
+	n += 7
+
 	# materials — distinct silhouettes so gel/dust/fang/shells don't blur together
 	_save(OUT + "item_slime_gel.png", _draw_gel(Color("60d060")))
 	_save(OUT + "item_wisp_dust.png", _draw_dust(Color("90d0f0")))
@@ -1069,6 +1080,67 @@ func _draw_sword(blade_c: Color, hilt_c: Color, has_accent: bool) -> Image:
 		var accent_c := blade_c.lightened(0.6)
 		PixelArt.px(img, 12, 3, accent_c)
 		PixelArt.px(img, 13, 4, accent_c)
+	PixelArt.outline(img, OUTLINE)
+	return img
+
+
+## DEPTH stride: fish silhouettes. `shape` selects the body plan so the 6
+## species stay visually distinct at a glance, same "silhouette family"
+## approach _draw_crop_shape() uses for produce:
+##   "classic"  — oval body + triangular tail fin (rivertrout/sardine/bass)
+##   "long"     — elongated wavy body, small tail (eel)
+##   "round"    — near-circular body + spikes (pufferfish)
+func _draw_fish(c: Color, shape: String) -> Image:
+	var img := PixelArt.blank(16, 16)
+	var shade := c.darkened(0.25)
+	var hi := Color(1, 1, 1, 0.5)
+	var eye := Color("2b2233")
+	match shape:
+		"long":
+			PixelArt.fill_ellipse(img, 8, 8, 6.5, 2.2, c)
+			PixelArt.fill_ellipse(img, 8, 9, 5.5, 1.2, shade)
+			# tapering tail
+			PixelArt.px(img, 14, 8, c)
+			PixelArt.px(img, 15, 7, shade)
+			PixelArt.px(img, 15, 9, shade)
+			PixelArt.px(img, 4, 6, hi)
+			PixelArt.px(img, 5, 6, eye)
+		"round":
+			PixelArt.fill_ellipse(img, 8, 8, 5.5, 4.5, c)
+			PixelArt.fill_ellipse(img, 8, 10, 4.5, 2.5, shade)
+			# spikes around the silhouette (deterministic, not random per-pixel)
+			for p: Vector2i in [Vector2i(3, 5), Vector2i(3, 11), Vector2i(13, 5),
+					Vector2i(13, 11), Vector2i(8, 2), Vector2i(8, 14)]:
+				PixelArt.px(img, p.x, p.y, shade)
+			PixelArt.px(img, 5, 6, hi)
+			PixelArt.px(img, 6, 6, eye)
+		_:  # "classic"
+			PixelArt.fill_ellipse(img, 7, 8, 5.5, 3.2, c)
+			PixelArt.fill_ellipse(img, 7, 9.5, 4.5, 1.6, shade)
+			# triangular tail fin, pointing right
+			for i in 4:
+				PixelArt.vline(img, 13 + i, 8 - (3 - i), (3 - i) * 2 + 1, shade)
+			PixelArt.px(img, 4, 6, hi)
+			PixelArt.px(img, 5, 6, eye)
+	PixelArt.outline(img, OUTLINE)
+	return img
+
+
+func _draw_fishing_rod() -> Image:
+	var img := PixelArt.blank(16, 16)
+	var pole := Color("8a5a2f")
+	var pole_shade := Color("6a4522")
+	var line := Color("d8d0c0")
+	var hook := Color("a8a8b0")
+	# diagonal pole, bottom-left to top-right (mirrors the hoe's handle angle)
+	for i in 12:
+		PixelArt.px(img, 1 + i, 14 - i, pole)
+		if i > 0:
+			PixelArt.px(img, 1 + i, 15 - i, pole_shade)
+	# fishing line dangling from the tip down to a small hook
+	PixelArt.vline(img, 13, 3, 8, line)
+	PixelArt.px(img, 13, 11, hook)
+	PixelArt.px(img, 12, 12, hook)
 	PixelArt.outline(img, OUTLINE)
 	return img
 

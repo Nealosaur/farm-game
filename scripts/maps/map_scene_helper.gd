@@ -17,6 +17,7 @@ const AUTO_INSTANCE_SCRIPTS := [
 	"res://scripts/ui/pause_menu.gd",
 	"res://scripts/util/debug_keys.gd",
 	"res://scripts/ui/forge_screen.gd",  # Craft Stride 2: Sten's Forge UI
+	"res://scripts/ui/fishing_screen.gd",  # DEPTH stride: fishing minigame
 ]
 
 

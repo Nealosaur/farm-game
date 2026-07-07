@@ -162,6 +162,27 @@ static func cell_center(cell: Vector2i) -> Vector2:
 	return Vector2(cell) * TILE + Vector2(TILE / 2.0, TILE / 2.0)
 
 
+static func is_water_at(ground: TileMapLayer, cell: Vector2i) -> bool:
+	## DEPTH stride (fishing): a runtime "is this cell water" query for a
+	## built Ground TileMapLayer — used by FishingLogic.can_fish_at() to
+	## gate casting on "facing water". Compares the cell's tile SOURCE
+	## texture against tile_water.png's loaded resource (Godot caches
+	## load() by path, so this is a reference-equality check, not a path
+	## string compare) rather than requiring callers to thread the
+	## build_tileset() ids dict through — a map script only ever hands
+	## its Ground node to callers, never its ids dict.
+	if ground == null or ground.tile_set == null:
+		return false
+	var source_id := ground.get_cell_source_id(cell)
+	if source_id < 0:
+		return false
+	var source := ground.tile_set.get_source(source_id)
+	if not (source is TileSetAtlasSource):
+		return false
+	var water_tex := load(TILE_TEXTURES["tile_water"])
+	return (source as TileSetAtlasSource).texture == water_tex
+
+
 static func solid_rect_for(center_px: Vector2, size_px: Vector2) -> Rect2i:
 	## Alive Stride 1: converts a StaticBody2D-style centered collision box
 	## (position in PIXELS, RectangleShape2D.size in PIXELS) into the Rect2i

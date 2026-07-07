@@ -1,7 +1,7 @@
 class_name ToolData
 extends ItemData
 
-enum ToolType { HOE, WATERING_CAN, SWORD }
+enum ToolType { HOE, WATERING_CAN, SWORD, FISHING_ROD }
 
 @export var tool_type: ToolType = ToolType.HOE
 @export var rp_cost: int = 2
