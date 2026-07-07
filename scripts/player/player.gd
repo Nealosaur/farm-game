@@ -4,6 +4,13 @@ extends CharacterBody2D
 ## Player has no HealthComponent — GameState owns player HP.
 
 const SPEED := 80.0
+## FEEL Stride 1 (movement weight): PlayerMove ramps velocity toward
+## input*SPEED via approach_velocity() instead of snapping instantly, so
+## walking has a brief wind-up/wind-down. Tuned conservatively (reaches top
+## speed in ~0.1s, stops in ~0.08s) — top speed and collision behavior
+## (move_and_slide) are unchanged, this only shapes the ramp.
+const ACCEL := 800.0   # px/s^2 while input is held
+const FRICTION := 1000.0  # px/s^2 while input is released (slightly snappier stop than accel)
 const ANIM_NAMES := [
 	"idle_down", "idle_up", "idle_left", "idle_right",
 	"walk_down", "walk_up", "walk_left", "walk_right",
@@ -94,6 +101,15 @@ func try_dodge() -> void:
 	if not GameState.try_spend_rp(PlayerDodge.RP_COST):
 		return  # try_spend_rp fails silently (no cost) when RP is fully empty
 	machine.transition("Dodge")
+
+
+static func approach_velocity(current: Vector2, target: Vector2, accel: float, friction: float, delta: float) -> Vector2:
+	## Pure ramp helper (FEEL Stride 1): moves `current` toward `target` at
+	## `accel` px/s^2 when target is nonzero, or `friction` px/s^2 when target
+	## is zero (release) — move_toward() clamps the step so it can never
+	## overshoot past `target`'s magnitude (no oscillation, no exceeding SPEED).
+	var rate := friction if target == Vector2.ZERO else accel
+	return current.move_toward(target, rate * delta)
 
 
 static func facing_from(dir: Vector2) -> Vector2i:
