@@ -69,10 +69,15 @@ static func make_npc(npc_id: String) -> NPC:
 	area.dialog_data = dialog_data(npc_id)
 	area.has_shop = bool(cfg.get("has_shop", false))
 	area.has_forge = bool(cfg.get("has_forge", false))
-	var sprite := Sprite2D.new()
+	var sprite := AnimatedSprite2D.new()
 	sprite.name = "Sprite2D"
-	sprite.texture = load(cfg["sprite"])
+	var single_tex := load(cfg["sprite"]) as Texture2D
+	var sheet_path: String = String(cfg["sprite"]).replace(".png", "_sheet.png")
+	var sheet_tex := load(sheet_path) as Texture2D if ResourceLoader.exists(sheet_path) else null
+	sprite.sprite_frames = SpriteSheets.build_character(sheet_tex, single_tex, PackedStringArray(NPC.ANIM_NAMES))
+	sprite.play("idle_down")
 	area.add_child(sprite)
+	GroundShadow.attach(area, Vector2(0, 14), Vector2(14, 6))
 	var col := CollisionShape2D.new()
 	var shape := RectangleShape2D.new()
 	shape.size = Vector2(16, 32)

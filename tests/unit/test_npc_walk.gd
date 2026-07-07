@@ -29,8 +29,17 @@ func before_each() -> void:
 	npc = NPC.new()
 	npc.npc_data = StenData.build()
 	npc.dialog_data = StenDialog.DATA
-	var sprite := Sprite2D.new()
+	# LOOK V2: real AnimatedSprite2D + sheet-built frames, matching
+	# npc_factory.gd's production construction, so this suite's walk/idle
+	# assertions exercise the real _play_anim() lookup path (see
+	# test_facing_updates_toward_movement_direction / a new anim-name test
+	# below) rather than a no-op against a null sprite.
+	var sprite := AnimatedSprite2D.new()
 	sprite.name = "Sprite2D"
+	var single_tex := load("res://assets/placeholder/char_sten.png") as Texture2D
+	var sheet_tex := load("res://assets/placeholder/char_sten_sheet.png") as Texture2D
+	sprite.sprite_frames = SpriteSheets.build_character(sheet_tex, single_tex, PackedStringArray(NPC.ANIM_NAMES))
+	sprite.play("idle_down")
 	npc.add_child(sprite)
 	add_child_autofree(npc)
 
@@ -98,6 +107,32 @@ func test_facing_updates_toward_movement_direction() -> void:
 	simulate(npc, 3, 0.1)
 	assert_true(npc.facing == Vector2.LEFT or npc.facing == Vector2.DOWN or npc.facing == Vector2.UP or npc.facing == Vector2.RIGHT)
 	assert_ne(npc.facing, Vector2.ZERO)
+
+
+## ---- LOOK V2: walk/idle animation plays the right name ----
+
+func test_walking_plays_walk_animation_matching_facing() -> void:
+	_advance_to_saloon_block()
+	simulate(npc, 3, 0.1)
+	var expected := "walk_" + npc._facing_name()
+	assert_eq(npc.sprite.animation, expected)
+
+
+func test_stopping_after_arrival_plays_idle_animation_matching_facing() -> void:
+	_advance_to_saloon_block()
+	simulate(npc, 90, 0.1)  # comfortably past arrival (see arrival test above)
+	var expected := "idle_" + npc._facing_name()
+	assert_eq(npc.sprite.animation, expected)
+
+
+func test_facing_the_player_on_interact_plays_idle_not_walk() -> void:
+	_advance_to_saloon_block()
+	simulate(npc, 5, 0.1)
+	var player := Node2D.new()
+	player.global_position = npc.global_position + Vector2(100, 0)
+	add_child_autofree(player)
+	npc.interact(player)
+	assert_eq(npc.sprite.animation, "idle_right")
 
 
 func test_interact_pauses_the_walk_and_faces_the_player() -> void:

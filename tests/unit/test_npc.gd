@@ -23,7 +23,12 @@ func before_each() -> void:
 	npc.npc_data = MartaData.build()
 	npc.dialog_data = MartaDialog.DATA
 	npc.has_shop = true
-	var sprite := Sprite2D.new()
+	# LOOK V2: production NPC sprites are AnimatedSprite2D (see npc_factory.gd);
+	# matched here so npc.gd's `sprite = get_node_or_null("Sprite2D") as
+	# AnimatedSprite2D` cast in _ready() resolves to the real node instead of
+	# null. This suite doesn't assert on animation itself (see test_npc_walk.gd
+	# for that), so sprite_frames is left unset.
+	var sprite := AnimatedSprite2D.new()
 	sprite.name = "Sprite2D"
 	npc.add_child(sprite)
 	add_child_autofree(npc)

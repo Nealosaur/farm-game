@@ -65,3 +65,38 @@ func test_hurtbox_hit_applies_damage_without_killing() -> void:
 	enemy._on_hurtbox_hit_taken(3, Vector2(5, 0))
 	assert_eq(enemy.health.hp, hp_before - 3)
 	assert_eq(enemy.machine.current.name, "Hurt")
+
+
+## ---- LOOK V2: real sheet-sliced idle/hurt/die animation ----
+
+func test_wander_state_plays_idle_animation() -> void:
+	enemy = _make_enemy("slime")
+	assert_eq(enemy.machine.current.name, "Wander")
+	assert_eq(enemy.sprite.animation, "idle")
+
+
+func test_hurt_state_plays_hurt_animation() -> void:
+	enemy = _make_enemy("slime")
+	enemy._on_hurtbox_hit_taken(1, Vector2(5, 0))
+	assert_eq(enemy.machine.current.name, "Hurt")
+	assert_eq(enemy.sprite.animation, "hurt")
+
+
+func test_dead_state_plays_die_animation() -> void:
+	enemy = _make_enemy("slime")
+	enemy.health.take_damage(9999)
+	assert_eq(enemy.machine.current.name, "Dead")
+	assert_eq(enemy.sprite.animation, "die")
+
+
+func test_goblin_sheet_slices_correctly_at_its_own_frame_size() -> void:
+	enemy = _make_enemy("goblin")
+	assert_true(enemy.sprite.sprite_frames.has_animation("idle"))
+	assert_eq(enemy.sprite.sprite_frames.get_frame_count("idle"), 2)
+
+
+func test_enemy_has_ground_shadow_node() -> void:
+	enemy = _make_enemy("slime")
+	var shadow := enemy.get_node_or_null("GroundShadow")
+	assert_not_null(shadow, "Enemy should have a GroundShadow child node")
+	assert_true(shadow is Polygon2D)

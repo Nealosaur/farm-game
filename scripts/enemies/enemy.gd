@@ -46,9 +46,11 @@ func setup(enemy_data: EnemyData) -> void:
 	is_wisp = data.id == "wisp"
 	is_goblin = data.id == "goblin"
 
-	var tex := load("res://assets/placeholder/char_%s.png" % data.id) as Texture2D
-	sprite.sprite_frames = PlaceholderFrames.build(tex, PackedStringArray(ANIM_NAMES))
+	var single_tex := load("res://assets/placeholder/char_%s.png" % data.id) as Texture2D
+	var sheet_tex := load("res://assets/placeholder/char_%s_sheet.png" % data.id) as Texture2D
+	sprite.sprite_frames = SpriteSheets.build_enemy(sheet_tex, single_tex, PackedStringArray(ANIM_NAMES))
 	sprite.play("idle")
+	_add_ground_shadow(single_tex)
 
 	health.max_hp = data.max_hp
 	health.hp = data.max_hp
@@ -77,6 +79,20 @@ func setup(enemy_data: EnemyData) -> void:
 
 	if not health.died.is_connected(_on_died):
 		health.died.connect(_on_died)
+
+
+func _add_ground_shadow(single_tex: Texture2D) -> void:
+	# Sprite is offset (0, -8) in the scene (see enemy.tscn) so the texture's
+	# bottom edge sits near local y=+half_height; size the shadow off the
+	# enemy's OWN texture so slime_king (48x48) gets a bigger shadow than a
+	# slime (16x16) without a per-species table.
+	var h := 16
+	var w := 16
+	if single_tex != null:
+		w = single_tex.get_width()
+		h = single_tex.get_height()
+	var feet_y := float(h) / 2.0
+	GroundShadow.attach(self, Vector2(0, feet_y - 2), Vector2(w * 0.7, h * 0.28))
 
 
 func _on_hurtbox_hit_taken(damage: int, knockback: Vector2) -> void:

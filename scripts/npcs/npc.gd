@@ -65,6 +65,15 @@ signal gift_given(npc_id: String, item_id: String, reaction: String)
 
 const RP := preload("res://scripts/npcs/npc_registry.gd")
 
+## LOOK V2: same animation-name contract Player uses (SpriteSheets.build_character
+## produces exactly these 12 names from char_<id>_sheet.png). NPCFactory builds
+## `sprite`'s SpriteFrames from this list.
+const ANIM_NAMES := [
+	"idle_down", "idle_up", "idle_left", "idle_right",
+	"walk_down", "walk_up", "walk_left", "walk_right",
+	"use_down", "use_up", "use_left", "use_right",
+]
+
 const WALK_SPEED := 40.0  # px/s, per contract
 const WANDER_MIN_INTERVAL := 4.0
 const WANDER_MAX_INTERVAL := 8.0
@@ -75,7 +84,7 @@ var npc_data: NPCData
 var dialog_data: Dictionary = {}
 var has_shop := false  # Marta-only: offers "Browse the store" during shop hours
 var has_forge := false  # Craft Stride 2, Sten-only: offers "Forge" during smithy blocks 6-17
-var sprite: Sprite2D
+var sprite: AnimatedSprite2D
 
 ## Set by the caller right before a "Give X" choice resolves, so
 ## _on_choice_made can look the item back up without re-deriving it from
@@ -97,6 +106,7 @@ var _host_map_id := ""               # last host_map_id passed to refresh_schedu
 var _current_cell := Vector2i(-1, -1)  # cell this NPC currently occupies (or is walking toward as its logical slot)
 var _walk_queue: Array[Vector2] = []   # remaining cell-center world positions to walk through, in order
 var _walking := false
+var _just_stopped_walking := false  # one-shot flag: next _process() plays idle_<facing>
 var _paused_for_dialog := false
 var _wander_timer := 0.0
 var _wander_home_cell := Vector2i(-1, -1)  # cell to return to after a wander stroll
@@ -105,7 +115,7 @@ var _dialog_finished_connected := false
 
 
 func _ready() -> void:
-	sprite = get_node_or_null("Sprite2D") as Sprite2D
+	sprite = get_node_or_null("Sprite2D") as AnimatedSprite2D
 	_wander_timer = _rng.randf_range(WANDER_MIN_INTERVAL, WANDER_MAX_INTERVAL)
 
 
@@ -115,7 +125,28 @@ func _process(delta: float) -> void:
 	if _walking:
 		_advance_walk(delta)
 		return
+	if _just_stopped_walking:
+		_just_stopped_walking = false
+		_play_anim("idle")
 	_update_wander(delta)
+
+
+func _facing_name() -> String:
+	if facing == Vector2.UP:
+		return "up"
+	if facing == Vector2.LEFT:
+		return "left"
+	if facing == Vector2.RIGHT:
+		return "right"
+	return "down"
+
+
+func _play_anim(prefix: String) -> void:
+	if sprite == null or sprite.sprite_frames == null:
+		return
+	var anim_name := prefix + "_" + _facing_name()
+	if sprite.sprite_frames.has_animation(anim_name):
+		sprite.play(anim_name)
 
 
 func interact(player: Node) -> void:
@@ -720,6 +751,7 @@ func _cancel_walk() -> void:
 func _advance_walk(delta: float) -> void:
 	if _walk_queue.is_empty():
 		_walking = false
+		_just_stopped_walking = true  # picked up next _process(): plays idle_<facing>
 		if not _wandering_out:
 			_wander_timer = _rng.randf_range(WANDER_MIN_INTERVAL, WANDER_MAX_INTERVAL)
 		else:
@@ -747,8 +779,21 @@ func _update_facing(dir: Vector2) -> void:
 		facing = Vector2.RIGHT if dir.x > 0 else Vector2.LEFT
 	else:
 		facing = Vector2.DOWN if dir.y > 0 else Vector2.UP
-	if sprite != null:
-		sprite.flip_h = facing == Vector2.LEFT
+	# LOOK V2: char_<id>_sheet.png authors LEFT and RIGHT as distinct side
+	# profiles (see tools/gen_placeholders.gd / SpriteSheets doc), not a
+	# mirror pair — flip_h stays false so walk_right isn't double-mirrored.
+	_play_anim("walk")
+
+
+## Turns to face `dir` WITHOUT implying movement (e.g. facing the player on
+## interact while paused for dialog) — same cardinal snap as _update_facing,
+## but plays idle_<facing> instead of walk_<facing>.
+func _face_direction_idle(dir: Vector2) -> void:
+	if absf(dir.x) > absf(dir.y):
+		facing = Vector2.RIGHT if dir.x > 0 else Vector2.LEFT
+	else:
+		facing = Vector2.DOWN if dir.y > 0 else Vector2.UP
+	_play_anim("idle")
 
 
 ## ---- idle wander (Alive Stride 1) ----
@@ -800,7 +845,7 @@ func _finish_wander_leg() -> void:
 func _pause_walk_for_dialog(player: Node) -> void:
 	_paused_for_dialog = true
 	if player is Node2D:
-		_update_facing((player as Node2D).global_position - global_position)
+		_face_direction_idle((player as Node2D).global_position - global_position)
 	var dialog := get_tree().get_first_node_in_group("dialog_box") as DialogBox
 	if dialog != null and not _dialog_finished_connected:
 		dialog.finished.connect(_on_dialog_finished_resume_walk, CONNECT_ONE_SHOT)

@@ -35,9 +35,11 @@ var _facing_indicator: ColorRect
 
 func _ready() -> void:
 	add_to_group("player")
-	var tex := load("res://assets/placeholder/char_player.png") as Texture2D
-	sprite.sprite_frames = PlaceholderFrames.build(tex, PackedStringArray(ANIM_NAMES))
+	var single_tex := load("res://assets/placeholder/char_player.png") as Texture2D
+	var sheet_tex := load("res://assets/placeholder/char_player_sheet.png") as Texture2D
+	sprite.sprite_frames = SpriteSheets.build_character(sheet_tex, single_tex, PackedStringArray(ANIM_NAMES))
 	sprite.play("idle_down")
+	_add_ground_shadow()
 	($Collision as CollisionShape2D).shape = RectangleShape2D.new()
 	(($Collision as CollisionShape2D).shape as RectangleShape2D).size = Vector2(10, 6)
 	($Collision as CollisionShape2D).position = Vector2(0, -3)
@@ -138,6 +140,13 @@ func _position_facing_indicator() -> void:
 		Vector2i.RIGHT:
 			center = Vector2(SPRITE_HALF_WIDTH - FACING_INDICATOR_INSET, SPRITE_CENTER_Y)
 	_facing_indicator.position = center - half
+
+
+func _add_ground_shadow() -> void:
+	# Player-local feet are at y=SPRITE_BOTTOM (4, see class doc consts); the
+	# shadow sits a couple px below that, roughly matching the sprite's own
+	# width (16px).
+	GroundShadow.attach(self, Vector2(0, SPRITE_BOTTOM + 2), Vector2(14, 6))
 
 
 func cell() -> Vector2i:
