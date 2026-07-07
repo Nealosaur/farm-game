@@ -1,0 +1,14 @@
+{
+	"frame_w": 16,
+	"frame_h": 32,
+	"rows": ["down", "up", "left", "right"],
+	"cols": ["idle", "walk1", "walk2", "walk3"],
+	"sheet_w": 64,
+	"sheet_h": 128,
+	"note": "char_<id>_sheet.png grid: row = facing (down/up/left/right), col = frame (idle, walk1, walk2, walk3). Each cell is frame_w x frame_h with feet at the bottom of the cell. right column is a mirror of left. Single-frame char_<id>.png (down/idle) is kept for V1 compatibility; Look V2's slicer should read this manifest to build SpriteFrames from the sheet instead of guessing.",
+	"enemy_sheets": {
+		"cols": ["idle1", "idle2", "hurt", "die"],
+		"rows": ["only"],
+		"note": "char_<id>_sheet.png for enemies is a single row: idle1, idle2 (bob), hurt (flash/knockback pose), die (squash/fade pose). Frame size matches the enemy's own char_<id>.png size."
+	}
+}
