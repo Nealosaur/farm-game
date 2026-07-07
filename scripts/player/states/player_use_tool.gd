@@ -11,7 +11,7 @@ var _elapsed := 0.0
 func enter() -> void:
 	_elapsed = 0.0
 	player.velocity = Vector2.ZERO
-	player.play_anim("use")
+	player.play_anim("action")
 
 
 func physics_update(delta: float) -> void:

@@ -44,22 +44,28 @@ func test_move_state_plays_walk_up() -> void:
 
 
 ## ---- UseTool ----
+## SPRITE FORMAT ALIGNMENT: the 8-row farmer sheet's action rows are shared by
+## tool-use AND sword-swing (assets/placeholder/char_frames.json's
+## action_row_is_shared) — both states now play "action_<dir>" instead of the
+## old "use_<dir>" row-name. This is a rename of WHICH animation plays, not a
+## behavior change: PlayerUseTool/PlayerSwing still lock movement for the same
+## STATE_DURATION either way.
 
-func test_use_tool_plays_use_anim_matching_facing() -> void:
+func test_use_tool_plays_action_anim_matching_facing() -> void:
 	player.facing = Vector2i.DOWN
 	player.machine.transition("UseTool")
-	assert_eq(player.sprite.animation, "use_down")
+	assert_eq(player.sprite.animation, "action_down")
 
 
-func test_use_tool_plays_use_left_when_facing_left() -> void:
+func test_use_tool_plays_action_left_when_facing_left() -> void:
 	player.facing = Vector2i.LEFT
 	player.machine.transition("UseTool")
-	assert_eq(player.sprite.animation, "use_left")
+	assert_eq(player.sprite.animation, "action_left")
 
 
 ## ---- Swing (sword) ----
 
-func test_swing_state_plays_use_anim_matching_facing() -> void:
+func test_swing_state_plays_action_anim_matching_facing() -> void:
 	Inventory.add_item("wooden_sword")
 	for i in Inventory.HOTBAR:
 		var s = Inventory.slots[i]
@@ -69,7 +75,7 @@ func test_swing_state_plays_use_anim_matching_facing() -> void:
 	player.facing = Vector2i.RIGHT
 	player.try_use_selected()
 	assert_eq(player.machine.current.name, "Swing")
-	assert_eq(player.sprite.animation, "use_right")
+	assert_eq(player.sprite.animation, "action_right")
 
 
 ## ---- Hurt ----

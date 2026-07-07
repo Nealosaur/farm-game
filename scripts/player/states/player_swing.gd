@@ -52,7 +52,7 @@ func enter() -> void:
 	_hitbox_on = false
 	_buffered = false
 	player.velocity = Vector2.ZERO
-	player.play_anim("use")
+	player.play_anim("action")
 	player.sword_hitbox.position = Vector2(player.facing) * 14.0
 	player.sword_hitbox.damage = _pending_damage
 	player.sword_hitbox.knockback_force = _pending_knockback

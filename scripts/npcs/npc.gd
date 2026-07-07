@@ -65,13 +65,15 @@ signal gift_given(npc_id: String, item_id: String, reaction: String)
 
 const RP := preload("res://scripts/npcs/npc_registry.gd")
 
-## LOOK V2: same animation-name contract Player uses (SpriteSheets.build_character
+## Same animation-name contract Player uses (SpriteSheets.build_character
 ## produces exactly these 12 names from char_<id>_sheet.png). NPCFactory builds
-## `sprite`'s SpriteFrames from this list.
+## `sprite`'s SpriteFrames from this list. "action_<dir>" is the shared
+## tool-use/swing cycle (NPCs never actually play it today — no NPC tools or
+## combat — but it's part of the same sheet contract every character shares).
 const ANIM_NAMES := [
 	"idle_down", "idle_up", "idle_left", "idle_right",
 	"walk_down", "walk_up", "walk_left", "walk_right",
-	"use_down", "use_up", "use_left", "use_right",
+	"action_down", "action_up", "action_left", "action_right",
 ]
 
 const WALK_SPEED := 40.0  # px/s, per contract

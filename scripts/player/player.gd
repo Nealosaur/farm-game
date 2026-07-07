@@ -14,7 +14,7 @@ const FRICTION := 1000.0  # px/s^2 while input is released (slightly snappier st
 const ANIM_NAMES := [
 	"idle_down", "idle_up", "idle_left", "idle_right",
 	"walk_down", "walk_up", "walk_left", "walk_right",
-	"use_down", "use_up", "use_left", "use_right",
+	"action_down", "action_up", "action_left", "action_right",
 ]
 
 ## Facing indicator: a small darker rect that hugs whichever edge of the
