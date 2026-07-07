@@ -43,9 +43,23 @@ func _ready() -> void:
 	_refresh()
 
 
+func is_open() -> bool:
+	return visible
+
+
 func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed("inventory"):
-		toggle()
+	if not event.is_action_pressed("inventory"):
+		return
+	# Reuse the pause menu's pure gate: never OPEN over another modal that
+	# already holds the tree paused (doing so, then closing, would unpause the
+	# world under that still-open modal); still allow closing ourselves. Also
+	# never open mid-cutscene. Symmetric with pause_menu.gd's guard.
+	if not PauseMenu.is_pause_allowed(get_tree().paused, is_open()):
+		return
+	if GameFlow.cutscene_active and not is_open():
+		return
+	toggle()
+	get_viewport().set_input_as_handled()
 
 
 func toggle() -> void:

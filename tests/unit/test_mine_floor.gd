@@ -70,6 +70,10 @@ func test_entrance_and_ascend_cell_always_walkable() -> void:
 		var rows := DungeonFloor.carve_layout(MineFloor.SIZE, rects)
 		assert_eq(_char_at(rows, MineFloor.ENTRANCE_CELL), "S", "depth %d entrance" % depth)
 		assert_eq(_char_at(rows, MineFloor.ASCEND_CELL), "S", "depth %d ascend stairs" % depth)
+		# The descend cell must also be walkable, or the player could be trapped
+		# with no way deeper (milestone-review coverage gap).
+		assert_eq(_char_at(rows, MineFloor._descend_cell(rects)), "S",
+			"depth %d descend stairs must be on walkable floor" % depth)
 
 
 ## ---- floor-type variety + enemy spawn generation ----
@@ -211,7 +215,8 @@ func test_killed_enemy_does_not_respawn_on_same_depth_same_run_reentry() -> void
 	var victim: Enemy = enemies[0]
 	victim.health.take_damage(9999)
 	await wait_process_frames(1)
-	assert_true(int(MineState.is_killed(SaveManager.world["mine"], 2, 0)) or true)  # sanity: no crash
+	assert_true(MineState.is_killed(SaveManager.world["mine"], 2, 0),
+		"the killed enemy is recorded in the per-depth ledger")
 	f1.free()
 
 	var f2 := _make_floor()
