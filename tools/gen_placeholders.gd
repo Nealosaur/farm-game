@@ -96,6 +96,8 @@ func _init() -> void:
 	_write_characters_preview()
 	_write_tiles_and_props_preview()
 	_write_ui_preview()
+	_write_format_reference()
+	_write_all_chars_sheets_preview()
 
 	print("placeholders written: ", count)
 	quit(0)
@@ -1509,3 +1511,104 @@ func _write_tiles_and_props_preview() -> void:
 			entries.append({"image": img, "tick_color": PixelArt.average_color(img)})
 	var sheet := PixelArt.compose_contact_sheet(entries, 8, 6)
 	sheet.save_png(PROTO_OUT + "tiles_and_props_6x.png")
+
+
+## =====================================================================
+## SPRITE FORMAT ALIGNMENT — review artifacts for the new farmer sheet
+## =====================================================================
+
+const FORMAT_REF_SCALE := 6
+const FORMAT_REF_LABEL_W := 90  # left margin for the row label text
+const FORMAT_REF_ROW_PAD := 2   # px gap between rows (unscaled)
+const FORMAT_REF_ROW_LABELS := [
+	"WALK DOWN", "WALK RIGHT", "WALK UP", "WALK LEFT",
+	"ACTION DOWN", "ACTION RIGHT", "ACTION UP", "ACTION LEFT",
+]
+
+
+## Emits tools/_proto/format_reference.png: ONE character's (player's) full
+## 64x256 sheet at 6x, each of the 8 rows labeled with real text (row index +
+## animation name) and a grid overlay (cell borders + a col/row ruler), so the
+## user can open this single image and confirm their own hand-authored art
+## lines up cell-for-cell with assets/placeholder/char_frames.json's contract.
+func _write_format_reference() -> void:
+	var sheet_img := Image.load_from_file(OUT + "char_player_sheet.png")
+	if sheet_img == null:
+		push_warning("gen_placeholders: cannot build format_reference.png, char_player_sheet.png missing")
+		return
+
+	var scale := FORMAT_REF_SCALE
+	var cell_w := 16 * scale
+	var cell_h := 32 * scale
+	var row_h := cell_h + FORMAT_REF_ROW_PAD * scale
+	var out_w := FORMAT_REF_LABEL_W + cell_w * 4 + 8
+	var out_h := row_h * 8 + 8
+
+	var out := Image.create(out_w, out_h, false, Image.FORMAT_RGBA8)
+	out.fill(Color("1c1c22"))
+
+	var grid_c := Color("50505c")
+	var ruler_c := Color("8a8a96")
+	var label_c := Color("f0e8d0")
+
+	for row_i in 8:
+		var row_y := 4 + row_i * row_h
+		# row label text (row index + animation name), left margin.
+		PixelArt.draw_text(out, 4, row_y + cell_h / 2 - 2, "%d %s" % [row_i, FORMAT_REF_ROW_LABELS[row_i]], label_c, 1, 1)
+
+		# the row's 4 frames, scaled, with a grid line between each cell.
+		var region := Rect2i(0, row_i * 32, 64, 32)
+		var row_img := sheet_img.get_region(region)
+		var scaled := row_img.duplicate() as Image
+		scaled.resize(cell_w * 4, cell_h, Image.INTERPOLATE_NEAREST)
+		var dest_x := FORMAT_REF_LABEL_W
+		out.blit_rect(scaled, Rect2i(Vector2i.ZERO, scaled.get_size()), Vector2i(dest_x, row_y))
+
+		# grid overlay: a vertical line at each column boundary (0..4) plus a
+		# horizontal line under the row, so cell-for-cell alignment is
+		# unambiguous at a glance.
+		for col_i in 5:
+			PixelArt.vline(out, dest_x + col_i * cell_w, row_y, cell_h, grid_c)
+		PixelArt.hline(out, dest_x, row_y + cell_h, cell_w * 4, grid_c)
+
+	# a light ruler strip along the very top labeling columns 0-3.
+	for col_i in 4:
+		var col_x := FORMAT_REF_LABEL_W + col_i * cell_w + cell_w / 2 - 3
+		PixelArt.draw_text(out, col_x, 4, "C%d" % col_i, ruler_c, 1, 1)
+
+	var err := out.save_png(PROTO_OUT + "format_reference.png")
+	assert(err == OK, "Failed to write format_reference.png")
+
+
+## Emits tools/_proto/all_chars_sheets_3x.png: all 9 characters' full 64x256
+## sheets side by side at 3x, each labeled with its id, for the orchestrator
+## to review every character's action/walk rows at once (not just the down-
+## idle single frame characters_8x.png already covers).
+func _write_all_chars_sheets_preview() -> void:
+	var scale := 3
+	var cell_w := 64 * scale
+	var cell_h := 256 * scale
+	var label_h := 10
+	var pad := 6
+	var defs := _char_defs()
+	var cols := defs.size()
+
+	var out_w := pad + (cell_w + pad) * cols
+	var out_h := pad + label_h + cell_h + pad
+
+	var out := Image.create(out_w, out_h, false, Image.FORMAT_RGBA8)
+	out.fill(Color("1c1c22"))
+
+	for i in defs.size():
+		var def: CharDef = defs[i]
+		var sheet_img := Image.load_from_file(OUT + "char_%s_sheet.png" % def.id)
+		if sheet_img == null:
+			continue
+		var ox := pad + i * (cell_w + pad)
+		PixelArt.draw_text(out, ox, pad, def.id, Color("f0e8d0"), 1, 1)
+		var scaled := sheet_img.duplicate() as Image
+		scaled.resize(cell_w, cell_h, Image.INTERPOLATE_NEAREST)
+		out.blit_rect(scaled, Rect2i(Vector2i.ZERO, scaled.get_size()), Vector2i(ox, pad + label_h))
+
+	var err := out.save_png(PROTO_OUT + "all_chars_sheets_3x.png")
+	assert(err == OK, "Failed to write all_chars_sheets_3x.png")
