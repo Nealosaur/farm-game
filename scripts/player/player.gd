@@ -217,6 +217,7 @@ func _use_tool(tool_data: ToolData) -> void:
 			if grid != null and grid.till(target_cell()):
 				GameState.spend_rp(tool_data.rp_cost)
 				machine.transition("UseTool")
+				ParticleFX.spawn_till(self, MapBuilder.cell_center(target_cell()))
 		ToolData.ToolType.WATERING_CAN:
 			# Craft Stride 2: water_width > 1 (Copper Watering Can) also waters
 			# the flanking cells perpendicular to facing — RP is still spent
@@ -225,6 +226,7 @@ func _use_tool(tool_data: ToolData) -> void:
 			if grid != null and grid.water_wide(target_cell(), facing, tool_data.water_width):
 				GameState.spend_rp(tool_data.rp_cost)
 				machine.transition("UseTool")
+				ParticleFX.spawn_water(self, MapBuilder.cell_center(target_cell()))
 		ToolData.ToolType.SWORD:
 			var swing := machine.get_node_or_null("Swing") as PlayerSwing
 			if swing == null:
@@ -309,6 +311,7 @@ func try_interact() -> void:
 				# so a full inventory leaves the crop ripe and untouched.
 				grid.harvest(target_cell())
 				EventBus.toast_requested.emit("+1 " + ItemDB.get_item(product).display_name)
+				ParticleFX.spawn_harvest(self, MapBuilder.cell_center(target_cell()))
 			else:
 				EventBus.toast_requested.emit("Inventory full!")
 			return

@@ -47,4 +47,7 @@ func _collect() -> void:
 		Inventory.add_item(item_id)
 		var data := ItemDB.get_item(item_id)
 		EventBus.toast_requested.emit("+1 " + (data.display_name if data != null else item_id))
+		# FEEL Stride 3: sparkle spawned under the pickup's own PARENT (not
+		# `self`) — this node queue_frees itself immediately below.
+		ParticleFX.spawn_sparkle(get_parent() if get_parent() != null else self, global_position)
 	queue_free()

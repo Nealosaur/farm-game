@@ -58,6 +58,10 @@ func enter() -> void:
 	player.sword_hitbox.knockback_force = _pending_knockback
 	player.sword_hitbox.set_active(true)
 	_hitbox_on = true
+	# FEEL Stride 3: soft swing-arc VFX in the facing direction, spawned under
+	# the player itself (short-lived — gone well before the player could be
+	# freed) at roughly the hitbox's own position.
+	ParticleFX.spawn_swing_arc(player, player.global_position + Vector2(player.facing) * 10.0, Vector2(player.facing))
 
 
 func exit() -> void:

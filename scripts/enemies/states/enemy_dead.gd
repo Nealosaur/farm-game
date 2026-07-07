@@ -27,6 +27,10 @@ func enter() -> void:
 	EventBus.toast_requested.emit("+%d XP  +%dg" % [data.xp, gold])
 	EventBus.enemy_died.emit(data, enemy.global_position)
 	EventBus.camera_shake.emit(CameraShake.DEFAULT_STRENGTH)
+	# FEEL Stride 3: death splat spawned under the enemy's PARENT, not the
+	# enemy itself — the tween below shrinks/fades and queue_frees the enemy
+	# well before the splat's own lifetime is up.
+	ParticleFX.spawn_death_splat(enemy.get_parent() if enemy.get_parent() != null else enemy, enemy.global_position)
 
 	if data.drop_item_id != "" and enemy.rng.randf() < data.drop_chance:
 		_spawn_pickup(data.drop_item_id)

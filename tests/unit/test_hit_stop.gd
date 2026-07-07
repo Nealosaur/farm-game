@@ -3,34 +3,44 @@ extends GutTest
 ## hit, always restored, never stuck. Restores real time_scale to 1.0 after
 ## every test regardless of what a test left it at, since Engine.time_scale
 ## is genuinely global (not reset between tests by GUT).
+##
+## The restore countdown is driven by HitStop's own _process (real engine
+## frames, not wall-clock time — see hit_stop.gd's class doc for why), so
+## tests drive it by calling _process() directly rather than awaiting time.
 
 
 func after_each() -> void:
 	Engine.time_scale = 1.0
 	HitStop._active = false
-	HitStop._token += 1  # invalidate any in-flight real-time restore timer from this test
+	HitStop._frames_left = 0
+	HitStop.set_process(false)
 
 
 func test_trigger_dips_time_scale() -> void:
-	HitStop.trigger(0.05, 0.02)
+	HitStop.trigger(3, 0.02)
 	assert_eq(Engine.time_scale, 0.02)
 	assert_true(HitStop.is_active())
 
 
-func test_time_scale_restores_after_window() -> void:
-	HitStop.trigger(0.05, 0.02)
-	await wait_seconds(0.08)
+func test_time_scale_restores_after_frame_window() -> void:
+	HitStop.trigger(3, 0.02)
+	HitStop._process(0.016)
+	HitStop._process(0.016)
+	assert_eq(Engine.time_scale, 0.02, "still within the 3-frame window")
+	HitStop._process(0.016)
 	assert_eq(Engine.time_scale, 1.0)
 	assert_false(HitStop.is_active())
 
 
 func test_retrigger_while_active_extends_window_and_still_restores() -> void:
-	HitStop.trigger(0.05, 0.02)
-	await wait_seconds(0.02)
-	HitStop.trigger(0.05, 0.02)  # re-arm partway through the first window
-	assert_eq(Engine.time_scale, 0.02)
-	await wait_seconds(0.08)
-	assert_eq(Engine.time_scale, 1.0, )
+	HitStop.trigger(3, 0.02)
+	HitStop._process(0.016)
+	HitStop.trigger(3, 0.02)  # re-arm partway through the first window
+	HitStop._process(0.016)
+	HitStop._process(0.016)
+	assert_eq(Engine.time_scale, 0.02, "re-armed window should still be active")
+	HitStop._process(0.016)
+	assert_eq(Engine.time_scale, 1.0)
 	assert_false(HitStop.is_active())
 
 
@@ -41,7 +51,7 @@ func test_ready_defensively_resets_time_scale() -> void:
 
 
 func test_exit_tree_restores_time_scale() -> void:
-	HitStop.trigger(5.0, 0.02)  # a long window that would still be active
+	HitStop.trigger(100, 0.02)  # a long window that would still be active
 	HitStop._exit_tree()
 	assert_eq(Engine.time_scale, 1.0)
 

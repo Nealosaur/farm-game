@@ -88,6 +88,7 @@ func _on_hurtbox_hit_taken(damage: int, knockback: Vector2, _is_heavy: bool = fa
 	# base Enemy — this override exists for the boss's own Hurt/Dead wiring,
 	# not to change when hit-stop fires.
 	HitStop.trigger()
+	ParticleFX.spawn_hit(get_parent() if get_parent() != null else self, hurtbox.global_position)
 	if machine.current != null and machine.current.name == "Dead":
 		return
 	health.take_damage(damage)

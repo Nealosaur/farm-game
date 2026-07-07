@@ -102,6 +102,9 @@ func _on_hurtbox_hit_taken(damage: int, knockback: Vector2, _is_heavy: bool = fa
 	# hit; no is_heavy gate needed on this side, unlike the player's own
 	# handler which reserves hit-stop for the boss's heavy slam).
 	HitStop.trigger()
+	# FEEL Stride 3: impact spark at the hurtbox's own position (not the
+	# enemy's feet) so it visually lands right where the sword connected.
+	ParticleFX.spawn_hit(get_parent() if get_parent() != null else self, hurtbox.global_position)
 	if machine.current != null and machine.current.name == "Dead":
 		return
 	health.take_damage(damage)
