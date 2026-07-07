@@ -66,6 +66,7 @@ func _level_up() -> void:
 	hp = max_hp
 	rp = max_rp
 	EventBus.player_leveled.emit(level)
+	AudioManager.play("level_up")
 
 
 func spend_rp(cost: int) -> void:

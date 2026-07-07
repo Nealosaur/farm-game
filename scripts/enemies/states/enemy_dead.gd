@@ -33,6 +33,7 @@ func enter() -> void:
 	# enemy itself — the tween below shrinks/fades and queue_frees the enemy
 	# well before the splat's own lifetime is up.
 	ParticleFX.spawn_death_splat(enemy.get_parent() if enemy.get_parent() != null else enemy, enemy.global_position)
+	AudioManager.play("enemy_die")
 
 	if data.drop_item_id != "" and enemy.rng.randf() < data.drop_chance:
 		_spawn_pickup(data.drop_item_id)

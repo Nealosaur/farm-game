@@ -91,6 +91,7 @@ func _on_hurtbox_hit_taken(damage: int, knockback: Vector2, _is_heavy: bool = fa
 	ParticleFX.spawn_hit(get_parent() if get_parent() != null else self, hurtbox.global_position)
 	# FEEL Stride 4: tiny shake on every landed sword hit, same as the base Enemy.
 	EventBus.camera_shake.emit(CameraShake.TINY_STRENGTH)
+	AudioManager.play("hit")
 	if machine.current != null and machine.current.name == "Dead":
 		return
 	health.take_damage(damage)

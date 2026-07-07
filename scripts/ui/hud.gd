@@ -133,6 +133,7 @@ func _on_day_passed(_d) -> void:
 
 func _on_hotbar_selection(_i) -> void:
 	_refresh_hotbar()
+	AudioManager.play("menu_move")
 
 
 func _on_quest_updated(quest_id) -> void:

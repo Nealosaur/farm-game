@@ -62,6 +62,7 @@ func enter() -> void:
 	# the player itself (short-lived — gone well before the player could be
 	# freed) at roughly the hitbox's own position.
 	ParticleFX.spawn_swing_arc(player, player.global_position + Vector2(player.facing) * 10.0, Vector2(player.facing))
+	AudioManager.play("sword_swing")
 
 
 func exit() -> void:

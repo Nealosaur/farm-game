@@ -56,6 +56,11 @@ func end_day(collapsed: bool) -> void:
 		return
 	_busy = true
 	Clock.paused = true
+	# FEEL Stride 5: the gentle sleep chime only fits a VOLUNTARY sleep, not a
+	# collapse (curfew/death) — those are already communicated as a harsher
+	# beat via the "You collapsed..." toast below.
+	if not collapsed:
+		AudioManager.play("sleep")
 	# Alive Stride 2: gates player input for the WHOLE end-of-day sequence —
 	# fixes the long-standing debt where Clock.paused stopped time/crops but
 	# Player.Idle/Move still polled input during the fade (see GameFlow's

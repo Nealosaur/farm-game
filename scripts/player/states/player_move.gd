@@ -51,6 +51,7 @@ func _update_footstep_cadence(delta: float) -> void:
 	if _footstep_elapsed >= FOOTSTEP_INTERVAL:
 		_footstep_elapsed = 0.0
 		ParticleFX.spawn_dust(player, player.global_position + Vector2(0, Player.SPRITE_BOTTOM))
+		AudioManager.play("footstep")
 
 
 func update(_delta: float) -> void:

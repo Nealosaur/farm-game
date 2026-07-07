@@ -153,6 +153,11 @@ func _add_points(npc_id: String, delta: int) -> void:
 	state["points"] = clampi(int(state.get("points", 0)) + delta, MIN_POINTS, MAX_POINTS)
 	_persist()
 	EventBus.relationship_changed.emit(npc_id)
+	# FEEL Stride 5/6: only a GAIN plays the bond-up chime (a disliked gift or
+	# an unempathetic heart-event choice routes through this same funnel with
+	# a negative delta — those should stay silent, not celebrate).
+	if delta > 0:
+		AudioManager.play("bond_up")
 
 
 ## ---- talk ----

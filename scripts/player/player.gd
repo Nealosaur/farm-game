@@ -218,6 +218,7 @@ func _use_tool(tool_data: ToolData) -> void:
 				GameState.spend_rp(tool_data.rp_cost)
 				machine.transition("UseTool")
 				ParticleFX.spawn_till(self, MapBuilder.cell_center(target_cell()))
+				AudioManager.play("till")
 		ToolData.ToolType.WATERING_CAN:
 			# Craft Stride 2: water_width > 1 (Copper Watering Can) also waters
 			# the flanking cells perpendicular to facing — RP is still spent
@@ -227,6 +228,7 @@ func _use_tool(tool_data: ToolData) -> void:
 				GameState.spend_rp(tool_data.rp_cost)
 				machine.transition("UseTool")
 				ParticleFX.spawn_water(self, MapBuilder.cell_center(target_cell()))
+				AudioManager.play("water")
 		ToolData.ToolType.SWORD:
 			var swing := machine.get_node_or_null("Swing") as PlayerSwing
 			if swing == null:
@@ -244,6 +246,7 @@ func _plant(seed_data: SeedData) -> void:
 	if grid != null and grid.plant(target_cell(), seed_data.crop_id):
 		Inventory.remove_item(seed_data.id, 1)
 		machine.transition("UseTool")
+		AudioManager.play("plant")
 
 
 func _eat(food: FoodData) -> void:
@@ -312,6 +315,7 @@ func try_interact() -> void:
 				grid.harvest(target_cell())
 				EventBus.toast_requested.emit("+1 " + ItemDB.get_item(product).display_name)
 				ParticleFX.spawn_harvest(self, MapBuilder.cell_center(target_cell()))
+				AudioManager.play("harvest")
 			else:
 				EventBus.toast_requested.emit("Inventory full!")
 			return

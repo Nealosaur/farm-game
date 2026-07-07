@@ -108,6 +108,7 @@ func _on_hurtbox_hit_taken(damage: int, knockback: Vector2, _is_heavy: bool = fa
 	# FEEL Stride 4: tiny shake on every landed sword hit — same "frequent,
 	# must stay subtle" reasoning as the enemy-death shake.
 	EventBus.camera_shake.emit(CameraShake.TINY_STRENGTH)
+	AudioManager.play("hit")
 	if machine.current != null and machine.current.name == "Dead":
 		return
 	health.take_damage(damage)

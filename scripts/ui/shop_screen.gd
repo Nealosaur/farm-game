@@ -223,6 +223,7 @@ func _on_buy_pressed(item_id: String) -> void:
 		ShopLogic.Result.OK:
 			var data := ItemDB.get_item(item_id)
 			EventBus.toast_requested.emit("Bought %s" % data.display_name)
+			AudioManager.play("menu_confirm")
 	_refresh()
 
 
@@ -236,6 +237,7 @@ func _on_sell_pressed(item_id: String) -> void:
 		ShopLogic.Result.OK:
 			var data := ItemDB.get_item(item_id)
 			EventBus.toast_requested.emit("Sold %d× %s" % [count, data.display_name])
+			AudioManager.play("coin")
 		ShopLogic.Result.UNSELLABLE:
 			EventBus.toast_requested.emit("Can't sell that")
 		ShopLogic.Result.NOTHING_TO_SELL:
