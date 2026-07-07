@@ -9,7 +9,9 @@ func test_content_loaded() -> void:
 	# Craft Stride 1: + 8 cooked dishes = 38 items; + 8 recipes.
 	# Craft Stride 2: + 3 forge tools (steel_sword, fangsteel_blade,
 	# copper_can) = 41 items.
-	assert_eq(ItemDB.items.size(), 41)
+	# DEPTH stride: + 4 tool-tier capstones (iridium_blade, golden_can,
+	# copper_hoe, golden_hoe) = 45 items.
+	assert_eq(ItemDB.items.size(), 45)
 	assert_eq(ItemDB.crops.size(), 9)
 	assert_eq(ItemDB.enemies.size(), 4)
 	assert_eq(ItemDB.recipes.size(), 8)
@@ -49,6 +51,38 @@ func test_forge_tools_resolve_with_contract_stats() -> void:
 	assert_eq(copper.water_width, 3)
 	assert_eq(copper.max_stack, 1)
 	assert_eq(copper.buy_price, 0, "copper_can must not be sold in the store")
+
+
+func test_depth_stride_tool_tiers_resolve_with_contract_stats() -> void:
+	## DEPTH stride content meta-test: the four new tool-tier capstones exist
+	## with the expected stats/types, never stack, and are forge-only.
+	var iridium := ItemDB.get_item("iridium_blade") as ToolData
+	assert_not_null(iridium)
+	assert_eq(iridium.tool_type, ToolData.ToolType.SWORD)
+	assert_eq(iridium.damage, 30)
+	assert_eq(iridium.max_stack, 1)
+	assert_eq(iridium.buy_price, 0)
+
+	var golden_can := ItemDB.get_item("golden_can") as ToolData
+	assert_not_null(golden_can)
+	assert_eq(golden_can.tool_type, ToolData.ToolType.WATERING_CAN)
+	assert_eq(golden_can.water_width, 5)
+	assert_eq(golden_can.max_stack, 1)
+	assert_eq(golden_can.buy_price, 0)
+
+	var copper_hoe := ItemDB.get_item("copper_hoe") as ToolData
+	assert_not_null(copper_hoe)
+	assert_eq(copper_hoe.tool_type, ToolData.ToolType.HOE)
+	assert_eq(copper_hoe.till_width, 3)
+	assert_eq(copper_hoe.max_stack, 1)
+	assert_eq(copper_hoe.buy_price, 0)
+
+	var golden_hoe := ItemDB.get_item("golden_hoe") as ToolData
+	assert_not_null(golden_hoe)
+	assert_eq(golden_hoe.tool_type, ToolData.ToolType.HOE)
+	assert_eq(golden_hoe.till_width, 5)
+	assert_eq(golden_hoe.max_stack, 1)
+	assert_eq(golden_hoe.buy_price, 0)
 
 
 func test_existing_watering_can_keeps_width_one() -> void:

@@ -47,7 +47,8 @@ func test_visible_upgrades_shows_fangsteel_once_flag_set() -> void:
 	for upgrade: Dictionary in ForgeLogic.visible_upgrades():
 		ids.append(String(upgrade["id"]))
 	assert_true("fangsteel_blade" in ids)
-	assert_eq(ids.size(), 3)
+	assert_eq(ids.size(), ForgeLogic.UPGRADES.size(),
+		"every upgrade is visible once the only gated one (fangsteel) unlocks")
 
 
 ## ---- affordability matrix ----
@@ -99,6 +100,93 @@ func test_copper_can_upgrade_consumes_watering_can_and_grants_copper() -> void:
 	assert_eq(Inventory.count_of("slime_gel"), 0)
 	assert_eq(GameState.gold, 0)
 	assert_eq(Inventory.count_of("copper_can"), 1)
+
+
+## ---- DEPTH stride: tool-tier ladder (hoe/can capstones + iridium sword) ----
+
+func test_visible_upgrades_includes_every_new_tier_and_none_are_hidden() -> void:
+	var ids: Array[String] = []
+	for upgrade: Dictionary in ForgeLogic.visible_upgrades():
+		ids.append(String(upgrade["id"]))
+	for expected in ["iridium_blade", "golden_can", "copper_hoe", "golden_hoe"]:
+		assert_true(expected in ids, "%s must be visible (no hidden_until_flag)" % expected)
+
+
+func test_iridium_blade_requires_fangsteel_and_grants_iridium() -> void:
+	Inventory.add_item("fangsteel_blade", 1)
+	Inventory.add_item("wisp_dust", 6)
+	Inventory.add_item("driftglass", 4)
+	GameState.gold = 3500
+	var result := ForgeLogic.upgrade("iridium_blade")
+	assert_eq(result, ForgeLogic.Result.OK)
+	assert_eq(Inventory.count_of("fangsteel_blade"), 0, "old tool must be consumed")
+	assert_eq(Inventory.count_of("wisp_dust"), 0)
+	assert_eq(Inventory.count_of("driftglass"), 0)
+	assert_eq(GameState.gold, 0)
+	assert_eq(Inventory.count_of("iridium_blade"), 1)
+
+
+func test_iridium_blade_refuses_without_fangsteel() -> void:
+	Inventory.add_item("wisp_dust", 6)
+	Inventory.add_item("driftglass", 4)
+	GameState.gold = 3500
+	var result := ForgeLogic.upgrade("iridium_blade")
+	assert_eq(result, ForgeLogic.Result.MISSING_OLD_TOOL)
+	assert_eq(Inventory.count_of("iridium_blade"), 0)
+
+
+func test_golden_can_requires_copper_can_and_grants_golden() -> void:
+	Inventory.add_item("copper_can", 1)
+	Inventory.add_item("slime_gel", 5)
+	Inventory.add_item("wisp_dust", 3)
+	GameState.gold = 1400
+	var result := ForgeLogic.upgrade("golden_can")
+	assert_eq(result, ForgeLogic.Result.OK)
+	assert_eq(Inventory.count_of("copper_can"), 0)
+	assert_eq(Inventory.count_of("golden_can"), 1)
+	var golden := ItemDB.get_item("golden_can") as ToolData
+	assert_eq(golden.water_width, 5, "golden can must be a wider tier than copper (3)")
+
+
+func test_golden_can_refuses_without_copper_can() -> void:
+	Inventory.add_item("slime_gel", 5)
+	Inventory.add_item("wisp_dust", 3)
+	GameState.gold = 1400
+	var result := ForgeLogic.upgrade("golden_can")
+	assert_eq(result, ForgeLogic.Result.MISSING_OLD_TOOL)
+
+
+func test_copper_hoe_requires_base_hoe_and_grants_copper() -> void:
+	Inventory.add_item("hoe", 1)
+	Inventory.add_item("slime_gel", 3)
+	GameState.gold = 500
+	var result := ForgeLogic.upgrade("copper_hoe")
+	assert_eq(result, ForgeLogic.Result.OK)
+	assert_eq(Inventory.count_of("hoe"), 0)
+	assert_eq(Inventory.count_of("copper_hoe"), 1)
+	var copper := ItemDB.get_item("copper_hoe") as ToolData
+	assert_eq(copper.till_width, 3)
+
+
+func test_golden_hoe_requires_copper_hoe_and_grants_golden() -> void:
+	Inventory.add_item("copper_hoe", 1)
+	Inventory.add_item("goblin_fang", 3)
+	Inventory.add_item("wisp_dust", 3)
+	GameState.gold = 1400
+	var result := ForgeLogic.upgrade("golden_hoe")
+	assert_eq(result, ForgeLogic.Result.OK)
+	assert_eq(Inventory.count_of("copper_hoe"), 0)
+	assert_eq(Inventory.count_of("golden_hoe"), 1)
+	var golden := ItemDB.get_item("golden_hoe") as ToolData
+	assert_eq(golden.till_width, 5, "golden hoe must be a wider tier than copper (3)")
+
+
+func test_golden_hoe_refuses_without_copper_hoe() -> void:
+	Inventory.add_item("goblin_fang", 3)
+	Inventory.add_item("wisp_dust", 3)
+	GameState.gold = 1400
+	var result := ForgeLogic.upgrade("golden_hoe")
+	assert_eq(result, ForgeLogic.Result.MISSING_OLD_TOOL)
 
 
 func test_upgrade_leaves_surplus_materials_untouched() -> void:

@@ -960,6 +960,17 @@ func _write_items() -> int:
 	_save(OUT + "item_fangsteel_blade.png", _draw_sword(Color("586070"), Color("e8d8a0"), true))
 	n += 4
 
+	# DEPTH stride: tool-tier capstones — golden can/hoe reuse the base
+	# silhouette tinted gold (same "recolor, not reshape" convention as the
+	# copper can vs the base can); iridium blade reuses the sword silhouette
+	# with a cool purple-blue tint + accent flecks (has_accent=true, same as
+	# fangsteel) so it reads as a distinct top-tier weapon.
+	_save(OUT + "item_golden_can.png", _draw_watering_can(Color("d8a838"), true))
+	_save(OUT + "item_copper_hoe.png", _draw_hoe(Color("c07840"), Color("c07840").darkened(0.25)))
+	_save(OUT + "item_golden_hoe.png", _draw_hoe(Color("d8a838"), Color("d8a838").darkened(0.25)))
+	_save(OUT + "item_iridium_blade.png", _draw_sword(Color("7868c8"), Color("d8d0f0"), true))
+	n += 4
+
 	# materials — distinct silhouettes so gel/dust/fang/shells don't blur together
 	_save(OUT + "item_slime_gel.png", _draw_gel(Color("60d060")))
 	_save(OUT + "item_wisp_dust.png", _draw_dust(Color("90d0f0")))
@@ -997,11 +1008,13 @@ func _draw_seed_packet(swatch: Color) -> Image:
 	return img
 
 
-func _draw_hoe() -> Image:
+func _draw_hoe(head: Color = Color("808890"), head_shade: Color = Color("606870")) -> Image:
+	## DEPTH stride: head/head_shade params generalize this for the tool-tier
+	## ladder (copper_hoe/golden_hoe reuse the same silhouette, tinted) —
+	## defaults are the ORIGINAL hardcoded colors so item_hoe.png stays
+	## pixel-identical to before this stride (no gratuitous asset churn).
 	var img := PixelArt.blank(16, 16)
 	var handle := Color("8a5a2f")
-	var head := Color("808890")
-	var head_shade := Color("606870")
 	# diagonal handle
 	for i in 11:
 		PixelArt.px(img, 2 + i, 13 - i, handle)

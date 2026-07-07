@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ToolData" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/placeholder/item_iridium_blade.png" id="1_h8y87"]
+[ext_resource type="Script" path="res://scripts/resources/tool_data.gd" id="2_783hf"]
+
+[resource]
+script = ExtResource("2_783hf")
+tool_type = 2
+rp_cost = 3
+damage = 30
+id = "iridium_blade"
+display_name = "Iridium Blade"
+icon = ExtResource("1_h8y87")
+max_stack = 1

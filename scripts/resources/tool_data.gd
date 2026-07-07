@@ -13,3 +13,8 @@ enum ToolType { HOE, WATERING_CAN, SWORD }
 ## odd number — see FarmGrid.water_cells_for()/player.gd's _use_tool() for
 ## the consumer.
 @export var water_width: int = 1
+## DEPTH stride (tool tiers): hoes only. Same "1 = single target cell, 3 =
+## target + 2 flanking cells" contract as water_width, reusing the identical
+## FarmGrid.flanking_cells() geometry (see FarmGrid.till_wide()) — a tiered
+## hoe tills a small row the same way the Copper Watering Can waters one.
+@export var till_width: int = 1

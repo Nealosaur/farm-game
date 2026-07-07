@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ToolData" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/placeholder/item_copper_hoe.png" id="1_ikwgr"]
+[ext_resource type="Script" path="res://scripts/resources/tool_data.gd" id="2_mvn3i"]
+
+[resource]
+script = ExtResource("2_mvn3i")
+rp_cost = 4
+till_width = 3
+id = "copper_hoe"
+display_name = "Copper Hoe"
+icon = ExtResource("1_ikwgr")
+max_stack = 1

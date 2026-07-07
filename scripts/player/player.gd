@@ -267,7 +267,11 @@ func _use_tool(tool_data: ToolData) -> void:
 	var grid := _farm_grid()
 	match tool_data.tool_type:
 		ToolData.ToolType.HOE:
-			if grid != null and grid.till(target_cell()):
+			# DEPTH stride: till_width > 1 (a tiered hoe) also tills the
+			# flanking cells perpendicular to facing, same "RP spent exactly
+			# ONCE per swing, on success of ANY cell" contract as the
+			# watering can's water_wide() (see FarmGrid.till_wide()'s doc).
+			if grid != null and grid.till_wide(target_cell(), facing, tool_data.till_width):
 				GameState.spend_rp(tool_data.rp_cost)
 				machine.transition("UseTool")
 				ParticleFX.spawn_till(self, MapBuilder.cell_center(target_cell()))

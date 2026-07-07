@@ -36,14 +36,18 @@ func test_close_unpauses_tree() -> void:
 func test_rows_match_visible_upgrades_and_hide_fangsteel() -> void:
 	screen.open()
 	assert_eq(screen.upgrade_list.get_child_count(), ForgeLogic.visible_upgrades().size())
-	assert_eq(screen.upgrade_list.get_child_count(), 2, "steel + copper only before the scene")
+	# DEPTH stride: fangsteel is still the only hidden_until_flag entry, so
+	# "everything except it" stays the exact count relationship regardless of
+	# how many tiers ForgeLogic.UPGRADES grows to hold.
+	assert_eq(screen.upgrade_list.get_child_count(), ForgeLogic.UPGRADES.size() - 1,
+		"every upgrade except the gated fangsteel, before the masterwork scene")
 	assert_null(screen.upgrade_list.get_node_or_null("Row_fangsteel_blade"))
 
 
 func test_fangsteel_row_appears_once_masterwork_flag_set() -> void:
 	GameState.flags["sten_masterwork_done"] = true
 	screen.open()
-	assert_eq(screen.upgrade_list.get_child_count(), 3)
+	assert_eq(screen.upgrade_list.get_child_count(), ForgeLogic.UPGRADES.size())
 	assert_not_null(screen.upgrade_list.get_node_or_null("Row_fangsteel_blade"))
 
 

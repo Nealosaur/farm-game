@@ -52,6 +52,22 @@ func water(cell: Vector2i) -> bool:
 	return true
 
 
+func till_wide(target: Vector2i, facing: Vector2i, width: int) -> bool:
+	## DEPTH stride (tool tiers): tills `target` plus its flanking cells,
+	## same geometry as water_wide()/flanking_cells() — a wider hoe (Copper
+	## Hoe, till_width 3) tills a small row across the field the same way
+	## the Copper Watering Can waters one. Each cell independently attempts
+	## till() (an already-tilled or out-of-bounds flank just no-ops for that
+	## cell — same "edge-of-field partial applies what it can" contract).
+	## Returns true if ANY cell was newly tilled, so callers spend RP exactly
+	## once per swing on ANY success (mirrors water_wide()'s doc).
+	var any_tilled := false
+	for cell: Vector2i in flanking_cells(target, facing, width):
+		if till(cell):
+			any_tilled = true
+	return any_tilled
+
+
 static func flanking_cells(target: Vector2i, facing: Vector2i, width: int) -> Array[Vector2i]:
 	## Craft Stride 2 (Copper Watering Can): target cell + the (width-1)/2
 	## cells flanking it PERPENDICULAR to facing, on each side. width <= 1

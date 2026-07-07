@@ -21,6 +21,34 @@ func test_till_only_inside_tillable_area() -> void:
 	assert_false(grid.till(Vector2i(50, 50)))   # outside
 
 
+## ---- DEPTH stride: tiered hoe (till_wide) ----
+
+func test_till_wide_width_one_matches_plain_till() -> void:
+	assert_true(grid.till_wide(Vector2i(5, 5), Vector2i.RIGHT, 1))
+	assert_true(grid.plots.has(Vector2i(5, 5)))
+	assert_false(grid.plots.has(Vector2i(5, 4)), "width 1 must not flank")
+
+
+func test_till_wide_width_three_tills_flanking_cells() -> void:
+	assert_true(grid.till_wide(Vector2i(5, 5), Vector2i.RIGHT, 3))
+	assert_true(grid.plots.has(Vector2i(5, 5)))
+	assert_true(grid.plots.has(Vector2i(5, 4)), "facing right flanks up")
+	assert_true(grid.plots.has(Vector2i(5, 6)), "facing right flanks down")
+
+
+func test_till_wide_partial_at_field_edge_still_returns_true() -> void:
+	# tillable is Rect2i(0,0,10,10) — targeting (5,0) facing up puts a flank
+	# at y=-1, outside the field; till_wide must still till what it can.
+	assert_true(grid.till_wide(Vector2i(5, 0), Vector2i.UP, 3))
+	assert_true(grid.plots.has(Vector2i(5, 0)))
+	assert_true(grid.plots.has(Vector2i(4, 0)) or grid.plots.has(Vector2i(6, 0)))
+
+
+func test_till_wide_returns_false_when_nothing_tillable() -> void:
+	assert_false(grid.till_wide(Vector2i(50, 50), Vector2i.RIGHT, 3),
+		"every flanking cell out of bounds -> no state change, false")
+
+
 func test_water_requires_tilled() -> void:
 	assert_false(grid.water(Vector2i(3, 3)))
 	grid.till(Vector2i(3, 3))

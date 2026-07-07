@@ -22,6 +22,16 @@ enum Result {
 
 ## Each entry: id, old_tool (consumed, "" if none), materials (item_id -> count),
 ## gold (int), result_id (granted ToolData id), hidden_until_flag ("" = never hidden).
+##
+## DEPTH stride (tool tiers): every tool now has a FULL base->copper->steel->
+## gold-equivalent ladder (bible: "hoe/can/sword copper->iron->gold style
+## tiers"). Sword's ladder predates this stride (wooden -> iron [shop] ->
+## steel -> fangsteel [masterwork-gated]) and is UNCHANGED except for adding
+## one more capstone rung (iridium_blade) so all three tools end on a true
+## top tier; hoe/can are NEW ladders added this stride, same shape as the
+## sword's steel/fangsteel rungs (mine materials + gold, later rungs pricier).
+## Materials scale with the mine's new depth-sourced drops (goblin_fang/
+## driftglass/wisp_dust/slime_gel) so the deep-delve loop feeds the forge.
 const UPGRADES := [
 	{
 		"id": "steel_sword",
@@ -40,11 +50,43 @@ const UPGRADES := [
 		"hidden_until_flag": "sten_masterwork_done",
 	},
 	{
+		"id": "iridium_blade",
+		"old_tool": "fangsteel_blade",
+		"materials": {"wisp_dust": 6, "driftglass": 4},
+		"gold": 3500,
+		"result_id": "iridium_blade",
+		"hidden_until_flag": "",
+	},
+	{
 		"id": "copper_can",
 		"old_tool": "watering_can",
 		"materials": {"slime_gel": 3},
 		"gold": 500,
 		"result_id": "copper_can",
+		"hidden_until_flag": "",
+	},
+	{
+		"id": "golden_can",
+		"old_tool": "copper_can",
+		"materials": {"slime_gel": 5, "wisp_dust": 3},
+		"gold": 1400,
+		"result_id": "golden_can",
+		"hidden_until_flag": "",
+	},
+	{
+		"id": "copper_hoe",
+		"old_tool": "hoe",
+		"materials": {"slime_gel": 3},
+		"gold": 500,
+		"result_id": "copper_hoe",
+		"hidden_until_flag": "",
+	},
+	{
+		"id": "golden_hoe",
+		"old_tool": "copper_hoe",
+		"materials": {"goblin_fang": 3, "wisp_dust": 3},
+		"gold": 1400,
+		"result_id": "golden_hoe",
 		"hidden_until_flag": "",
 	},
 ]

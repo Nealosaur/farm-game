@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ToolData" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/placeholder/item_golden_hoe.png" id="1_3ksoj"]
+[ext_resource type="Script" path="res://scripts/resources/tool_data.gd" id="2_ctt0j"]
+
+[resource]
+script = ExtResource("2_ctt0j")
+rp_cost = 4
+till_width = 5
+id = "golden_hoe"
+display_name = "Golden Hoe"
+icon = ExtResource("1_3ksoj")
+max_stack = 1

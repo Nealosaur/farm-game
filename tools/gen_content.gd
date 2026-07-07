@@ -41,14 +41,27 @@ func _init() -> void:
 	_tool("wooden_sword", "Wooden Sword", ToolData.ToolType.SWORD, 3, 5, 0)
 	_tool("iron_sword", "Iron Sword", ToolData.ToolType.SWORD, 3, 11, 2500)
 
-	# Craft Stride 2 (Forging) — Sten's smithy upgrades. All three are
-	# forge-only (buy_price 0 = "not sold", per the bible: granted by
-	# ForgeLogic.upgrade(), never Marta's shop) and max_stack 1 (swords/cans
-	# are equipment, never stack — matches every existing ToolData). water_width
-	# defaults to 1 for every tool except the Copper Watering Can.
+	# Craft Stride 2 (Forging) — Sten's smithy upgrades. All forge-only
+	# (buy_price 0 = "not sold", per the bible: granted by ForgeLogic.upgrade(),
+	# never Marta's shop) and max_stack 1 (swords/cans/hoes are equipment,
+	# never stack — matches every existing ToolData). water_width/till_width
+	# default to 1 for every tool except the wide-area tiers below.
 	_tool("steel_sword", "Steel Sword", ToolData.ToolType.SWORD, 3, 16, 0)
 	_tool("fangsteel_blade", "Fangsteel Blade", ToolData.ToolType.SWORD, 3, 22, 0)
 	_tool_watering_can("copper_can", "Copper Watering Can", 3, 3)
+
+	# DEPTH stride: the tool-tier ladder extends to a "gold" capstone on every
+	# tool (bible: "copper -> steel -> gold style tiers") — a gold-equivalent
+	# sword (iridium_blade, past the masterwork-gated fangsteel), a wider
+	# golden watering can (width 5, past copper's width 3), and a brand-new
+	# hoe ladder (copper_hoe width 3, golden_hoe width 5) mirroring the can's
+	# shape exactly. rp_cost holds steady per tool family (upgrades trade
+	# materials/gold for AREA, not cheaper RP, per the bible's "area/
+	# efficiency gains" framing landing on area here).
+	_tool("iridium_blade", "Iridium Blade", ToolData.ToolType.SWORD, 3, 30, 0)
+	_tool_watering_can("golden_can", "Golden Watering Can", 3, 5)
+	_tool_hoe("copper_hoe", "Copper Hoe", 4, 3)
+	_tool_hoe("golden_hoe", "Golden Hoe", 4, 5)
 
 	_material("slime_gel", "Slime Gel", 15)
 	_material("wisp_dust", "Wisp Dust", 25)
@@ -184,6 +197,24 @@ func _tool_watering_can(id: String, name: String, rp_cost: int, water_width: int
 	r.tool_type = ToolData.ToolType.WATERING_CAN
 	r.rp_cost = rp_cost
 	r.water_width = water_width
+	_save(r, "items/%s.tres" % id)
+
+
+func _tool_hoe(id: String, name: String, rp_cost: int, till_width: int) -> void:
+	## DEPTH stride: Copper/Golden Hoe — same shape as _tool_watering_can()
+	## but sets till_width instead of water_width (see tool_data.gd's field
+	## doc). Kept as its own small helper for the same reason as
+	## _tool_watering_can(): every OTHER tool stays till_width 1 by the
+	## field's own default.
+	var r := ToolData.new()
+	r.id = id
+	r.display_name = name
+	r.icon = _icon(id)
+	r.max_stack = 1
+	r.buy_price = 0
+	r.tool_type = ToolData.ToolType.HOE
+	r.rp_cost = rp_cost
+	r.till_width = till_width
 	_save(r, "items/%s.tres" % id)
 
 
