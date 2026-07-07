@@ -129,7 +129,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 
 
-func _on_relationship_changed(_npc_id) -> void:
+func _on_relationship_changed(_npc_id, _delta = 0) -> void:
 	if is_open():
 		_refresh_social()
 

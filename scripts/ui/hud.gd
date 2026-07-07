@@ -114,6 +114,7 @@ func _ready() -> void:
 	EventBus.hotbar_selection_changed.connect(_on_hotbar_selection)
 	EventBus.toast_requested.connect(toast)
 	EventBus.quest_updated.connect(_on_quest_updated)
+	EventBus.relationship_changed.connect(_on_relationship_changed_bond_number)
 	_refresh_stats()
 	_refresh_clock()
 	_refresh_hotbar()
@@ -134,6 +135,27 @@ func _on_day_passed(_d) -> void:
 func _on_hotbar_selection(_i) -> void:
 	_refresh_hotbar()
 	AudioManager.play("menu_move")
+
+
+func _on_relationship_changed_bond_number(npc_id, delta) -> void:
+	## FEEL Stride 6: floating "+15"/"+80" (or "-20") bond number, spawned at
+	## the live NPC node's position if one is found in the "npc" group for
+	## this id (NPCs are built purely in code — see NPC._ready()'s doc), else
+	## silently skipped (a decay/off-screen change with no visible NPC has
+	## nothing sensible to float a number over).
+	var d := int(delta)
+	if d == 0:
+		return
+	var npc_node: Node2D = null
+	for n in get_tree().get_nodes_in_group("npc"):
+		if n is NPC and (n as NPC).npc_data != null and (n as NPC).npc_data.id == String(npc_id):
+			npc_node = n
+			break
+	if npc_node == null:
+		return
+	var text := ("+%d" % d) if d > 0 else str(d)
+	var color := FloatingNumber.BOND_COLOR
+	FloatingNumber.spawn(self, npc_node.global_position + Vector2(0, -24), text, color)
 
 
 func _on_quest_updated(quest_id) -> void:

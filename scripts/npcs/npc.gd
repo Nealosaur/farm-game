@@ -117,6 +117,11 @@ var _dialog_finished_connected := false
 func _ready() -> void:
 	sprite = get_node_or_null("Sprite2D") as AnimatedSprite2D
 	_wander_timer = _rng.randf_range(WANDER_MIN_INTERVAL, WANDER_MAX_INTERVAL)
+	# FEEL Stride 6: lets the floating bond-number feedback find "the live NPC
+	# node for this npc_id" from EventBus.relationship_changed's npc_id alone
+	# (NPCs are built purely in code — no per-NPC scene — so a group lookup
+	# by npc_data.id, done lazily in BondNumberDisplay, is the simplest way in).
+	add_to_group("npc")
 
 
 func _process(delta: float) -> void:

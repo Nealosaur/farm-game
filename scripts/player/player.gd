@@ -38,6 +38,8 @@ var facing := Vector2i.DOWN
 @onready var sword_hitbox: HitboxComponent = $SwordHitbox
 
 var _facing_indicator: ColorRect
+var _target_highlight: ColorRect
+var _interact_prompt: Label
 
 
 func _ready() -> void:
@@ -83,6 +85,34 @@ func _ready() -> void:
 	_facing_indicator.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_facing_indicator)
 	_position_facing_indicator()
+
+	# FEEL Stride 6: tool-target cell highlight — a faint square shown on
+	# target_cell() while a farm tool/seed is held, so aiming till/water/plant
+	# is legible. Child of Player (never rotates — see class doc, top-down
+	# with animation-only facing) repositioned in local space every frame so
+	# it tracks the actual tile-grid-aligned target cell even while the
+	# player itself isn't tile-locked mid-movement.
+	_target_highlight = ColorRect.new()
+	_target_highlight.color = Color(1.0, 1.0, 1.0, 0.22)
+	_target_highlight.size = Vector2(MapBuilder.TILE, MapBuilder.TILE)
+	_target_highlight.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_target_highlight.visible = false
+	_target_highlight.z_index = -1  # under the character, over the ground
+	add_child(_target_highlight)
+
+	# FEEL Stride 6: interactable "E" prompt — a small bubble shown above the
+	# player whenever an NPC/bed/bin/portal (anything exposing interact(),
+	# same has_method("interact") duck-type try_interact() already uses) is
+	# in the interact_zone right now.
+	_interact_prompt = Label.new()
+	_interact_prompt.text = "E"
+	_interact_prompt.add_theme_color_override("font_color", Color(1.0, 1.0, 0.85))
+	_interact_prompt.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.7))
+	_interact_prompt.add_theme_constant_override("outline_size", 3)
+	_interact_prompt.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_interact_prompt.visible = false
+	_interact_prompt.position = Vector2(-4, SPRITE_TOP - 12)
+	add_child(_interact_prompt)
 
 
 func _on_hurtbox_hit_taken(damage: int, knockback: Vector2, is_heavy: bool = false) -> void:
@@ -177,6 +207,29 @@ func cell() -> Vector2i:
 
 func target_cell() -> Vector2i:
 	return cell() + facing
+
+
+func _process(_delta: float) -> void:
+	_update_target_highlight()
+	_update_interact_prompt()
+
+
+## FEEL Stride 6: shows the faint target-cell square only while the
+## currently-selected hotbar item is a farm tool (hoe/watering can — SWORD
+## excluded, a weapon has no "cell it affects") or a seed; hidden the rest of
+## the time (holding food, nothing selected, etc.) so it doesn't clutter the
+## screen when it isn't meaningful.
+func _update_target_highlight() -> void:
+	if _target_highlight == null:
+		return
+	var data := Inventory.get_selected_item_data()
+	var is_relevant := (data is SeedData) or (data is ToolData and (data as ToolData).tool_type != ToolData.ToolType.SWORD)
+	_target_highlight.visible = is_relevant
+	if not is_relevant:
+		return
+	var world_center := MapBuilder.cell_center(target_cell())
+	var local_center := to_local(world_center)
+	_target_highlight.position = local_center - _target_highlight.size / 2.0
 
 
 func play_anim(prefix: String) -> void:
@@ -301,6 +354,23 @@ func _feed(target: Enemy, food: FoodData) -> void:
 		_:
 			target.feed()
 			EventBus.toast_requested.emit("The slime bounces happily.")
+
+
+## FEEL Stride 6: true when an NPC/bed/bin/portal (anything exposing
+## interact()) is currently in range — the SAME duck-typed check try_interact()
+## falls through to, so the prompt's "is something interactable here" always
+## agrees with what pressing "interact" would actually do.
+func _interactable_in_zone() -> bool:
+	for area in interact_zone.get_overlapping_areas():
+		if area.has_method("interact"):
+			return true
+	return false
+
+
+func _update_interact_prompt() -> void:
+	if _interact_prompt == null:
+		return
+	_interact_prompt.visible = _interactable_in_zone()
 
 
 func try_interact() -> void:

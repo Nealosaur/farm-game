@@ -93,9 +93,13 @@ func test_talk_on_festival_day_outside_hours_grants_no_bonus() -> void:
 
 
 func test_talk_emits_relationship_changed() -> void:
+	# FEEL Stride 6: relationship_changed gained a second `delta` param so the
+	# floating bond-number feedback knows the amount to show — updated this
+	# assertion to match (behavior itself — that talk() grants TALK_GAIN — is
+	# unchanged, see test_talk_once_grants_fifteen above).
 	watch_signals(EventBus)
 	Relationships.talk(NPC_ID)
-	assert_signal_emitted_with_parameters(EventBus, "relationship_changed", [NPC_ID])
+	assert_signal_emitted_with_parameters(EventBus, "relationship_changed", [NPC_ID, Relationships.TALK_GAIN])
 
 
 # ---- gift ----

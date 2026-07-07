@@ -109,6 +109,7 @@ func _on_hurtbox_hit_taken(damage: int, knockback: Vector2, _is_heavy: bool = fa
 	# must stay subtle" reasoning as the enemy-death shake.
 	EventBus.camera_shake.emit(CameraShake.TINY_STRENGTH)
 	AudioManager.play("hit")
+	_show_damage_number(damage)
 	if machine.current != null and machine.current.name == "Dead":
 		return
 	health.take_damage(damage)
@@ -122,6 +123,18 @@ func _on_hurtbox_hit_taken(damage: int, knockback: Vector2, _is_heavy: bool = fa
 
 func _on_died() -> void:
 	machine.transition("Dead")
+
+
+## FEEL Stride 6 (optional "damage dealt" feedback): floating number over the
+## hurtbox's position, using the HUD's CanvasLayer the same way the bond-gain
+## number does (see Hud._on_relationship_changed_bond_number) — looked up
+## fresh per hit rather than cached, since this Enemy may outlive/precede the
+## HUD in some test setups that don't build a full map.
+func _show_damage_number(amount: int) -> void:
+	var hud := get_tree().get_first_node_in_group("hud") as CanvasLayer
+	if hud == null:
+		return
+	FloatingNumber.spawn(hud, hurtbox.global_position, "-%d" % amount, FloatingNumber.DAMAGE_COLOR)
 
 
 func player_node() -> Node2D:
