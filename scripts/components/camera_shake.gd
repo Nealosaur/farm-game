@@ -16,6 +16,17 @@ extends Camera2D
 const DEFAULT_STRENGTH := 4.0
 const DURATION := 0.15
 
+## FEEL Stride 4 (screen shake retune): named magnitude tiers so every call
+## site reaches for a WORD, not a bare number — keeps the four wired events
+## (player damage, landed sword hit, enemy death, boss slam) in a consistent
+## relative order without each site re-deriving its own multiplier of
+## DEFAULT_STRENGTH. Values stay subtle per the contract ("a few px, fast
+## decay" — juice, not nausea); DURATION (0.15s) already decays fast for all
+## of them, so tiering is magnitude-only.
+const TINY_STRENGTH := 2.0     # landed sword hit, enemy death — frequent, must not fatigue
+const SMALL_STRENGTH := 4.0    # player takes ordinary damage (== DEFAULT_STRENGTH)
+const MEDIUM_STRENGTH := 7.0   # boss slam landing — the biggest hit in the game today
+
 ## Position smoothing speed (Camera2D.position_smoothing_speed) tuned for this
 ## game's small 640x360 viewport — Godot's default (5.0) reads sluggish at
 ## this zoom; higher values track the player more snugly while still

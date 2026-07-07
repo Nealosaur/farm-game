@@ -26,7 +26,9 @@ func enter() -> void:
 	GameState.add_xp(data.xp)
 	EventBus.toast_requested.emit("+%d XP  +%dg" % [data.xp, gold])
 	EventBus.enemy_died.emit(data, enemy.global_position)
-	EventBus.camera_shake.emit(CameraShake.DEFAULT_STRENGTH)
+	# FEEL Stride 4: tiny shake on an ordinary enemy death (frequent event —
+	# stays subtle so it never fatigues; the boss slam is the medium one).
+	EventBus.camera_shake.emit(CameraShake.TINY_STRENGTH)
 	# FEEL Stride 3: death splat spawned under the enemy's PARENT, not the
 	# enemy itself — the tween below shrinks/fades and queue_frees the enemy
 	# well before the splat's own lifetime is up.

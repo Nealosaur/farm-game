@@ -67,7 +67,10 @@ func physics_update(delta: float) -> void:
 
 
 func _spawn_slam_hitbox() -> void:
-	EventBus.camera_shake.emit(CameraShake.DEFAULT_STRENGTH * 1.5)
+	# FEEL Stride 4: medium shake on the slam LANDING (this is the AoE going
+	# live, not the earlier telegraph) — test_boss_slam.gd's
+	# test_entering_slam_does_not_shake_yet already pins that ordering.
+	EventBus.camera_shake.emit(CameraShake.MEDIUM_STRENGTH)
 	_slam_hitbox = HitboxComponent.new()
 	_slam_hitbox.damage = boss.data.damage
 	_slam_hitbox.knockback_force = KNOCKBACK
