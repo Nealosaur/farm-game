@@ -7,6 +7,7 @@ extends RefCounted
 
 const AUTO_INSTANCE_SCRIPTS := [
 	"res://scripts/components/day_tint.gd",
+	"res://scripts/components/night_vignette.gd",  # V3: pairs with DayTint's curve, see its class doc
 	"res://scripts/ui/hud.gd",
 	"res://scripts/ui/inventory_screen.gd",
 	"res://scripts/ui/dialog_box.gd",

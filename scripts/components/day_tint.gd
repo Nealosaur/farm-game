@@ -12,9 +12,17 @@ extends CanvasModulate
 ## this node is instanced, and we check our parent for it (dungeons also skip
 ## the seasonal ground palette — see season_palette.gd / dungeon_floor.gd).
 
+## V3 retune (docs/design/visual-overhaul.md "day/night + season retune"):
+## the old NIGHT (0.35, 0.4, 0.6) crushed the whole scene down to ~40%
+## brightness with barely any color separation from DUSK — read as muddy
+## gray-brown, not "nighttime". New values keep DUSK a richer, more saturated
+## amber (r stays 1.0 — dusk should still feel bright/golden, not dim) and
+## raise NIGHT's floor so shapes/sprites stay readable while pushing it
+## further into a genuine deep blue-violet (moonlight, not "the lights went
+## out"). See tools/_proto/tint_swatches.png for the rendered ramp.
 const WHITE := Color(1.0, 1.0, 1.0)
-const DUSK := Color(1.0, 0.75, 0.55)
-const NIGHT := Color(0.35, 0.4, 0.6)
+const DUSK := Color(1.0, 0.72, 0.46)
+const NIGHT := Color(0.42, 0.46, 0.7)
 
 const DUSK_START := 16 * 60   # 16:00
 const DUSK_END := 19 * 60     # 19:00 — fully dusk
