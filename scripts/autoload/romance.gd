@@ -149,6 +149,19 @@ func start_dating(npc_id: String) -> bool:
 
 ## ---- marriage ----
 
+## Marriage M3 (bible §2/§5: "marrying ends other dating... a small bond ding
+## + a one-line reaction — your call"): no per-character breakup speech
+## exists in romance-dialog.md for this beat (every candidate's authored arc
+## only ever covers THEIR OWN romance, never a scene where they're the one
+## being let go for someone else) — inventing 5 unsourced voice lines would
+## violate the "ship VERBATIM, don't paraphrase" rule this whole pillar
+## follows. M3's call: skip a spoken line entirely and apply the mechanism +
+## a single, dignified, GENERIC toast per ended candidate instead (documented
+## here rather than in marry()'s own doc, since the toast is this constant's
+## whole reason for existing).
+const _OTHER_DATING_ENDED_TOAST := "%s heard about the wedding. Quietly, they wish you well."
+
+
 func marry(npc_id: String) -> bool:
 	## Sets married + spouse, ends every OTHER dating relationship (bible:
 	## "One spouse at a time... a small bond ding"). Does NOT itself check
@@ -165,6 +178,9 @@ func marry(npc_id: String) -> bool:
 		if bool(other.get("dating", false)):
 			other["dating"] = false
 			Relationships.add_flat_bond(other_id, END_OTHER_DATING_BOND_DING)
+			var other_data := NPCFactory.build_data(other_id)
+			var other_name := other_data.display_name if other_data != null else other_id.capitalize()
+			EventBus.toast_requested.emit(_OTHER_DATING_ENDED_TOAST % other_name)
 	var state := _get_or_create(npc_id)
 	state["dating"] = true
 	state["married"] = true
