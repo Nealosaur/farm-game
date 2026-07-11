@@ -13,6 +13,11 @@ extends RefCounted
 ##
 ## Shape consumed by DialogResolver.pick() — see data/dialog/marta.gd's
 ## header comment for the full documented shape.
+##
+## Marriage M2: heart_events.l8/l10, dating_lines, and fourteen_heart below
+## are AUTHORED VERBATIM romance content from docs/design/romance-dialog.md —
+## see rosa.gd's identical class-doc note for the full convention (data-only
+## fourteen_heart; M3 wires the trigger).
 
 const DATA := {
 	"tier_pools": {
@@ -79,7 +84,45 @@ const DATA := {
 			"response_a": "\"...The forest said you'd say that. The forest is very smug about you.\"",
 			"response_b": "\"That's what losing your voice FEELS like, at first. More tea?\"",
 		},
+		"l8": {
+			"id": "kin_of_this_ground",
+			"lines": [
+				"Willow presses your hand to the old trunk, then keeps her hand over yours.",
+				"\"I sorted you 'safe' a long time ago. That's the forest's highest rank. But there's a rank above it the trees don't have a word for, because trees don't get lonely. I do. I did. ...Less, lately. Because of a person. A specific one.\"",
+			],
+			"choice_a": "\"Say the specific one's name.\"",
+			"choice_b": "\"The forest is enough company.\"",
+			"response_a": "\"...You. The forest is unbearably smug. So am I, quietly. That's the loudest I get.\"",
+			"response_b": "\"It was. It's rude to say 'was' out loud. ...The sap's still rising. We can talk after.\"",
+		},
+		"l10": {
+			"id": "the_volume_of_a_voice",
+			"lines": [
+				"Her hut, rain, one cup between you.",
+				"\"I moved somewhere quiet enough to hear my own voice again. It took two years. And now there's a second voice I'd move a whole forest to keep in earshot. I didn't plan for that. The woods don't plan. They just grow toward the light and call it choice.\"",
+			],
+			"choice_a": "\"Then grow toward me.\"",
+			"choice_b": "\"You'd tire of the noise of me.\"",
+			"response_a": "\"...I have been. For a season. Bring me something bright and permanent and I'll stop pretending it's the trees leaning, not me.\"",
+			"response_b": "\"You're not noise. That's the whole point I just— ...more tea. We'll let the rain finish its sentence.\"",
+		},
 	},
+	"fourteen_heart": {
+		"id": "two_quiet_things",
+		"lines": [
+			"Riverwoods clearing, late light.",
+			"\"The wisps stayed calm the whole way here. They do that near you now. I said someday you'd come find me first when they did. You did. So here's the first thing I never told anyone: I'm happy. In this exact volume. Don't repeat it — the trees will never let me hear the end of it.\"",
+		],
+	},
+	## Marriage M2 (bible §6): dating-flavored lines, checked when
+	## Romance.is_dating("willow") is true — see rosa.gd's identical doc for
+	## the resolver precedence. Verbatim from docs/design/romance-dialog.md's
+	## DATING pool.
+	"dating_lines": [
+		"The woods asked what changed in you. I told them your name. They already knew.",
+		"I marked a second path to the sunny clearing. Wide enough for two, if one of them walks quiet.",
+		"You wait long enough to hear the sap rise now. You learned that from me. I'm keeping it.",
+	],
 	## Level perks (bible/characters.md): L5 gift: 2 wildroot + 1 emberberry;
 	## L8 gift: "forest-mark" dialog + 200g worth of forage bundle (shipped
 	## as flat gold — no itemized "bundle" contents are specified). See

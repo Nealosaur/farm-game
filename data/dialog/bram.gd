@@ -6,6 +6,11 @@ extends RefCounted
 ##
 ## Shape consumed by DialogResolver.pick() — see data/dialog/marta.gd's
 ## header comment for the full documented shape.
+##
+## Marriage M2: heart_events.l8/l10, dating_lines, and fourteen_heart below
+## are AUTHORED VERBATIM romance content from docs/design/romance-dialog.md —
+## see rosa.gd's identical class-doc note for the full convention (data-only
+## fourteen_heart; M3 wires the trigger).
 
 const DATA := {
 	"tier_pools": {
@@ -71,7 +76,45 @@ const DATA := {
 			"response_a": "quiet. \"...That is the first true thing anyone's said to me in six years.\"",
 			"response_b": "\"'Forget it.' The city said that too. Good evening.\"",
 		},
+		"l8": {
+			"id": "the_chart",
+			"lines": [
+				"Empty clinic, Bram holding your file.",
+				"\"I keep a chart on everyone. Symptoms, follow-ups, the professional distance. Yours has gotten... unprofessional. There's worry in the margins that isn't clinical. I've been calling it diligence. That was a lie a doctor tells himself.\"",
+			],
+			"choice_a": "\"Call it what it is.\"",
+			"choice_b": "\"Diligence is fine, Doc.\"",
+			"response_a": "\"...Affection. There. Said aloud in a room where I usually only deliver bad news. This one's not bad. I'm as surprised as you.\"",
+			"response_b": "\"Yes. Diligence. Safer word. ...Appointment's over. Eat a vegetable.\"",
+		},
+		"l10": {
+			"id": "the_reason_part_two",
+			"lines": [
+				"Dusk, Bram unprompted.",
+				"\"I told you once why I left the city — the one I lost, the error the numbers forgave and I didn't. I came here to feel small. To matter to no one so I could never fail anyone that size again. And then you walked in needing bandages and I have never in my life been so afraid of how much someone could matter.\"",
+			],
+			"choice_a": "\"Let me matter that much anyway.\"",
+			"choice_b": "\"You don't have to risk it.\"",
+			"response_a": "\"...God help my nerve. Bring me something that means forever and I'll risk it. I'll risk YOU. First brave thing I've done since the table.\"",
+			"response_b": "\"No. I don't. That's the tragedy of being careful. Good evening. Mind the wet step.\"",
+		},
 	},
+	"fourteen_heart": {
+		"id": "morning_rounds",
+		"lines": [
+			"Farm kitchen, Bram with coffee and your chart, now framed as a joke.",
+			"\"Healthiest patient in Emberhollow. Official. I retired the worry from your margins — turns out you can't chart a thing you get to check on every morning. I stopped feeling small. I started feeling like a man who got a second table and didn't lose anyone on it.\"",
+		],
+	},
+	## Marriage M2 (bible §6): dating-flavored lines, checked when
+	## Romance.is_dating("bram") is true — see rosa.gd's identical doc for the
+	## resolver precedence. Verbatim from docs/design/romance-dialog.md's
+	## DATING pool.
+	"dating_lines": [
+		"I updated your chart. Under 'prognosis' I wrote a word I haven't used professionally in six years. I'm not telling you which.",
+		"Rosa asked why I'm eating better. I said 'reasons.' Singular reason. You.",
+		"I left the city so the stakes would be small. Then the stakes became you. That was not the plan and I do not object.",
+	],
 	## Level perks (bible/characters.md): L5 gift: 2 frostcap; L8 gift:
 	## "house call" +20 max HP permanent (one-time, GameState.max_hp += 20
 	## with the perks_given flag as the "one-time" guard — see marta.gd's

@@ -8,29 +8,72 @@ extends RefCounted
 ## picking placeholder-vs-authored line text — not save-state ownership,
 ## which stays Romance's job alone.
 ##
-## Placeholder lines (M1): every candidate shares ONE generic line per beat
-## until M2 authors verbatim per-character text in characters.md. Looked up
-## by candidate_id first (Rosa's M1-pilot lines are placeholder-but-real per
-## the contract, not yet the shared generic — kept distinct here so swapping
-## in her REAL verbatim text later, or any other candidate's, is a one-entry
-## dict edit, never a script-structure change).
+## Marriage M2: every candidate now has AUTHORED VERBATIM text from
+## docs/design/romance-dialog.md for all four beats (proposal reacts/accept/
+## decline, vow) — the M1 generic placeholder fallback stays below only as a
+## defensive default for a hypothetical future candidate id that hasn't been
+## authored yet (roster is fixed at 5 today, so it should never actually be
+## read, but keeps this function total instead of crashing on a bad id).
+##
+## romance-dialog.md ships ONE "PROPOSAL reaction" line per candidate (no
+## separate accept/decline split) — that authored line IS the accept-path
+## reaction (it always reads as an enthusiastic yes, matching propose.gd's
+## `speak` beat immediately before the DSL's own generic "I do. Marry me."
+## question prompt). The DECLINE beat has no per-candidate authored line in
+## the source doc (every candidate's arc assumes the player already at L10 +
+## dating + presenting a pendant says yes) — kept on the shared generic decline
+## line for all 5, documented here rather than inventing un-sourced voice text.
 
 const _GENERIC_REACTS := "...You're serious. Give me a second — okay. Okay. Ask me properly."
 const _GENERIC_ACCEPT := "Yes. Absolutely, unquestionably yes."
 const _GENERIC_DECLINE := "...Not yet. Ask me again sometime — I'm not saying no, I'm saying not YET."
 const _GENERIC_VOW := "I don't have fancy words. Just — I pick you. Every day, I'd pick you."
 
+## "reacts" is the beat spoken BEFORE the DSL's generic accept/decline
+## question prompt — romance-dialog.md's authored PROPOSAL reaction lines
+## read as the full in-the-moment reaction (excitement through to the yes),
+## so they're used as the reacts line, with the doc's same text repeated as
+## the accept line (the scene's accept beat is what actually finalizes it —
+## repeating the authored yes there keeps the emotional beat intact instead
+## of introducing an unsourced second line).
 const _PROPOSAL_REACTS_BY_ID := {
-	"rosa": "You're— oh. Oh, love. Hang on, let me put this tray down before I drop it.",
+	"rosa": "You brought the pendant. To ME. The organizer never gets organized FOR — I'm going to marry you SO hard, love. Yes. Loud yes. Every yes.",
+	"willow": "A pendant. Given with hands, from the ground of your choosing. That's the whole ceremony, and the forest is my witness. Yes. The quietest, surest yes I own.",
+	"bram": "A pendant. In a doctor's hands. I have delivered a hundred hard verdicts in this room and never once a joyful one — so let me: yes. Prognosis excellent. Lifelong.",
+	"sten": "Pendant. In my forge. ...Right. Yes. Only word I've got and I mean it harder than I've meant anything I've hammered. Yes. Come here.",
+	"garrick": "A pendant. From you. Ha— the King below, the floors, the twenty years, and THIS is the thing that finally gets my nerve to stand still. Yes. Grinning yes. Don't you dare tell Sten I teared up.",
 }
 const _PROPOSAL_ACCEPT_BY_ID := {
-	"rosa": "Yes. Ask a room full of strangers to feel like family every night and then ask ME that? Yes.",
+	"rosa": "You brought the pendant. To ME. The organizer never gets organized FOR — I'm going to marry you SO hard, love. Yes. Loud yes. Every yes.",
+	"willow": "A pendant. Given with hands, from the ground of your choosing. That's the whole ceremony, and the forest is my witness. Yes. The quietest, surest yes I own.",
+	"bram": "A pendant. In a doctor's hands. I have delivered a hundred hard verdicts in this room and never once a joyful one — so let me: yes. Prognosis excellent. Lifelong.",
+	"sten": "Pendant. In my forge. ...Right. Yes. Only word I've got and I mean it harder than I've meant anything I've hammered. Yes. Come here.",
+	"garrick": "A pendant. From you. Ha— the King below, the floors, the twenty years, and THIS is the thing that finally gets my nerve to stand still. Yes. Grinning yes. Don't you dare tell Sten I teared up.",
 }
 const _PROPOSAL_DECLINE_BY_ID := {
 	"rosa": "...Not yet, love. Ask me again — I mean that, I'm not just being kind.",
 }
 const _VOW_BY_ID := {
-	"rosa": "Mother's rule was no one leaves sad. I'm amending it: no one leaves sad, and YOU don't leave. Ever.",
+	"rosa": "Rule holds — no one leaves sad. Least of all me. I've got my one, and the whole plaza to prove it.",
+	"willow": "The woods count you as weather now — reliable, returning. So do I. Kin of this ground. Mine to grow beside.",
+	"bram": "I left a city to matter to no one. Worst plan of my career. You're my someone. I intend to be very, very careful with you — forever.",
+	"sten": "Blades I've made that I trust: three. People: one. You carry the blade. I carry you. Straight, and forever, and I'll not say it softer than that in front of a crowd — but I mean it soft.",
+	"garrick": "To floors below and a friend above — I found the above. I'm done descending. Whatever's left of this old adventurer, it's yours, and it's staying put.",
+}
+
+## Marriage M2: the 14-heart capstone monologue — data-only here (M1's doc:
+## "the event data lives here now so M3 can trigger it"). Looked up from each
+## candidate's own dialog DATA (data/dialog/<id>.gd's "fourteen_heart" key)
+## rather than duplicated in a const table here, since the full scene text is
+## multi-line (a "lines" array, same shape as an ordinary heart event) and
+## dialog DATA is already the single source of truth for every other piece of
+## a candidate's authored voice.
+const _DIALOG_SCRIPTS_BY_ID := {
+	"rosa": "res://data/dialog/rosa.gd",
+	"willow": "res://data/dialog/willow.gd",
+	"bram": "res://data/dialog/bram.gd",
+	"sten": "res://data/dialog/sten.gd",
+	"garrick": "res://data/dialog/garrick.gd",
 }
 
 
@@ -48,6 +91,36 @@ static func proposal_decline_line(candidate_id: String) -> String:
 
 static func vow_line(candidate_id: String) -> String:
 	return String(_VOW_BY_ID.get(candidate_id, _GENERIC_VOW))
+
+
+## ---- 14-heart spouse capstone (data-only in M2; M3 triggers it) ----
+
+static func fourteen_heart_lines(candidate_id: String) -> Array[String]:
+	## Returns the capstone monologue's "lines" array (setup beat + the
+	## authored speech), or an empty array if the candidate id isn't
+	## registered/has no fourteen_heart block — mirrors npc.gd's own
+	## graceful-degradation shape for un-authored content (never crashes on a
+	## bad/future id; a caller just gets nothing to play).
+	var script_path: String = _DIALOG_SCRIPTS_BY_ID.get(candidate_id, "")
+	if script_path == "":
+		return []
+	var script: GDScript = load(script_path)
+	var data: Dictionary = script.DATA
+	var capstone: Dictionary = data.get("fourteen_heart", {})
+	var out: Array[String] = []
+	for line: String in capstone.get("lines", []):
+		out.append(line)
+	return out
+
+
+static func fourteen_heart_id(candidate_id: String) -> String:
+	var script_path: String = _DIALOG_SCRIPTS_BY_ID.get(candidate_id, "")
+	if script_path == "":
+		return ""
+	var script: GDScript = load(script_path)
+	var data: Dictionary = script.DATA
+	var capstone: Dictionary = data.get("fourteen_heart", {})
+	return String(capstone.get("id", ""))
 
 
 ## ---- launching the proposal scene from the gift flow ----

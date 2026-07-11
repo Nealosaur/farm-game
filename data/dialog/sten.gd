@@ -14,6 +14,11 @@ extends RefCounted
 ## here, in the ordinary pool, rather than a separate gated-only list, so
 ## this file stays pure data and the completeness meta-test's "every NPC has
 ## 3+ lines per tier" style checks see it like any other line.
+##
+## Marriage M2: heart_events.l8/l10, dating_lines, and fourteen_heart below
+## are AUTHORED VERBATIM romance content from docs/design/romance-dialog.md —
+## see rosa.gd's identical class-doc note for the full convention (data-only
+## fourteen_heart; M3 wires the trigger).
 
 const DATA := {
 	"tier_pools": {
@@ -80,7 +85,45 @@ const DATA := {
 			"response_a": "\"...Get out before I say something soft. Come back tomorrow. Bring fang steel.\"",
 			"response_b": "\"Maybe. Forge's cold today.\"",
 		},
+		"l8": {
+			"id": "the_back_bench",
+			"lines": [
+				"Sten uncovers the back bench — not the masterwork, something small, half-made.",
+				"\"Been shaping this between jobs. Not a blade. A ring band, if you must know. No stone yet. Told myself it was practice. Man doesn't practice a thing three hundred times unless he's hoping.\"",
+			],
+			"choice_a": "\"Hoping for what, Sten?\"",
+			"choice_b": "\"It's just practice, then.\"",
+			"response_a": "\"...Hm. For a hand it fits. Been avoiding saying whose. It's yours. There. Forge is hot, I said something soft, those two facts are related.\"",
+			"response_b": "\"Aye. Practice. ...Cover it back up. Forge's cold today, turns out.\"",
+		},
+		"l10": {
+			"id": "folded_steel",
+			"lines": [
+				"The band's finished, a small bright stone set in it.",
+				"\"My father made swords for a town. His father, horses. I made blades for a farmer and thought that was the strange part. Wrong. The strange part is I fold steel for a living and the toughest thing I ever made is whatever's holding my chest together when you walk in. Take the band. It's not a gift. It's a question I'm too gruff to say straight.\"",
+			],
+			"choice_a": "\"Then I'll answer it — bring me something to say yes to.\"",
+			"choice_b": "\"Keep it — it's your best work.\"",
+			"response_a": "\"...Get out before I make more noise like a man with feelings. Bring the pendant. I'll be here. I'm always here. For you, that's the point, not the complaint.\"",
+			"response_b": "\"My best work's meant to be carried. If you won't carry it... fine. Fine. Put the hammer back straight on your way.\"",
+		},
 	},
+	"fourteen_heart": {
+		"id": "the_warm_forge",
+		"lines": [
+			"Farm, evening, Sten with the coat-hook he made hung by your door.",
+			"\"Whole life the forge was the warmest thing I owned. Isn't anymore. Don't repeat that in the saloon. Garrick already knows — hands me things wrong on purpose just to see me not mind. I don't mind anything, lately. Turns out tough was never the hard part. This is. Glad I made it.\"",
+		],
+	},
+	## Marriage M2 (bible §6): dating-flavored lines, checked when
+	## Romance.is_dating("sten") is true — see rosa.gd's identical doc for the
+	## resolver precedence. Verbatim from docs/design/romance-dialog.md's
+	## DATING pool.
+	"dating_lines": [
+		"Made you something. Don't look at it like that. It's just a hook by the door. For your coat. Which is here now. Often.",
+		"Forge ran warm all day. Wasn't the coal.",
+		"Hammer goes back straight. Coat goes there. You go... wherever you like. Preferably here.",
+	],
 	## Level perks (bible/characters.md): L5 gift: 150g "scrap credit"; L8
 	## gift: whetstone dialog + 300g. See marta.gd's "perks" doc for the
 	## shape npc.gd consumes.

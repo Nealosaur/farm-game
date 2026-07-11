@@ -103,6 +103,12 @@ func test_bram_l8_perk_grants_permanent_plus_20_max_hp() -> void:
 	Relationships._get_or_create("bram")["points"] = 800  # level 8
 	Relationships.mark_event_seen("bram", "l3")
 	Relationships.mark_event_seen("bram", "l7")
+	# Marriage M2: Bram (a romance candidate) now has a REAL l8 heart-event
+	# scene too — mark it seen so this test still exercises the ordinary
+	# perk-grant-on-talk path it's actually about, not the heart-event gate
+	# (which would otherwise intercept interact() before the perk ever runs).
+	# Same pattern as the Rosa l8-perk test above.
+	Relationships.mark_event_seen("bram", "l8")
 
 	var max_hp_before := GameState.max_hp
 	await _talk_through(npc)
@@ -116,6 +122,9 @@ func test_garrick_l8_perk_grants_permanent_plus_10_max_hp() -> void:
 	Relationships._get_or_create("garrick")["points"] = 800  # level 8
 	Relationships.mark_event_seen("garrick", "l3")
 	Relationships.mark_event_seen("garrick", "l7")
+	# Marriage M2: Garrick (a romance candidate) now has a REAL l8 heart-event
+	# scene too — see the Bram test's identical note just above.
+	Relationships.mark_event_seen("garrick", "l8")
 
 	var max_hp_before := GameState.max_hp
 	await _talk_through(npc)

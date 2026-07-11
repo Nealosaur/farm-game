@@ -19,6 +19,11 @@ extends RefCounted
 ##
 ## Shape consumed by DialogResolver.pick() — see data/dialog/marta.gd's
 ## header comment for the full documented shape.
+##
+## Marriage M2: heart_events.l8/l10, dating_lines, and fourteen_heart below
+## are AUTHORED VERBATIM romance content from docs/design/romance-dialog.md —
+## see rosa.gd's identical class-doc note for the full convention (data-only
+## fourteen_heart; M3 wires the trigger).
 
 const DATA := {
 	"quests": {
@@ -89,7 +94,45 @@ const DATA := {
 			"response_a": "\"...Pour me one first, then. Tomorrow. Early. Before my nerve retires again.\" (unlocks CLOSE line about the reconciliation)",
 			"response_b": "\"Same reason the town keeps a broken adventurer. Somebody might need the reminder. Night, farmer.\"",
 		},
+		"l8": {
+			"id": "the_tell_again",
+			"lines": [
+				"Garrick at the Delve door, watching you gear up.",
+				"\"You check your food before your blade now. I taught you that — 'the tell of someone who plans to come back.' What I didn't say: somewhere along the way, the thing I started planning to come back TO stopped being the surface. Started being a person standing on it. This person. Now.\"",
+			],
+			"choice_a": "\"Then come back to me. Every time.\"",
+			"choice_b": "\"You come back for the town, Garrick.\"",
+			"response_a": "\"...Twenty years I came back to an empty room and called it freedom. Freedom's overrated next to a lit window. I'll come back to you, farmer. That's a vow from a man who doesn't make them.\"",
+			"response_b": "\"Aye. The town. Sure. ...Mind the goblin wind-up down there. Tell's in the shoulders.\"",
+		},
+		"l10": {
+			"id": "a_friend_above_the_floors",
+			"lines": [
+				"Saloon, late, Garrick sets down the two halves of his old broken sword — mended now, welded whole.",
+				"\"Sten fixed it. Said a thing kept for the reminder can also be kept for the mending. Twenty years I carried a broken blade to remember what I lost. I'd rather carry something that means what I found. That's you. I'm too old and too scarred to say it prettier: I love you, and I'd like to stop adventuring toward anything but here.\"",
+			],
+			"choice_a": "\"Then stop here. With me.\"",
+			"choice_b": "\"You'd get restless, old man.\"",
+			"response_a": "\"...Bring me something that means it and I'll hang up the wandering for good. Never wanted a floor deeper than the one you're standing on.\"",
+			"response_b": "\"Maybe. Maybe the knee finally wins. ...Night, farmer. Eat before you're hungry.\"",
+		},
 	},
+	"fourteen_heart": {
+		"id": "the_lit_window",
+		"lines": [
+			"Farm, night, Garrick on the porch looking back at the house.",
+			"\"Used to navigate by the Delve entrance. Now I navigate by that window being lit. Simpler map. Better one. Sten and I are talking again, the King's dead, and I married a farmer who checks her food before her blade. Old adventurer's supposed to die with his boots on. I'd rather wear out slow, right here, boots off, with you. That's the best ending I never went looking for.\"",
+		],
+	},
+	## Marriage M2 (bible §6): dating-flavored lines, checked when
+	## Romance.is_dating("garrick") is true — see rosa.gd's identical doc for
+	## the resolver precedence. Verbatim from docs/design/romance-dialog.md's
+	## DATING pool.
+	"dating_lines": [
+		"First rule of deep floors: come back to something. Never had a something. ...Have one now. Ruins the whole grim-adventurer bit. Worth it.",
+		"Checked my food before my blade this morning. You did that to me. Man who plans to come back. To you.",
+		"Adventurer's toast: to floors below and a friend above. You're the friend. Also the above. Also, apparently, the toast.",
+	],
 	## Level perks (bible/characters.md): L5 gift: 2 goblin fang; L8 gift:
 	## "old shield technique" dialog → one-time +10 max HP flag. See
 	## marta.gd's "perks" doc for the shape npc.gd consumes.
