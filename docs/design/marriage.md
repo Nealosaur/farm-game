@@ -6,23 +6,21 @@
 > Dialog authored VERBATIM in characters.md like all NPC content.
 > ROSTER (§1) is Forrest's call — confirm before authoring per-character arcs.
 
-## 1. Romance roster (PROPOSED — pending Forrest confirmation)
-The 8 NPCs, and who is romanceable, grounded in their established lore:
+## 1. Romance roster — CONFIRMED (Forrest, 2026-07-07): THE 5
+Romanceable: **Rosa, Willow, Doc Bram, Sten, Garrick**. Platonic (keep their
+existing arcs, no romance content): **Marta** (grief arc for Tomas stays
+intact), **Alden** (mayor/mentor), **Finn** (teen).
 
-| NPC | Romanceable? | Why |
+| NPC | Romanceable? | Note |
 |---|---|---|
-| **Rosa** (saloon keeper) | ✅ yes | Warm, unattached, peer-age; her "no one leaves sad" openness suits a romance arc. |
-| **Willow** (herbalist) | ✅ yes | Unattached, her "found my voice in the quiet" arc deepens naturally toward intimacy. |
-| **Doc Bram** (doctor) | ✅ yes | Unattached, burned-out; a romance that pulls him back toward caring about people fits his arc. |
-| **Sten** (blacksmith) | ✅ yes | Gruff-softening arc + the masterwork/Garrick threads make a slow-burn romance land. |
-| **Garrick** (retired adventurer) | ⚠️ optional | Wry, unattached, age-ambiguous. Good candidate OR keep as platonic mentor. |
-| **Marta** (widow) | ⚠️ optional | Actively grieving Tomas — romance could undercut the grief arc, OR be a poignant late-in-life second chance. Default: platonic. |
-| **Alden** (aging mayor) | ❌ platonic | Near-retirement mentor figure; platonic depth fits better. |
-| **Finn** (teen) | ❌ platonic | A kid — best-friend arc only (already has "The Shed" L7). |
-
-**Recommended roster: the 4 clear (Rosa, Willow, Bram, Sten) + Garrick = 5.**
-Marta/Alden/Finn stay platonic (their existing arcs are already strong).
-Forrest confirms via the roster question; this doc + build target whatever is chosen.
+| **Rosa** (saloon keeper) | ✅ | Warm, unattached; "no one leaves sad" openness. |
+| **Willow** (herbalist) | ✅ | "Found my voice in the quiet" deepens toward intimacy. |
+| **Doc Bram** (doctor) | ✅ | Romance pulls him back toward caring; fits his burnout arc. |
+| **Sten** (blacksmith) | ✅ | Slow-burn; gruff-softening + masterwork threads. |
+| **Garrick** (retired adventurer) | ✅ | Wry, unattached; peer/mentor-turned-partner. |
+| **Marta** (widow) | ❌ platonic | Grief arc for Tomas kept intact. |
+| **Alden** (aging mayor) | ❌ platonic | Mentor figure. |
+| **Finn** (teen) | ❌ platonic | Best-friend arc only ("The Shed" L7). |
 
 ## 2. Dating & marriage flow (mechanics)
 Builds on the existing 10-level relationship (100 pts/level, gifts/talk/decay).
