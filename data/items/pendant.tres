@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/placeholder/item_pendant.png" id="1_u7ed3"]
+[ext_resource type="Script" path="res://scripts/resources/item_data.gd" id="2_tq5qu"]
+
+[resource]
+script = ExtResource("2_tq5qu")
+id = "pendant"
+display_name = "Pendant"
+icon = ExtResource("1_u7ed3")
+buy_price = 5000
+sell_price = 2500

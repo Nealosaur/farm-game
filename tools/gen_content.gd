@@ -107,6 +107,19 @@ func _init() -> void:
 	_enemy("goblin", "Goblin", 35, 10, 45.0, 20, 8, 15, "goblin_fang", 0.4)
 	_enemy("slime_king", "Slime King", 300, 14, 30.0, 150, 200, 300, "slime_gel", 1.0)
 
+	# Marriage M1 (bible §2): Bouquet buyable at Marta's (~200g, per the
+	# contract) starts dating at L8+. Pendant is documented as a
+	# placeholder-gate for M1: buyable at a deliberately high price (~5000g)
+	# rather than a real drop/quest gate — a real acquisition gate (mine
+	# drop/Willow-at-high-bond, per the bible's "or a documented placeholder
+	# gate" option) can replace this in a later stride without touching the
+	# propose/marry systems, which only care that the player HAS one. Neither
+	# stacks meaningfully beyond 1-2 at a time, but max_stack stays the
+	# ItemData default (99) like every other material — no gameplay reason to
+	# special-case it.
+	_material("bouquet", "Bouquet", 100, 200)
+	_material("pendant", "Pendant", 2500, 5000)
+
 	# Craft Stride 1 — Cooking. Dishes (FoodData, is_dish=true) + recipes
 	# (RecipeData). Sell price = round(sum of ingredient sell_price * 1.25)
 	# per the bible's "sell ≈ sum of ingredients +25%, rounded" rule.
@@ -236,12 +249,18 @@ func _tool_hoe(id: String, name: String, rp_cost: int, till_width: int) -> void:
 	_save(r, "items/%s.tres" % id)
 
 
-func _material(id: String, name: String, sell: int) -> void:
+func _material(id: String, name: String, sell: int, buy: int = 0) -> void:
+	## `buy` defaults to 0 ("not sold", matching every existing material call
+	## site — driftglass/tideshell/gel/dust/fang all stay sell-only). Marriage
+	## M1's bouquet/pendant are the first materials Marta actually stocks
+	## (buy_price > 0 makes ShopLogic.buyable_items() list them automatically
+	## — no separate shop-registration step needed, same as any other tool).
 	var r := ItemData.new()
 	r.id = id
 	r.display_name = name
 	r.icon = _icon(id)
 	r.sell_price = sell
+	r.buy_price = buy
 	_save(r, "items/%s.tres" % id)
 
 

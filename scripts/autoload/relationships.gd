@@ -26,6 +26,15 @@ extends Node
 ## so a player who reached FRIEND (400+) never decays back to ACQUAINT.
 
 const MAX_POINTS := 1000
+## Marriage M1 (bible §3: "the relationship cap moves to L14 for a spouse,
+## like Stardew's 14-heart"): a MARRIED spouse may bank points up to L14
+## (1400) instead of the ordinary L10/1000 cap. Every non-spouse (including
+## every OTHER romanceable candidate you're merely dating) stays capped at
+## MAX_POINTS/L10 exactly as before — see max_points_for(npc_id) below, the
+## single choke point _add_points()/level()/level_for_points() callers now
+## route through instead of the bare MAX_POINTS constant.
+const SPOUSE_MAX_POINTS := 1400
+const SPOUSE_MAX_LEVEL := 14
 ## No hard floor is specified by the bible for gift/heart-event penalties
 ## (only decay has a documented floor, and only at L2+). A generous negative
 ## bound just prevents runaway underflow from repeated disliked gifts/
@@ -128,7 +137,13 @@ func points(npc_id: String) -> int:
 
 
 func level(npc_id: String) -> int:
-	return level_for_points(points(npc_id))
+	## Clamped to max_level_for(npc_id) — L10 for everyone except the current
+	## spouse, who can bank up to L14 (Marriage M1, see SPOUSE_MAX_POINTS'
+	## doc). level_for_points() itself stays a generic, cap-agnostic pure
+	## function (existing tests pin its own L10 clamp) — the spouse lift is
+	## applied HERE, one level up, so a raw points/tier conversion never needs
+	## to know about marriage state.
+	return mini(level_for_points(points(npc_id)), max_level_for(npc_id))
 
 
 static func level_for_points(pts: int) -> int:
@@ -136,11 +151,34 @@ static func level_for_points(pts: int) -> int:
 	return clampi(pts / 100, 0, 10)
 
 
+func max_points_for(npc_id: String) -> int:
+	## Marriage M1: the points ceiling _add_points() clamps to. A married
+	## spouse gets SPOUSE_MAX_POINTS (1400/L14); everyone else (including a
+	## merely-dating romanceable candidate) stays at the ordinary MAX_POINTS
+	## (1000/L10) — Romance.is_married_to() is the single source of truth for
+	## "is this NPC my spouse right now", so this never drifts out of sync
+	## with a marry()/other-dating-ended reassignment.
+	if Romance.is_married_to(npc_id):
+		return SPOUSE_MAX_POINTS
+	return MAX_POINTS
+
+
+func max_level_for(npc_id: String) -> int:
+	if Romance.is_married_to(npc_id):
+		return SPOUSE_MAX_LEVEL
+	return 10
+
+
 func tier_name(npc_id: String) -> String:
 	return tier_name_for_level(level(npc_id))
 
 
 static func tier_name_for_level(lvl: int) -> String:
+	## Levels above KINDRED's L10 (a married spouse, up to L14 — Marriage M1)
+	## still read as KINDRED: no new tier band is introduced by the cap lift
+	## itself (the bible's L14 capstone heart event is a SCENE gate, not a new
+	## tier name) — clampi keeps indexing TIER_BY_LEVEL (sized 0..10) in range
+	## instead of growing that table for 4 levels that share one tier name.
 	return TIER_BY_LEVEL[clampi(lvl, 0, 10)]
 
 
@@ -150,7 +188,7 @@ static func tier_base_points(tier: String) -> int:
 
 func _add_points(npc_id: String, delta: int) -> void:
 	var state := _get_or_create(npc_id)
-	state["points"] = clampi(int(state.get("points", 0)) + delta, MIN_POINTS, MAX_POINTS)
+	state["points"] = clampi(int(state.get("points", 0)) + delta, MIN_POINTS, max_points_for(npc_id))
 	_persist()
 	EventBus.relationship_changed.emit(npc_id, delta)
 	# FEEL Stride 5/6: only a GAIN plays the bond-up chime (a disliked gift or
@@ -301,12 +339,26 @@ func _decay_one(npc_id: String) -> void:
 ## ---- heart events ----
 
 func pending_event(npc_id: String) -> String:
-	## "l3"/"l7" when the level gate is met and not yet marked seen, else "".
-	## L7 takes precedence when both somehow qualify (shouldn't happen since
-	## l3 is marked seen long before L7, but keep it deterministic).
+	## "l3"/"l7"/"l8"/"l10" when the level gate is met and not yet marked
+	## seen, else "". Highest-qualifying-level takes precedence (shouldn't
+	## matter in practice since each lower one is marked seen long before the
+	## next level is reached, but keeps this deterministic).
+	##
+	## Marriage M1 (bible §2: "romance candidates gain events at L8 and L10...
+	## Non-candidates keep L3/L7 only"): the l8/l10 slots are gated on
+	## Romance.is_romanceable(npc_id) IN ADDITION to the level check, so
+	## Marta/Alden/Finn (and any future non-candidate) never surface a
+	## romance heart event even if some future content ever pushed their bond
+	## to L8+ — the roster gate is checked first and short-circuits both new
+	## slots together.
 	var state := _get_or_create(npc_id)
 	var seen: Array = state.get("events_seen", [])
 	var lvl := level(npc_id)
+	if Romance.is_romanceable(npc_id):
+		if lvl >= 10 and not ("l10" in seen):
+			return "l10"
+		if lvl >= 8 and not ("l8" in seen):
+			return "l8"
 	if lvl >= 7 and not ("l7" in seen):
 		return "l7"
 	if lvl >= 3 and not ("l3" in seen):

@@ -166,7 +166,7 @@ func interact(player: Node) -> void:
 	_pause_walk_for_dialog(player)
 
 	var pending := Relationships.pending_event(npc_data.id)
-	if pending != "":
+	if pending != "" and _has_heart_event_data(pending):
 		_play_heart_event(dialog, pending)
 		return
 
@@ -174,6 +174,22 @@ func interact(player: Node) -> void:
 
 
 ## ---- heart events ----
+
+func _has_heart_event_data(event_key: String) -> bool:
+	## Marriage M1: Relationships.pending_event() gates l8/l10 on LEVEL +
+	## ROSTER alone (see its own doc) — it has no visibility into which of the
+	## 5 romanceable candidates actually has l8/l10 CONTENT authored yet (only
+	## Rosa does, as the M1 pilot; Willow/Bram/Sten/Garrick's l8/l10 scenes
+	## are M2 work). Without this check, a non-pilot candidate reaching L8
+	## would hit interact() -> pending_event() returns "l8" ->
+	## _play_heart_event() finds an empty dict -> returns with NO dialog at
+	## all, a silent soft-lock on every future interact (talk/gift/perk all
+	## skipped). Falling through to ordinary _play_talk() instead means an
+	## un-authored candidate just talks normally until M2 fills the scene in —
+	## same graceful-degradation spirit as DialogResolver's own "no lines for
+	## this tier -> fall back to STRANGER" rule.
+	return not dialog_data.get("heart_events", {}).get(event_key, {}).is_empty()
+
 
 func _play_heart_event(dialog: DialogBox, event_key: String) -> void:
 	var event: Dictionary = dialog_data.get("heart_events", {}).get(event_key, {})

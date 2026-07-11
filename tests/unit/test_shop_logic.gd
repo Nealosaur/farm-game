@@ -158,6 +158,8 @@ func test_buyable_items_includes_seeds_and_iron_sword_only() -> void:
 	# World Stride A: buyable_items() now also filters seeds by season (Marta
 	# only stocks in-season seeds) — force Spring (day 1) so this test's
 	# expectations are stable regardless of which day the suite runs on.
+	# Marriage M1: bouquet + pendant are also season-blind Marta stock now
+	# (buy_price > 0, like the tools) — +2 to every seasonal count below.
 	Clock.day = 1  # Spring, day_of_season 1
 	var ids: Array[String] = []
 	for item: ItemData in ShopLogic.buyable_items():
@@ -167,7 +169,9 @@ func test_buyable_items_includes_seeds_and_iron_sword_only() -> void:
 	assert_true(ids.has("strawberry_seeds"), "strawberry is a spring crop")
 	assert_true(ids.has("iron_sword"))
 	assert_true(ids.has("fishing_rod"), "DEPTH stride: fishing rod is Marta stock, season-blind")
-	assert_eq(ids.size(), 5, "3 spring seeds + iron sword + fishing rod are buyable in Spring")
+	assert_true(ids.has("bouquet"), "Marriage M1: bouquet is Marta stock, season-blind")
+	assert_true(ids.has("pendant"), "Marriage M1: pendant is Marta stock, season-blind")
+	assert_eq(ids.size(), 7, "3 spring seeds + iron sword + fishing rod + bouquet + pendant are buyable in Spring")
 	assert_false(ids.has("pumpkin_seeds"), "pumpkin is fall-only, excluded in spring")
 	assert_false(ids.has("tomato_seeds"), "tomato is summer-only, excluded in spring")
 	assert_false(ids.has("wooden_sword"), "wooden_sword has no buy_price")
@@ -199,7 +203,9 @@ func test_buyable_items_excludes_all_seeds_in_winter() -> void:
 		ids.append(item.id)
 	assert_true(ids.has("iron_sword"), "tools are season-blind")
 	assert_true(ids.has("fishing_rod"), "tools are season-blind")
-	assert_eq(ids.size(), 2, "no seeds are plantable in winter — only the iron sword + fishing rod")
+	assert_true(ids.has("bouquet"), "Marriage M1: bouquet is season-blind")
+	assert_true(ids.has("pendant"), "Marriage M1: pendant is season-blind")
+	assert_eq(ids.size(), 4, "no seeds are plantable in winter — only iron sword + fishing rod + bouquet + pendant")
 
 
 func test_sellable_stacks_merges_across_slots_and_sorts() -> void:

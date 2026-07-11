@@ -1001,6 +1001,12 @@ func _write_items() -> int:
 		_save(OUT + name + ".png", _draw_dish(Color(dishes[name])))
 		n += 1
 
+	# Marriage M1: bouquet (flowers) + pendant (jewel) — silhouette family
+	# distinct from produce/materials so they read at a glance in a hotbar.
+	_save(OUT + "item_bouquet.png", _draw_bouquet())
+	_save(OUT + "item_pendant.png", _draw_pendant())
+	n += 2
+
 	return n
 
 
@@ -1220,6 +1226,60 @@ func _draw_dish(c: Color) -> Image:
 	PixelArt.fill_ellipse(img, 8, 9, 4.2, 2.2, c)
 	PixelArt.fill_ellipse(img, 8, 8.3, 4.2, 1.4, c.lightened(0.15))
 	PixelArt.px(img, 6, 8, shine)
+	PixelArt.outline(img, OUTLINE)
+	return img
+
+
+## Marriage M1: bouquet — three round blooms (pink/red/yellow, deterministic
+## palette, not random) fanned above a wrapped stem bundle, distinct from any
+## crop/dish silhouette (no leafy stalk, no bowl).
+func _draw_bouquet() -> Image:
+	var img := PixelArt.blank(16, 16)
+	var wrap := Color("c8a868")
+	var wrap_shade := wrap.darkened(0.25)
+	var stem := Color("4a7a3a")
+	# stem bundle + paper wrap, bottom of the frame
+	PixelArt.vline(img, 7, 10, 5, stem)
+	PixelArt.vline(img, 8, 11, 4, stem)
+	PixelArt.vline(img, 9, 10, 5, stem)
+	PixelArt.rect(img, 6, 12, 4, 3, wrap)
+	PixelArt.shade_bottom(img, 6, 12, 4, 3, wrap_shade, 1)
+	# three blooms fanned across the top
+	var blooms := [
+		{"pos": Vector2(5, 7), "c": Color("d84868")},
+		{"pos": Vector2(8, 5), "c": Color("e8c840")},
+		{"pos": Vector2(11, 7), "c": Color("e888a8")},
+	]
+	for bloom: Dictionary in blooms:
+		var pos: Vector2 = bloom["pos"]
+		var c: Color = bloom["c"]
+		PixelArt.fill_ellipse(img, pos.x, pos.y, 2.2, 2.0, c)
+		PixelArt.px(img, int(pos.x), int(pos.y), c.darkened(0.3))
+	PixelArt.outline(img, OUTLINE)
+	return img
+
+
+## Marriage M1: pendant — a teardrop gem on a chain loop, distinct from the
+## other "small precious thing" silhouettes (shell/gel/fang) via its chain +
+## faceted highlight.
+func _draw_pendant() -> Image:
+	var img := PixelArt.blank(16, 16)
+	var gem := Color("68c8e8")
+	var gem_shade := gem.darkened(0.3)
+	var gem_hi := Color(1, 1, 1, 0.7)
+	var chain := Color("d8c868")
+	# chain loop at the top
+	PixelArt.px(img, 7, 2, chain)
+	PixelArt.px(img, 8, 2, chain)
+	PixelArt.px(img, 6, 3, chain)
+	PixelArt.px(img, 9, 3, chain)
+	PixelArt.vline(img, 7, 4, 2, chain)
+	PixelArt.vline(img, 8, 4, 2, chain)
+	# teardrop gem body
+	PixelArt.fill_ellipse(img, 8, 9, 3.2, 3.6, gem)
+	PixelArt.fill_ellipse(img, 8, 10.5, 2.6, 2.2, gem_shade)
+	PixelArt.px(img, 6, 7, gem_hi)
+	PixelArt.px(img, 7, 8, gem_hi)
 	PixelArt.outline(img, OUTLINE)
 	return img
 

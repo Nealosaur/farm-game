@@ -86,6 +86,19 @@ var save_path := "user://save1.json"
 ##                     directly via Taming.read()/record_feed(), no autoload/
 ##                     restore() step of its own. int()/String() coerced on
 ##                     read like every other blob.
+##   "romance"       — npc_id -> {"dating": bool, "married": bool}, plus a
+##                     RESERVED "spouse": String key in the SAME dict (holds
+##                     the current spouse's npc_id, "" if unmarried — safe
+##                     since no real npc_id is literally "spouse"). Marriage
+##                     M1: owned by the Romance autoload (scripts/autoload/
+##                     romance.gd); call Romance.restore() after
+##                     new_game()/load_game() (no signal fires on load — same
+##                     sequencing rule as Relationships.restore()/
+##                     Quests.restore()). bool()/String() coerced on read.
+##                     Engagement (proposed-but-not-yet-married) is NOT stored
+##                     here — it lives in GameState.flags["engaged_to"] /
+##                     ["wedding_day"] (see romance.gd's class doc), since
+##                     GameState.flags already round-trips on its own.
 var world := {}  # map-owned persistent blobs (farm grid etc.), set by scenes
 
 
@@ -105,6 +118,7 @@ func new_game() -> void:
 	Inventory.add_item("wooden_sword")
 	Inventory.add_item("turnip_seeds", 5)
 	Relationships.restore()  # empty world["relationships"] -> fresh state for every NPC
+	Romance.restore()  # empty world["romance"] -> no one dating/married yet (fresh Day 1)
 	Quests.restore()  # empty world["quests"] -> no quests granted yet (fresh Day 1)
 
 
@@ -154,6 +168,7 @@ func load_game() -> bool:
 	world = data.get("world", {})
 	Clock.restore_calendar()  # weather back from world["calendar"] (or defaults)
 	Relationships.restore()  # bond state back from world["relationships"] (or defaults)
+	Romance.restore()  # dating/married state back from world["romance"] (or defaults)
 	Quests.restore()  # quest state back from world["quests"] (or defaults)
 	_migrate_intro_flag()
 	return true

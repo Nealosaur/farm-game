@@ -12,7 +12,8 @@ func test_content_loaded() -> void:
 	# DEPTH stride: + 4 tool-tier capstones (iridium_blade, golden_can,
 	# copper_hoe, golden_hoe) = 45 items; + fishing rod + 6 fish species
 	# (rivertrout/bluegill/eel/sardine/bass/pufferfish) = 52 items.
-	assert_eq(ItemDB.items.size(), 52)
+	# Marriage M1: + bouquet + pendant = 54 items.
+	assert_eq(ItemDB.items.size(), 54)
 	assert_eq(ItemDB.crops.size(), 9)
 	assert_eq(ItemDB.enemies.size(), 4)
 	assert_eq(ItemDB.recipes.size(), 8)
