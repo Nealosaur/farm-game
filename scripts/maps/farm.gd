@@ -60,6 +60,14 @@ var garrick: NPC
 var alden_intro: Area2D  # World Stride D day-1 opening; null after day 1 (or once intro_done)
 var path_grid: PathGrid  # Alive Stride 1: walkable-grid for NPC pathfinding, read via the "map_root" group
 var barn_slimes: Array[BarnSlime] = []  # Craft Stride 3: live pettable slimes rendered from world["taming"].barn
+## Marriage M3: any registered NPC with a schedule slot on THIS map this hour —
+## today that's only ever the current spouse (Romance.is_married_to via
+## NPCRegistry.SPOUSE_FARM_SCHEDULE), since no non-Garrick NPC's ordinary/rain/
+## season schedule ever resolves to "farm". Built the same generic way town.gd
+## builds `npcs` (see its _add_npcs()/_has_any_town_slot()) rather than a
+## Garrick-style named var per id, so a future 6th spouse or any other
+## farm-visiting NPC needs zero farm.gd changes to just work.
+var npcs: Dictionary = {}
 var _last_block := ""
 
 
@@ -106,6 +114,7 @@ func _ready() -> void:
 	path_grid = PathGrid.build(_layout(), _solid_prop_rects())
 	_add_props(world)
 	_add_garrick(world)
+	_add_registry_npcs(world)
 	_add_alden_intro(world)
 
 	player = (load("res://scenes/player/player.tscn") as PackedScene).instantiate()
@@ -150,6 +159,8 @@ func _ready() -> void:
 	_last_block = NPCRegistry.block_for(Clock.hour())
 	if garrick != null:
 		garrick.refresh_schedule("farm")
+	for npc_id: String in npcs:
+		(npcs[npc_id] as NPC).refresh_schedule("farm")
 	if alden_intro != null:
 		alden_intro.refresh_for_block()
 	EventBus.time_ticked.connect(_on_time_ticked)
@@ -224,8 +235,58 @@ func _add_garrick(world: Node2D) -> void:
 	## refresh_schedule() per the current time block — his schedule only
 	## resolves to "farm" during the 6-9/9-12 blocks (see data/npcs/
 	## garrick.gd's per-block map override); every other block hides him here.
+	## Marriage M3: if Garrick himself is the spouse, _add_registry_npcs()
+	## below skips "garrick" (see its own doc) so this remains his ONLY farm
+	## instance — his married-spouse schedule still resolves correctly through
+	## THIS node, since refresh_schedule() just queries NPCRegistry same as
+	## ever, and NPCRegistry now returns the spouse-farm cells for him too.
 	garrick = NPCFactory.make_npc("garrick")
 	world.add_child(garrick)
+
+
+func _add_registry_npcs(world: Node2D) -> void:
+	## Marriage M3 (bible §3/§4: "the farm map must query the registry for
+	## NPCs, like town does"): generic pass over every OTHER registered NPC
+	## (Garrick already gets his own always-on instance above — see that
+	## method's doc) that has ANY schedule slot on "farm" this hour. In
+	## practice today the only way a non-Garrick NPC ever resolves to "farm"
+	## is Romance.is_married_to() (NPCRegistry.SPOUSE_FARM_SCHEDULE) — no
+	## other NPC's ordinary/rain/season schedule targets this map — but this
+	## is written the same generic way town.gd's _add_npcs()/_has_any_town_
+	## slot() is, rather than a bespoke "is there a spouse" check, so a future
+	## farm-visiting NPC (or a second marriage-adjacent feature) needs zero
+	## farm.gd changes to just work.
+	for npc_id: String in NPCFactory.ALL_IDS:
+		if npc_id == "garrick":
+			continue
+		var data := NPCFactory.build_data(npc_id)
+		if not _has_any_farm_slot(data):
+			continue
+		var npc := NPCFactory.make_npc(npc_id)
+		npcs[npc_id] = npc
+		world.add_child(npc)
+
+
+func _has_any_farm_slot(data: NPCData) -> bool:
+	## Mirrors town.gd's _has_any_town_slot() exactly, checking "farm" instead
+	## of "town" — see that method's doc for why this walks every block rather
+	## than special-casing Romance directly (keeps this map generic over
+	## WHATEVER NPCRegistry resolves, not just marriage).
+	if data.home_map == "farm":
+		return true
+	for block: String in NPCRegistry.BLOCKS:
+		if NPCRegistry.map_for(data, _hour_for_block(block), false, false) == "farm":
+			return true
+	return false
+
+
+func _hour_for_block(block: String) -> int:
+	match block:
+		NPCRegistry.BLOCK_6_9: return 7
+		NPCRegistry.BLOCK_9_12: return 10
+		NPCRegistry.BLOCK_12_17: return 13
+		NPCRegistry.BLOCK_17_20: return 18
+		_: return 21
 
 
 func _add_alden_intro(world: Node2D) -> void:
@@ -419,5 +480,7 @@ func _on_time_ticked(_hour, _minute) -> void:
 		_last_block = block
 		if garrick != null:
 			garrick.refresh_schedule("farm")
+		for npc_id: String in npcs:
+			(npcs[npc_id] as NPC).refresh_schedule("farm")
 		if alden_intro != null:
 			alden_intro.refresh_for_block()

@@ -25,6 +25,7 @@ extends RefCounted
 ## per-NPC schedule Dictionary MAY now carry extra top-level keys beyond the
 ## plain block table, checked for the CURRENT block in this order:
 ##   festival_cell (handled separately, above all of this) >
+##   married-to-player farm schedule (Marriage M3, see below) >
 ##   rain_schedule (existing) >
 ##   "<season>_weekend" (season name lowercase, e.g. "winter_weekend") >
 ##   "weekend" >
@@ -38,6 +39,21 @@ extends RefCounted
 ## further down the SAME priority chain (e.g. a "winter" table with only the
 ## 6-9 block set still falls back to `schedule` for 9-12 onward), not
 ## straight to `schedule` — see _raw_entry's ordered lookup below.
+##
+## Marriage M3 (docs/design/marriage.md §3: "spouse lives on the farm... gets
+## a farm-map schedule... leaves their old town job"): once
+## Romance.is_married_to(npc.id) is true, EVERY block for that NPC resolves to
+## SPOUSE_FARM_SCHEDULE below instead of consulting rain/weekend/season/
+## ordinary `schedule` at all — the spouse's whole former town routine is
+## vacated while married (documented, bible-accepted: "acceptable this
+## phase"). This is ONE generic template shared by all 5 candidates (bible:
+## "keep it generic... per-spouse flavor cell optional") rather than a
+## per-candidate table, since nothing about WHERE a spouse stands needs to
+## vary by voice — their DIALOG does (see dialog_resolver.gd's spouse tier).
+## Checked ahead of rain_schedule (a rainy day doesn't send your spouse back
+## to their old town job) but still BELOW festival_cell (a spouse still
+## attends the plaza festival like every other NPC, via their own
+## festival_cell — Romance doesn't touch that).
 ##
 ## Weekend rule (bible: "day%7>=5", adapted for 1-based day_of_season): the
 ## 28-day month is 4 weeks of 7; days 6 and 7 of each week are the weekend.
@@ -147,11 +163,41 @@ static func is_weekend(day_of_season: int) -> bool:
 	return zero_based == 5 or zero_based == 6
 
 
+## Marriage M3: kitchen/porch/field-edge cells on the FARM map, one entry per
+## block — reused verbatim for whichever of the 5 candidates is currently
+## Romance.spouse() (bible: "keep it generic... any of the 5 spouses uses the
+## same farm schedule template"). Cells chosen clear of every solid prop/
+## portal/interactable rect on farm.gd (house x:4-6,y:4-6; kitchen (2,5); bed
+## (8,6); bin (11,7); barn/pen x:25-33,y:1-7; TILLABLE x:24-37,y:10-19) — see
+## farm.gd's own layout constants. Morning: kitchen-adjacent (near the stove);
+## midday: porch (the path row right in front of the house, where the player
+## naturally walks past); afternoon: field-edge (just outside the tillable
+## rect's west border, a companionable "watching you farm" spot); evening/
+## night: back to the porch/kitchen area, settling in for the night.
+const SPOUSE_FARM_SCHEDULE := {
+	BLOCK_6_9: {"map": "farm", "cell": Vector2i(3, 6)},    # kitchen-adjacent
+	BLOCK_9_12: {"map": "farm", "cell": Vector2i(5, 7)},   # porch
+	BLOCK_12_17: {"map": "farm", "cell": Vector2i(23, 12)}, # field-edge
+	BLOCK_17_20: {"map": "farm", "cell": Vector2i(5, 7)},  # porch
+	BLOCK_20_2: {"map": "farm", "cell": Vector2i(7, 6)},   # near the house, settled in for the night
+}
+
+
 static func _raw_entry(npc: NPCData, hour: int, is_raining: bool, is_festival: bool,
 		season: int = _UNSET, day_of_season: int = _UNSET) -> Variant:
 	if is_festival and npc.festival_cell != Vector2i(-1, -1):
 		return npc.festival_cell
 	var block := block_for(hour)
+	if Romance.is_married_to(npc.id):
+		# Marriage M3: while married, the spouse's ENTIRE schedule (every
+		# block, every day) resolves to the shared farm template — no rain/
+		# weekend/season table or their old `schedule` is consulted at all
+		# (bible: "leaves their old town job's schedule... acceptable this
+		# phase"). Returns null (absent) only if SPOUSE_FARM_SCHEDULE itself
+		# is missing an entry for this block, which shouldn't happen since it
+		# covers all 5 blocks — kept as a `.get()` rather than direct index
+		# for defensive symmetry with every other lookup in this function.
+		return SPOUSE_FARM_SCHEDULE.get(block, null)
 	if is_raining and npc.rain_schedule.has(block):
 		return npc.rain_schedule[block]
 
