@@ -22,12 +22,44 @@ extends Node
 ## Crop continuity away from the farm: Clock.end_day() emits day_passed, but
 ## if no FarmGrid is alive nothing advances the crops — so we advance the
 ## stored blob directly via FarmGrid.advance_stored_day() before saving.
+##
+## Marriage M3 (bible §3: "each morning a chance the spouse waters a few crop
+## cells OR leaves a dish/gift"): once Romance.spouse() != "", a ~50% chance
+## per day (seeded by Clock.day, see _SPOUSE_HELP_CHANCE_SEED_OFFSET) picks
+## ONE of two cozy beats: water _SPOUSE_HELP_WATER_COUNT random unwatered
+## tilled cells (reusing FarmGrid.water_random_unwatered()/_stored(), same
+## on-farm-vs-off-farm split as the barn slimes' own morning-help below), or
+## drop one dish from _SPOUSE_GIFT_DISH_IDS straight into the player's
+## inventory. Both branches are deterministic per day (seeded RNG, no
+## Clock-time/real-random dependence) so a replayed/re-simulated day always
+## produces the identical outcome — same testability contract as the barn
+## slimes'. Runs BEFORE the barn-slime check and the rain check (ordering
+## doesn't matter between spouse-help and barn-help since they're additive,
+## independent toasts; kept first here simply because marriage content reads
+## first in this file's toast list).
 
 const FARM_SCENE := "res://scenes/maps/farm.tscn"
 
 ## Farm wake cell comes from the farm's own SPAWNS table instead of the old
 ## hardcoded (8, 8) — same cell today, but now single-sourced.
 const FarmScript := preload("res://scripts/maps/farm.gd")
+
+## Marriage M3 (spouse morning-help): distinct seed offsets from the barn
+## slimes' own `Clock.day * 1000 + i` scheme so the two systems' random draws
+## never accidentally correlate (not a correctness requirement — collision
+## would still be deterministic — just keeps the two features' outcomes
+## independent of each other's internal seeding choice).
+const _SPOUSE_HELP_CHANCE_SEED_OFFSET := 7919      # decide: does help happen at all today
+const _SPOUSE_HELP_KIND_SEED_OFFSET := 7927        # decide: water vs. gift
+const _SPOUSE_HELP_ITEM_SEED_OFFSET := 7933         # decide: which dish
+const _SPOUSE_HELP_WATER_SEED_OFFSET := 7937        # which cells get watered
+const _SPOUSE_HELP_CHANCE := 0.5                    # bible: "a chance (~50%)"
+const _SPOUSE_HELP_WATER_COUNT := 5                 # bible: "waters a few (~5)"
+## Bible: "leaves a small gift/dish" — drawn from the already-shipped cooked
+## dishes (Craft Stride 1, tools/gen_content.gd's `_dish()` entries) rather
+## than inventing a new item, since a home-cooked dish is exactly the "made
+## you something" flavor the spouse dialog pool already promises.
+const _SPOUSE_GIFT_DISH_IDS := ["carrot_soup", "berry_jam", "pumpkin_pie", "forest_stew", "miners_meal"]
 
 var _busy := false
 
@@ -81,9 +113,12 @@ func end_day(collapsed: bool) -> void:
 	var grid := get_tree().get_first_node_in_group("farm_grid") as FarmGrid
 	var wilted := 0
 	var slime_watered := 0
+	var spouse_help := _resolve_spouse_help()  # Marriage M3: decide BEFORE touching the grid (on-farm/off-farm branches both need the same decision)
 	if grid != null:
 		# day_passed already grew + season-wilted the live grid; read the tally.
 		wilted = grid.last_wilt_count
+		if spouse_help["kind"] == "water":
+			grid.water_random_unwatered(_SPOUSE_HELP_WATER_COUNT, Clock.day + _SPOUSE_HELP_WATER_SEED_OFFSET)
 		# Craft Stride 3 (Taming — morning help): each barn slime waters 8
 		# random unwatered tilled cells, seeded by Clock.day for determinism,
 		# BEFORE the rain check (bible ordering). Works on-farm here; the
@@ -101,9 +136,13 @@ func end_day(collapsed: bool) -> void:
 		# season-boundary wilt, nor an overnight rain watering, nor the barn
 		# slimes' morning watering — same stored-blob pattern as those two).
 		wilted = FarmGrid.advance_stored_day()
+		if spouse_help["kind"] == "water":
+			FarmGrid.water_random_unwatered_stored(_SPOUSE_HELP_WATER_COUNT, Clock.day + _SPOUSE_HELP_WATER_SEED_OFFSET)
 		slime_watered = _barn_slime_water_stored()
 		if Clock.is_raining():
 			FarmGrid.water_all_stored()
+	if spouse_help["kind"] == "gift":
+		Inventory.add_item(String(spouse_help["item_id"]), 1)
 	SaveManager.save_game()
 
 	var toasts := PackedStringArray()
@@ -115,6 +154,9 @@ func end_day(collapsed: bool) -> void:
 		toasts.append("Shipped goods: +%dg" % earned)
 	if wilted > 0:
 		toasts.append("The season turned — %d crops wilted." % wilted)
+	var spouse_toast := _spouse_help_toast_text(spouse_help)
+	if spouse_toast != "":
+		toasts.append(spouse_toast)
 	if slime_watered > 0:
 		# One combined toast regardless of barn size (bible: "once per slime
 		# or combined — your call"; combined reads cleaner than a toast per
@@ -147,6 +189,48 @@ func end_day(collapsed: bool) -> void:
 		GameFlow.cutscene_active = false
 		_busy = false
 		SceneChanger.swap_scene_while_black(FARM_SCENE, "wake", toasts)
+
+
+## ---- Marriage M3: spouse morning-help ----
+
+func _resolve_spouse_help() -> Dictionary:
+	## Pure decision step (no grid/inventory side effects here — callers apply
+	## the result themselves, once per on-farm/off-farm branch, since only ONE
+	## of those branches ever actually runs for a given end_day() call).
+	## Returns {"kind": "none"/"water"/"gift", "item_id": String, "spouse_id": String}.
+	## Deterministic per Clock.day: three seeded rolls (chance, kind, item) so
+	## a replayed day always reproduces the identical decision, same
+	## testability contract as the barn slimes' own seeding.
+	var spouse_id := Romance.spouse()
+	if spouse_id == "":
+		return {"kind": "none", "item_id": "", "spouse_id": ""}
+	var chance_rng := RandomNumberGenerator.new()
+	chance_rng.seed = Clock.day + _SPOUSE_HELP_CHANCE_SEED_OFFSET
+	if chance_rng.randf() >= _SPOUSE_HELP_CHANCE:
+		return {"kind": "none", "item_id": "", "spouse_id": spouse_id}
+	var kind_rng := RandomNumberGenerator.new()
+	kind_rng.seed = Clock.day + _SPOUSE_HELP_KIND_SEED_OFFSET
+	var kind := "water" if kind_rng.randf() < 0.5 else "gift"
+	var item_id := ""
+	if kind == "gift":
+		var item_rng := RandomNumberGenerator.new()
+		item_rng.seed = Clock.day + _SPOUSE_HELP_ITEM_SEED_OFFSET
+		item_id = _SPOUSE_GIFT_DISH_IDS[item_rng.randi() % _SPOUSE_GIFT_DISH_IDS.size()]
+	return {"kind": kind, "item_id": item_id, "spouse_id": spouse_id}
+
+
+func _spouse_help_toast_text(spouse_help: Dictionary) -> String:
+	var kind := String(spouse_help.get("kind", "none"))
+	if kind == "none":
+		return ""
+	var spouse_id := String(spouse_help.get("spouse_id", ""))
+	var spouse_data := NPCFactory.build_data(spouse_id)
+	var spouse_name := spouse_data.display_name if spouse_data != null else spouse_id.capitalize()
+	if kind == "water":
+		return "%s watered part of the field." % spouse_name
+	var item := ItemDB.get_item(String(spouse_help.get("item_id", "")))
+	var item_name := item.display_name if item != null else String(spouse_help.get("item_id", ""))
+	return "%s left you %s." % [spouse_name, item_name]
 
 
 const _WATER_PER_SLIME := 8  # bible: "each barn slime waters 8 random unwatered tilled cells"
