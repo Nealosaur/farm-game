@@ -124,6 +124,16 @@ const DATA := {
 		"Forge ran warm all day. Wasn't the coal.",
 		"Hammer goes back straight. Coat goes there. You go... wherever you like. Preferably here.",
 	],
+	## Marriage M3 (bible §3): spouse-tier lines, checked when
+	## Romance.is_married_to("sten") is true — the TOP dialog tier, above
+	## KINDRED and dating (see dialog_resolver.gd's precedence doc). Verbatim
+	## from docs/design/romance-dialog.md's SPOUSE pool.
+	"spouse_lines": [
+		"Morning. Made you something. Don't ask, just wear it.",
+		"Kept the forge banked low this morning. Wanted to be here when you woke. Don't make it a whole thing.",
+		"You're past when I like, down in that Delve. I don't pace. ...I paced. Come back before I fix something that wasn't broken.",
+		"Whole life the forge was the warmest thing I owned. Told you that already. Still true. Still glad I said it.",
+	],
 	## Level perks (bible/characters.md): L5 gift: 150g "scrap credit"; L8
 	## gift: whetstone dialog + 300g. See marta.gd's "perks" doc for the
 	## shape npc.gd consumes.

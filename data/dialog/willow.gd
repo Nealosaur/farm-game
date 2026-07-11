@@ -123,6 +123,16 @@ const DATA := {
 		"I marked a second path to the sunny clearing. Wide enough for two, if one of them walks quiet.",
 		"You wait long enough to hear the sap rise now. You learned that from me. I'm keeping it.",
 	],
+	## Marriage M3 (bible §3): spouse-tier lines, checked when
+	## Romance.is_married_to("willow") is true — the TOP dialog tier, above
+	## KINDRED and dating (see dialog_resolver.gd's precedence doc). Verbatim
+	## from docs/design/romance-dialog.md's SPOUSE pool.
+	"spouse_lines": [
+		"Morning. The kitchen already smells like you were in it. I like that better than the woods, some days. Don't tell the trees.",
+		"Left something on the counter. From the good clearing. It's not medicine. It's just — for you.",
+		"You go quiet in that Delve too long and even the wisps get restless topside. So do I. Come back before the sap finishes rising.",
+		"The forest asks about you less now. It knows where you are. So do I. That's the whole trick to being married, I think — always knowing the one root.",
+	],
 	## Level perks (bible/characters.md): L5 gift: 2 wildroot + 1 emberberry;
 	## L8 gift: "forest-mark" dialog + 200g worth of forage bundle (shipped
 	## as flat gold — no itemized "bundle" contents are specified). See

@@ -24,8 +24,14 @@ extends RefCounted
 ## AND `data["dating_lines"]` being non-empty, so an NPC with no dating_lines
 ## authored yet (every candidate except Rosa, until M2) simply falls straight
 ## through to the tier pool unchanged — same graceful-degradation shape as
-## npc.gd's _has_heart_event_data() gate for l8/l10. Married-spouse dialog is
-## a separate, HIGHER-tier pool that M3 adds — out of scope here.
+## npc.gd's _has_heart_event_data() gate for l8/l10.
+##
+## Marriage M3 (bible §3): a "spouse" pool slot sits ABOVE dating (a married
+## spouse is the TOP dialog tier — KINDRED-plus, not just KINDRED) but still
+## BELOW every special-occasion line, same reasoning as dating: a spouse's
+## birthday/rain/seasonal flavor still takes priority on those specific days.
+## Gated on `context["is_spouse"]` AND `data["spouse_lines"]` being non-empty,
+## same graceful-degradation shape as the dating gate.
 ##
 ## context keys (all required except festival_id; caller fills from
 ## Clock/Relationships/Festival):
@@ -47,6 +53,8 @@ extends RefCounted
 ##                                  the resolved tier pool
 ##   "rng": RandomNumberGenerator — injectable for deterministic tests;
 ##                                  gameplay passes a real one
+##   "is_dating": bool         — Romance.is_dating(npc_id) (Marriage M1)
+##   "is_spouse": bool         — Romance.is_married_to(npc_id) (Marriage M3)
 ##
 ## "festival" data entries (World Stride D): each entry is EITHER a plain
 ## String (shown on ANY festival, the original shape — Marta/Rosa/etc. still
@@ -89,6 +97,16 @@ static func pick(data: Dictionary, context: Dictionary) -> Dictionary:
 	var seasonal_line := _seasonal_line_for(data, tier, int(context.get("season", 0)))
 	if seasonal_line != "":
 		return {"text": seasonal_line, "source": "seasonal", "pool_index": -1}
+
+	if bool(context.get("is_spouse", false)):
+		var spouse_lines: Array = data.get("spouse_lines", [])
+		if not spouse_lines.is_empty():
+			var rng: RandomNumberGenerator = context.get("rng")
+			var idx: int = rng.randi() % spouse_lines.size() if rng != null else 0
+			return {"text": spouse_lines[idx], "source": "spouse", "pool_index": -1}
+		# No spouse_lines authored for this NPC (shouldn't happen — all 5
+		# candidates ship them): fall through toward dating/tier pool, same
+		# graceful-degradation spirit as every other gate in this function.
 
 	if bool(context.get("is_dating", false)):
 		var dating_lines: Array = data.get("dating_lines", [])

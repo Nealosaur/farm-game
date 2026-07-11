@@ -115,6 +115,16 @@ const DATA := {
 		"Rosa asked why I'm eating better. I said 'reasons.' Singular reason. You.",
 		"I left the city so the stakes would be small. Then the stakes became you. That was not the plan and I do not object.",
 	],
+	## Marriage M3 (bible §3): spouse-tier lines, checked when
+	## Romance.is_married_to("bram") is true — the TOP dialog tier, above
+	## KINDRED and dating (see dialog_resolver.gd's precedence doc). Verbatim
+	## from docs/design/romance-dialog.md's SPOUSE pool.
+	"spouse_lines": [
+		"Morning. Your color's good. I check every day now — it's not a symptom of worry, it's just what husbands do, apparently.",
+		"Left a tonic by the bed. Tastes worse than it should. Drink it anyway, it's mostly affection with a medicinal aftertaste.",
+		"You're deep in that Delve later than I'd like, chart-wise. I don't say prayers. I do keep counting the minutes. Same thing, for me.",
+		"Healthiest household in Emberhollow. Official diagnosis: content. I never thought I'd get to write that word about myself.",
+	],
 	## Level perks (bible/characters.md): L5 gift: 2 frostcap; L8 gift:
 	## "house call" +20 max HP permanent (one-time, GameState.max_hp += 20
 	## with the perks_given flag as the "one-time" guard — see marta.gd's

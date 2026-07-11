@@ -13,6 +13,13 @@
 ---
 
 ## ROSA
+**SPOUSE (pool):** "Morning, love. Kettle's on, and I saved you the good
+mug — the one that doesn't say WORLD'S OKAYEST FARMER anymore, I painted
+over it." / "Made you something. Don't ask what, just eat it before it gets
+opinions." / "You're later out of that Delve than I like. I count the door
+same as I used to count chairs. Come back before I start setting an extra
+one again." / "Whole farm, and I still walk out here first thing to see
+you're real. Rule holds even off the clock, love."
 **DATING (pool):** "You walked in and the room did that thing again. The
 better thing. That's you, love, that's just what you do." / "I set your
 chair by the window. Don't argue. It's yours now." / "Forty-one chairs, and
@@ -47,6 +54,13 @@ happy, love. I just had to build it out here with you."
 ---
 
 ## WILLOW
+**SPOUSE (pool):** "Morning. The kitchen already smells like you were in it.
+I like that better than the woods, some days. Don't tell the trees." / "Left
+something on the counter. From the good clearing. It's not medicine. It's
+just — for you." / "You go quiet in that Delve too long and even the wisps
+get restless topside. So do I. Come back before the sap finishes rising." /
+"The forest asks about you less now. It knows where you are. So do I. That's
+the whole trick to being married, I think — always knowing the one root."
 **DATING (pool):** "The woods asked what changed in you. I told them your
 name. They already knew." / "I marked a second path to the sunny clearing.
 Wide enough for two, if one of them walks quiet." / "You wait long enough to
@@ -84,6 +98,14 @@ thing I never told anyone: I'm happy. In this exact volume. Don't repeat it
 ---
 
 ## DOC BRAM
+**SPOUSE (pool):** "Morning. Your color's good. I check every day now — it's
+not a symptom of worry, it's just what husbands do, apparently." / "Left a
+tonic by the bed. Tastes worse than it should. Drink it anyway, it's mostly
+affection with a medicinal aftertaste." / "You're deep in that Delve later
+than I'd like, chart-wise. I don't say prayers. I do keep counting the
+minutes. Same thing, for me." / "Healthiest household in Emberhollow.
+Official diagnosis: content. I never thought I'd get to write that word
+about myself."
 **DATING (pool):** "I updated your chart. Under 'prognosis' I wrote a word I
 haven't used professionally in six years. I'm not telling you which." /
 "Rosa asked why I'm eating better. I said 'reasons.' Singular reason. You." /
@@ -123,6 +145,12 @@ like a man who got a second table and didn't lose anyone on it."
 ---
 
 ## STEN
+**SPOUSE (pool):** "Morning. Made you something. Don't ask, just wear it."
+/ "Kept the forge banked low this morning. Wanted to be here when you woke.
+Don't make it a whole thing." / "You're past when I like, down in that
+Delve. I don't pace. ...I paced. Come back before I fix something that
+wasn't broken." / "Whole life the forge was the warmest thing I owned. Told
+you that already. Still true. Still glad I said it."
 **DATING (pool):** "Made you something. Don't look at it like that. It's just
 a hook by the door. For your coat. Which is here now. Often." / "Forge ran
 warm all day. Wasn't the coal." / "Hammer goes back straight. Coat goes
@@ -164,6 +192,13 @@ lately. Turns out tough was never the hard part. This is. Glad I made it."
 ---
 
 ## GARRICK
+**SPOUSE (pool):** "Morning, farmer. Watched the window get light instead of
+the Delve door. Better view, turns out." / "Made you something. Adventurer's
+kit habit — check the pack before you go. Everything's in there. So am I,
+in spirit, nagging." / "You're deeper and later than an old man's nerves
+like. I don't pray. I stand on the porch and glare at the horizon until you
+walk out of it." / "Twenty years I navigated by the Delve entrance. Now it's
+that window being lit. Told you that already. Still the best map I've had."
 **DATING (pool):** "First rule of deep floors: come back to something. Never
 had a something. ...Have one now. Ruins the whole grim-adventurer bit. Worth
 it." / "Checked my food before my blade this morning. You did that to me. Man

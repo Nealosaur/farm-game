@@ -451,6 +451,7 @@ func _resolver_context() -> Dictionary:
 		"festival_id": Clock.is_festival_today(),
 		"is_birthday": NPCData.is_birthday_today(npc_data),
 		"is_dating": Romance.is_dating(npc_data.id),  # Marriage M1: dating-flavored dialog pool slot
+		"is_spouse": Romance.is_married_to(npc_data.id),  # Marriage M3: top-tier spouse dialog pool slot
 		"shown_indices": Relationships.shown_indices(npc_data.id, Relationships.tier_name(npc_data.id)),
 		"rng": _rng,
 	}

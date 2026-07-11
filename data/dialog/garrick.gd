@@ -133,6 +133,16 @@ const DATA := {
 		"Checked my food before my blade this morning. You did that to me. Man who plans to come back. To you.",
 		"Adventurer's toast: to floors below and a friend above. You're the friend. Also the above. Also, apparently, the toast.",
 	],
+	## Marriage M3 (bible §3): spouse-tier lines, checked when
+	## Romance.is_married_to("garrick") is true — the TOP dialog tier, above
+	## KINDRED and dating (see dialog_resolver.gd's precedence doc). Verbatim
+	## from docs/design/romance-dialog.md's SPOUSE pool.
+	"spouse_lines": [
+		"Morning, farmer. Watched the window get light instead of the Delve door. Better view, turns out.",
+		"Made you something. Adventurer's kit habit — check the pack before you go. Everything's in there. So am I, in spirit, nagging.",
+		"You're deeper and later than an old man's nerves like. I don't pray. I stand on the porch and glare at the horizon until you walk out of it.",
+		"Twenty years I navigated by the Delve entrance. Now it's that window being lit. Told you that already. Still the best map I've had.",
+	],
 	## Level perks (bible/characters.md): L5 gift: 2 goblin fang; L8 gift:
 	## "old shield technique" dialog → one-time +10 max HP flag. See
 	## marta.gd's "perks" doc for the shape npc.gd consumes.

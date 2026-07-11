@@ -120,6 +120,16 @@ const DATA := {
 		"I set your chair by the window. Don't argue. It's yours now.",
 		"Forty-one chairs, and I finally know whose the extra one is.",
 	],
+	## Marriage M3 (bible §3): spouse-tier lines, checked when
+	## Romance.is_married_to("rosa") is true — the TOP dialog tier, above
+	## KINDRED and dating (see dialog_resolver.gd's precedence doc). Verbatim
+	## from docs/design/romance-dialog.md's SPOUSE pool.
+	"spouse_lines": [
+		"Morning, love. Kettle's on, and I saved you the good mug — the one that doesn't say WORLD'S OKAYEST FARMER anymore, I painted over it.",
+		"Made you something. Don't ask what, just eat it before it gets opinions.",
+		"You're later out of that Delve than I like. I count the door same as I used to count chairs. Come back before I start setting an extra one again.",
+		"Whole farm, and I still walk out here first thing to see you're real. Rule holds even off the clock, love.",
+	],
 	## Level perks (bible/characters.md): L5 gift: 2 melon seeds; L8 gift:
 	## "The Ember's own" recipe dialog + 250g. See marta.gd's "perks" doc for
 	## the shape npc.gd consumes.
