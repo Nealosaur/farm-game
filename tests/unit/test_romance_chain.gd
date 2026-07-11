@@ -252,3 +252,52 @@ func test_proposal_decline_leaves_dating_intact_and_no_engagement() -> void:
 	assert_false(GameFlow.cutscene_active, "the proposal scene must have ended")
 
 
+## ---- guard: proposal/wedding are cutscenes; the EventRunner._exit_tree() ----
+## ---- backstop restores the gate/Clock even if torn down mid-scene ----
+
+func test_proposal_scene_teardown_mid_play_restores_cutscene_gate_and_clock() -> void:
+	## Marriage M1's parametric propose.gd scene runs through the SAME
+	## EventRunner every authored DSL scene does (see romance_events.gd's
+	## play_proposal()), so it inherits _exit_tree()'s "Quit to Title mid-
+	## scene" backstop for free — this test pins that down explicitly for a
+	## romance scene rather than trusting it by inference. Mirrors
+	## test_event_runner.gd's own test_runner_freed_mid_scene_restores_gate_
+	## and_clock, but drives the REAL ProposeEvent.data() script instead of a
+	## synthetic one. A real DialogBox is required so the scene's first
+	## `speak` command actually holds (awaiting DialogBox.finished) instead of
+	## racing through to `end` in the same frame with no dialog box to await.
+	var dialog := (load("res://scripts/ui/dialog_box.gd") as GDScript).new() as DialogBox
+	add_child_autofree(dialog)
+	var temp_node := Node.new()
+	add_child_autofree(temp_node)
+	var doomed_runner := EventRunner.new()
+	temp_node.add_child(doomed_runner)
+	Clock.paused = false
+	doomed_runner.play(ProposeEvent.data("rosa"))
+	await wait_process_frames(1)
+	assert_true(GameFlow.cutscene_active, "precondition: the proposal scene is mid-play")
+	assert_true(Clock.paused, "precondition: the proposal scene has frozen the clock")
+	temp_node.free()  # tears down the runner WITHOUT _end_scene() ever running
+	await wait_process_frames(1)
+	assert_false(GameFlow.cutscene_active, "_exit_tree() backstop must clear the stuck gate")
+	assert_false(Clock.paused, "_exit_tree() backstop must restore Clock.paused")
+
+
+func test_wedding_scene_teardown_mid_play_restores_cutscene_gate_and_clock() -> void:
+	var dialog := (load("res://scripts/ui/dialog_box.gd") as GDScript).new() as DialogBox
+	add_child_autofree(dialog)
+	var temp_node := Node.new()
+	add_child_autofree(temp_node)
+	var doomed_runner := EventRunner.new()
+	temp_node.add_child(doomed_runner)
+	Clock.paused = false
+	doomed_runner.play(WeddingEvent.data("rosa"))
+	await wait_process_frames(1)
+	assert_true(GameFlow.cutscene_active, "precondition: the wedding scene is mid-play")
+	assert_true(Clock.paused, "precondition: the wedding scene has frozen the clock")
+	temp_node.free()
+	await wait_process_frames(1)
+	assert_false(GameFlow.cutscene_active, "_exit_tree() backstop must clear the stuck gate")
+	assert_false(Clock.paused, "_exit_tree() backstop must restore Clock.paused")
+
+
