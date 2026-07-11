@@ -139,11 +139,16 @@ func points(npc_id: String) -> int:
 func level(npc_id: String) -> int:
 	## Clamped to max_level_for(npc_id) — L10 for everyone except the current
 	## spouse, who can bank up to L14 (Marriage M1, see SPOUSE_MAX_POINTS'
-	## doc). level_for_points() itself stays a generic, cap-agnostic pure
-	## function (existing tests pin its own L10 clamp) — the spouse lift is
-	## applied HERE, one level up, so a raw points/tier conversion never needs
-	## to know about marriage state.
-	return mini(level_for_points(points(npc_id)), max_level_for(npc_id))
+	## doc). level_for_points() itself stays a generic, PURE, cap-agnostic
+	## function fixed at the ordinary L10 ceiling (existing tests pin that
+	## exact clamp — it must keep answering "10" for 5000 points regardless of
+	## marriage state, since it has no npc_id to check against). Computing a
+	## married spouse's level therefore can't route through it for points
+	## above 1000: clampi(pts/100, 0, max_level_for(npc_id)) is applied
+	## directly here instead, one level up, so the spouse lift never needs
+	## level_for_points() itself to know about marriage state.
+	@warning_ignore("integer_division")
+	return clampi(points(npc_id) / 100, 0, max_level_for(npc_id))
 
 
 static func level_for_points(pts: int) -> int:
