@@ -6,6 +6,14 @@ extends RefCounted
 ##
 ## Shape consumed by DialogResolver.pick() — see data/dialog/marta.gd's
 ## header comment for the full documented shape.
+##
+## Marriage M1 (Rosa is the pilot candidate): heart_events.l8/l10 and
+## dating_lines below are PLACEHOLDER-BUT-REAL per the contract — 2-line
+## scenes with a real choice, not filler — M2 replaces this text with
+## verbatim characters.md content once the roster's romance arcs are
+## authored. Every other candidate (Willow/Bram/Sten/Garrick) has NO l8/l10/
+## dating_lines yet; npc.gd's _has_heart_event_data()/DialogResolver's
+## dating-slot fallback both degrade gracefully for them until M2.
 
 const DATA := {
 	"tier_pools": {
@@ -71,7 +79,38 @@ const DATA := {
 			"response_a": "(no dialog choice text; the scene simply holds a beat) \"...Thanks, love. Rule holds. Even for me, turns out.\"",
 			"response_b": "\"That's the till talking, love. Good night.\"",
 		},
+		"l8": {
+			"id": "rosa_l8_placeholder",
+			"lines": [
+				"After close, Rosa's still wiping down the bar long after the last cider glass is dry.",
+				"\"I keep finding reasons to close up slow when you're the one still here, love. That mean what I think it means?\"",
+			],
+			"choice_a": "\"It means exactly that.\"",
+			"choice_b": "\"Let's not rush it.\"",
+			"response_a": "\"Good. Good! ...Don't tell Alden I got flustered over a farmer.\"",
+			"response_b": "\"Fair. The Ember isn't going anywhere. Neither am I, turns out.\"",
+		},
+		"l10": {
+			"id": "rosa_l10_placeholder",
+			"lines": [
+				"Rosa locks the saloon door herself for once, instead of leaving it to Finn.",
+				"\"Mother's rule was 'no one leaves sad.' I've got a new one brewing, and it's got your name in it, love. Whenever you're ready.\"",
+			],
+			"choice_a": "\"I'm ready now.\"",
+			"choice_b": "\"Soon. I promise.\"",
+			"response_a": "\"...Now works. Now works VERY well, actually.\"",
+			"response_b": "\"Soon, then. I'm patient. Mostly.\"",
+		},
 	},
+	## Marriage M1 (bible §6): dating-flavored lines, checked when
+	## Romance.is_dating("rosa") is true, above the ordinary tier pool but
+	## below any special-occasion line (birthday/festival/rain/seasonal) —
+	## see dialog_resolver.gd's precedence doc. Placeholder-but-real for the
+	## M1 pilot; M2 authors the full verbatim set.
+	"dating_lines": [
+		"There's my favorite regular. Or — more than regular, these days. I like that.",
+		"Don't tell the whole town, love, but I've been saving you the good stool.",
+	],
 	## Level perks (bible/characters.md): L5 gift: 2 melon seeds; L8 gift:
 	## "The Ember's own" recipe dialog + 250g. See marta.gd's "perks" doc for
 	## the shape npc.gd consumes.

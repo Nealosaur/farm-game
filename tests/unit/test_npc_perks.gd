@@ -78,6 +78,11 @@ func test_l8_perk_grants_gold_once_l5_and_l8_are_independent_gates() -> void:
 	Relationships._get_or_create("rosa")["points"] = 800  # level 8: both l5 and l8 gates are met
 	Relationships.mark_event_seen("rosa", "l3")
 	Relationships.mark_event_seen("rosa", "l7")
+	# Marriage M1: Rosa (the romance pilot) also has a REAL l8 heart-event
+	# scene now — mark it seen so this test still exercises the ordinary
+	# perk-grant-on-talk path it's actually about, not the heart-event gate
+	# (which would otherwise intercept interact() before the perk ever runs).
+	Relationships.mark_event_seen("rosa", "l8")
 
 	# pending_perk() returns "l8" first when both qualify (mirrors pending_event's documented precedence).
 	assert_eq(Relationships.pending_perk("rosa"), "l8")

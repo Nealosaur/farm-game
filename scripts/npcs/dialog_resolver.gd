@@ -7,13 +7,25 @@ extends RefCounted
 ##
 ## Precedence (characters.md header, binding):
 ##   heart-event-if-pending > birthday > festival > rain > seasonal
-##   (if present for the NPC's current tier) > tier pool (random,
-##   no-repeat-until-exhausted).
+##   (if present for the NPC's current tier) > DATING (Marriage M1) > tier
+##   pool (random, no-repeat-until-exhausted).
 ## Heart events are NOT resolved by pick() — npc.gd checks
 ## Relationships.pending_event() itself and, if set, plays the heart-event
 ## script directly (it has its own multi-line + choice shape, distinct from
 ## a single resolved line). pick() covers everything AFTER that gate: the
 ## ordinary "what does the NPC say when I talk to them" question.
+##
+## Marriage M1 (bible §2/§6): a "dating" pool slot sits ABOVE the tier pool
+## but BELOW every special-occasion line (birthday/festival/rain/seasonal) —
+## a dating candidate still gets their birthday/rain/seasonal flavor first
+## exactly like before, but on an otherwise-ordinary talk they now surface a
+## dating-flavored line instead of their plain tier-pool text. Gated on
+## `context["is_dating"]` (caller-supplied — see npc.gd's _resolver_context())
+## AND `data["dating_lines"]` being non-empty, so an NPC with no dating_lines
+## authored yet (every candidate except Rosa, until M2) simply falls straight
+## through to the tier pool unchanged — same graceful-degradation shape as
+## npc.gd's _has_heart_event_data() gate for l8/l10. Married-spouse dialog is
+## a separate, HIGHER-tier pool that M3 adds — out of scope here.
 ##
 ## context keys (all required except festival_id; caller fills from
 ## Clock/Relationships/Festival):
@@ -77,6 +89,16 @@ static func pick(data: Dictionary, context: Dictionary) -> Dictionary:
 	var seasonal_line := _seasonal_line_for(data, tier, int(context.get("season", 0)))
 	if seasonal_line != "":
 		return {"text": seasonal_line, "source": "seasonal", "pool_index": -1}
+
+	if bool(context.get("is_dating", false)):
+		var dating_lines: Array = data.get("dating_lines", [])
+		if not dating_lines.is_empty():
+			var rng: RandomNumberGenerator = context.get("rng")
+			var idx: int = rng.randi() % dating_lines.size() if rng != null else 0
+			return {"text": dating_lines[idx], "source": "dating", "pool_index": -1}
+		# No dating_lines authored for this NPC yet (M2 work): fall through to
+		# the ordinary tier pool below, same graceful-degradation spirit as
+		# the festival-lines fallback above.
 
 	return _pick_from_tier_pool(data, tier, context)
 

@@ -16,6 +16,14 @@ const FIXTURE := {
 	"rain": ["rainy"],
 	"festival": ["festive"],
 	"birthday_reaction": "happy birthday to you",
+	"dating_lines": ["sweet on you", "glad you came by"],
+}
+
+## Marriage M1: an NPC with NO dating_lines authored yet (every candidate
+## except Rosa, until M2) — must fall straight through to the tier pool even
+## when is_dating is true, not crash/return a blank line.
+const FIXTURE_NO_DATING_LINES := {
+	"tier_pools": {"STRANGER": ["s0", "s1"]},
 }
 
 
@@ -26,6 +34,7 @@ func _ctx(overrides: Dictionary = {}) -> Dictionary:
 		"is_raining": false,
 		"is_festival": false,
 		"is_birthday": false,
+		"is_dating": false,
 		"shown_indices": [],
 		"rng": null,
 	}
@@ -83,6 +92,53 @@ func test_falls_back_to_tier_pool_when_nothing_else_matches() -> void:
 	var result := DialogResolver.pick(FIXTURE, ctx)
 	assert_eq(result["source"], "tier_pool")
 	assert_true(result["text"] in ["a0", "a1"])
+
+
+## ---- Marriage M1: dating pool slot (above tier, below every special-occasion line) ----
+
+func test_dating_line_shown_when_dating_and_nothing_higher_precedence_matches() -> void:
+	var ctx := _ctx({"tier": "ACQUAINT", "is_dating": true})
+	var result := DialogResolver.pick(FIXTURE, ctx)
+	assert_eq(result["source"], "dating")
+	assert_true(result["text"] in ["sweet on you", "glad you came by"])
+
+
+func test_dating_line_not_shown_when_not_dating() -> void:
+	var ctx := _ctx({"tier": "ACQUAINT", "is_dating": false})
+	var result := DialogResolver.pick(FIXTURE, ctx)
+	assert_eq(result["source"], "tier_pool")
+
+
+func test_birthday_still_beats_dating() -> void:
+	var ctx := _ctx({"is_dating": true, "is_birthday": true})
+	var result := DialogResolver.pick(FIXTURE, ctx)
+	assert_eq(result["source"], "birthday")
+
+
+func test_festival_still_beats_dating() -> void:
+	var ctx := _ctx({"is_dating": true, "is_festival": true})
+	var result := DialogResolver.pick(FIXTURE, ctx)
+	assert_eq(result["source"], "festival")
+
+
+func test_rain_still_beats_dating() -> void:
+	var ctx := _ctx({"is_dating": true, "is_raining": true})
+	var result := DialogResolver.pick(FIXTURE, ctx)
+	assert_eq(result["source"], "rain")
+
+
+func test_seasonal_still_beats_dating() -> void:
+	var ctx := _ctx({"is_dating": true, "season": 0, "tier": "FRIEND"})
+	var result := DialogResolver.pick(FIXTURE, ctx)
+	assert_eq(result["source"], "seasonal")
+
+
+func test_dating_gracefully_falls_through_when_npc_has_no_dating_lines_authored() -> void:
+	## Every candidate except Rosa (M1 pilot) — M2 authors the rest.
+	var ctx := _ctx({"tier": "STRANGER", "is_dating": true})
+	var result := DialogResolver.pick(FIXTURE_NO_DATING_LINES, ctx)
+	assert_eq(result["source"], "tier_pool")
+	assert_true(result["text"] in ["s0", "s1"])
 
 
 func test_tier_pool_no_repeat_until_exhausted() -> void:

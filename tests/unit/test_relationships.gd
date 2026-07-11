@@ -301,6 +301,50 @@ func test_pending_event_l7_after_l3_seen() -> void:
 	assert_eq(Relationships.pending_event(NPC_ID), "l7")
 
 
+## ---- Marriage M1: L8/L10 romance heart-event gating (romanceable only) ----
+
+func test_non_candidate_never_gets_l8_or_l10_even_at_max_level() -> void:
+	## NPC_ID ("marta") is explicitly platonic (bible §1) — she must keep
+	## L3/L7 only, no matter how high her bond goes.
+	Relationships._get_or_create(NPC_ID)["points"] = 1000  # L10
+	Relationships.mark_event_seen(NPC_ID, "l3")
+	Relationships.mark_event_seen(NPC_ID, "l7")
+	assert_eq(Relationships.pending_event(NPC_ID), "", "a platonic NPC must never surface l8/l10")
+
+
+func test_romanceable_candidate_gets_l8_after_l7_seen() -> void:
+	Relationships._get_or_create("rosa")["points"] = 800  # L8
+	Relationships.mark_event_seen("rosa", "l3")
+	Relationships.mark_event_seen("rosa", "l7")
+	assert_eq(Relationships.pending_event("rosa"), "l8")
+
+
+func test_romanceable_candidate_gets_l10_after_l8_seen() -> void:
+	Relationships._get_or_create("rosa")["points"] = 1000  # L10
+	Relationships.mark_event_seen("rosa", "l3")
+	Relationships.mark_event_seen("rosa", "l7")
+	Relationships.mark_event_seen("rosa", "l8")
+	assert_eq(Relationships.pending_event("rosa"), "l10")
+
+
+func test_l10_takes_precedence_over_l8_when_both_qualify() -> void:
+	Relationships._get_or_create("rosa")["points"] = 1000
+	Relationships.mark_event_seen("rosa", "l3")
+	Relationships.mark_event_seen("rosa", "l7")
+	assert_eq(Relationships.pending_event("rosa"), "l10", "l10 takes precedence, same as l7-over-l3")
+
+
+func test_l8_takes_precedence_over_l7_when_both_unseen() -> void:
+	## Precedence is checked highest-level-first (l10 > l8 > l7 > l3) — same
+	## documented "shouldn't happen in practice, stay deterministic" shape the
+	## class doc already establishes for l7-over-l3 (a normal player always
+	## clears each gate via interact() before the next one is reachable; this
+	## only matters for an out-of-order jump, e.g. via a debug/test helper).
+	Relationships._get_or_create("rosa")["points"] = 800
+	Relationships.mark_event_seen("rosa", "l3")
+	assert_eq(Relationships.pending_event("rosa"), "l8")
+
+
 func test_apply_heart_event_choice_empathetic_adds_thirty() -> void:
 	Relationships._get_or_create(NPC_ID)["points"] = 300
 	Relationships.apply_heart_event_choice(NPC_ID, true)

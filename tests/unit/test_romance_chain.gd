@@ -93,6 +93,12 @@ func _arm_rosa_dating_at_l10(town: Node2D) -> void:
 	Relationships._get_or_create("rosa")["points"] = 1000  # L10
 	Relationships.mark_event_seen("rosa", "l3")
 	Relationships.mark_event_seen("rosa", "l7")
+	# Rosa (the romance pilot) also has REAL l8/l10 heart-event scenes now —
+	# mark them seen so this chain test isolates the pendant->propose trigger
+	# it's actually about, not the heart-event gate (which would otherwise
+	# intercept interact() before the "Give Pendant" choice is ever offered).
+	Relationships.mark_event_seen("rosa", "l8")
+	Relationships.mark_event_seen("rosa", "l10")
 	Romance.start_dating("rosa")
 	assert_true(Romance.is_dating("rosa"), "precondition: dating before the pendant")
 
@@ -127,6 +133,7 @@ func test_full_rosa_pilot_chain_bouquet_to_married() -> void:
 	Relationships._get_or_create("rosa")["points"] = 800  # L8
 	Relationships.mark_event_seen("rosa", "l3")
 	Relationships.mark_event_seen("rosa", "l7")
+	Relationships.mark_event_seen("rosa", "l8")  # isolate the bouquet flow from Rosa's real l8 heart-event
 	Inventory.add_item("bouquet")
 	Inventory.select_hotbar(0)
 	var rosa: NPC = town.npcs["rosa"]
@@ -149,6 +156,7 @@ func test_full_rosa_pilot_chain_bouquet_to_married() -> void:
 
 	# ---- bond up to L10 ----
 	Relationships._get_or_create("rosa")["points"] = 1000
+	Relationships.mark_event_seen("rosa", "l10")  # isolate the pendant flow from Rosa's real l10 heart-event
 	assert_eq(Relationships.level("rosa"), 10)
 
 	# ---- pendant -> proposal scene ----

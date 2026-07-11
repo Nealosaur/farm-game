@@ -66,7 +66,8 @@ func _give_selected_item(target: NPC) -> void:
 func test_bouquet_at_l8_starts_dating_and_consumes_item() -> void:
 	Relationships._get_or_create("rosa")["points"] = 800  # L8
 	Relationships.mark_event_seen("rosa", "l3")
-	Relationships.mark_event_seen("rosa", "l7")  # clear the L7 heart-event gate so talk resolves normally
+	Relationships.mark_event_seen("rosa", "l7")
+	Relationships.mark_event_seen("rosa", "l8")  # clear Rosa's own L8 heart-event gate so talk resolves normally
 	Inventory.add_item("bouquet")
 	Inventory.select_hotbar(0)
 	watch_signals(EventBus)
@@ -132,6 +133,8 @@ func test_pendant_while_dating_at_l10_triggers_proposal_and_consumes_item() -> v
 	Relationships._get_or_create("rosa")["points"] = 1000  # L10
 	Relationships.mark_event_seen("rosa", "l3")
 	Relationships.mark_event_seen("rosa", "l7")
+	Relationships.mark_event_seen("rosa", "l8")
+	Relationships.mark_event_seen("rosa", "l10")
 	Romance.start_dating("rosa")
 	Inventory.add_item("pendant")
 	Inventory.select_hotbar(0)
@@ -159,6 +162,7 @@ func test_pendant_while_dating_below_l10_is_an_ordinary_gift() -> void:
 	Relationships._get_or_create("rosa")["points"] = 900  # dating-eligible level but not L10
 	Relationships.mark_event_seen("rosa", "l3")
 	Relationships.mark_event_seen("rosa", "l7")
+	Relationships.mark_event_seen("rosa", "l8")
 	Romance.start_dating("rosa")
 	# start_dating requires L8+; drop back under L10 to isolate the L10 gate.
 	Inventory.add_item("pendant")
@@ -176,6 +180,8 @@ func test_pendant_while_not_dating_is_an_ordinary_gift() -> void:
 	Relationships._get_or_create("rosa")["points"] = 1000  # L10 but never started dating
 	Relationships.mark_event_seen("rosa", "l3")
 	Relationships.mark_event_seen("rosa", "l7")
+	Relationships.mark_event_seen("rosa", "l8")
+	Relationships.mark_event_seen("rosa", "l10")
 	Inventory.add_item("pendant")
 	Inventory.select_hotbar(0)
 
@@ -184,3 +190,61 @@ func test_pendant_while_not_dating_is_an_ordinary_gift() -> void:
 
 	assert_false(GameFlow.cutscene_active, "no proposal without dating first")
 	assert_true(Relationships.has_gifted_today("rosa"))
+
+
+## ---- Marriage M1: Rosa's L8/L10 heart events (pilot) ----
+
+func test_rosa_l8_heart_event_triggers_and_gates_normal_talk() -> void:
+	Relationships._get_or_create("rosa")["points"] = 800  # L8
+	Relationships.mark_event_seen("rosa", "l3")
+	Relationships.mark_event_seen("rosa", "l7")
+	npc.interact(null)
+	assert_true(dialog.is_open())
+	assert_eq(dialog.label.text, RosaDialog.DATA["heart_events"]["l8"]["lines"][0])
+
+
+func test_rosa_l8_heart_event_choice_a_applies_plus_thirty_and_marks_seen() -> void:
+	Relationships._get_or_create("rosa")["points"] = 800
+	Relationships.mark_event_seen("rosa", "l3")
+	Relationships.mark_event_seen("rosa", "l7")
+	npc.interact(null)
+	dialog._advance()  # reveal the second line
+	dialog._advance()  # reveal choice buttons
+	(dialog.choice_box.get_child(0) as Button).pressed.emit()
+	assert_eq(Relationships.points("rosa"), 830)
+	assert_eq(Relationships.pending_event("rosa"), "", "l8 must be marked seen (l10 not yet reachable at L8 points)")
+
+
+func test_rosa_l10_heart_event_after_l8_seen() -> void:
+	Relationships._get_or_create("rosa")["points"] = 1000  # L10
+	Relationships.mark_event_seen("rosa", "l3")
+	Relationships.mark_event_seen("rosa", "l7")
+	Relationships.mark_event_seen("rosa", "l8")
+	npc.interact(null)
+	assert_eq(dialog.label.text, RosaDialog.DATA["heart_events"]["l10"]["lines"][0])
+
+
+## ---- Marriage M1: dating dialog resolver hook (Rosa pilot) ----
+
+func test_dating_line_appears_on_ordinary_talk_once_dating() -> void:
+	Relationships._get_or_create("rosa")["points"] = 850  # past L8, below L10 — ordinary talk territory
+	Relationships.mark_event_seen("rosa", "l3")
+	Relationships.mark_event_seen("rosa", "l7")
+	Relationships.mark_event_seen("rosa", "l8")
+	Relationships.mark_perk_given("rosa", "l5")  # clear both perk lines so they don't prepend
+	Relationships.mark_perk_given("rosa", "l8")
+	Romance.start_dating("rosa")
+	npc.interact(null)
+	assert_true(dialog.label.text in RosaDialog.DATA["dating_lines"],
+		"once dating, an ordinary talk must surface a dating-flavored line")
+
+
+func test_dating_line_does_not_appear_before_dating_starts() -> void:
+	Relationships._get_or_create("rosa")["points"] = 850
+	Relationships.mark_event_seen("rosa", "l3")
+	Relationships.mark_event_seen("rosa", "l7")
+	Relationships.mark_event_seen("rosa", "l8")
+	Relationships.mark_perk_given("rosa", "l5")
+	Relationships.mark_perk_given("rosa", "l8")
+	npc.interact(null)
+	assert_false(dialog.label.text in RosaDialog.DATA["dating_lines"])
