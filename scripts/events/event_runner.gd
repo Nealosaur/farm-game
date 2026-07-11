@@ -462,6 +462,26 @@ func _cmd_end(_args: Array[String]) -> void:
 	_running = false
 
 
+## ---- Marriage M1: dating-state commands (parametric propose/wedding DSL) ----
+
+func _cmd_engage(args: Array[String]) -> void:
+	## `engage <npc_id>` — Romance.propose_accept(): sets GameState.flags
+	## engaged_to/wedding_day (the wedding fires at the NEXT day-rollover).
+	## Used by propose.gd's accept branch.
+	if args.is_empty():
+		return
+	Romance.propose_accept(args[0])
+
+
+func _cmd_marry(args: Array[String]) -> void:
+	## `marry <npc_id>` — Romance.marry(): sets married+spouse, ends every
+	## OTHER dating relationship (with its own small bond ding), and lifts
+	## the relationship cap to L14 for this NPC. Used by wedding.gd's finale.
+	if args.is_empty():
+		return
+	Romance.marry(args[0])
+
+
 ## ---- walking (shared by `move` for both NPC actors and the player) ----
 
 func wait_idle_frame_signal() -> void:

@@ -594,6 +594,13 @@ func _on_talk_choice(index: int) -> void:
 func _resolve_gift() -> void:
 	if _gift_item_id == "":
 		return
+	if _gift_item_id == "bouquet":
+		_resolve_bouquet_gift()
+		return
+	if _gift_item_id == "pendant" and Romance.is_dating(npc_data.id) \
+			and Relationships.level(npc_data.id) >= Romance.PROPOSAL_MIN_LEVEL:
+		_resolve_pendant_proposal()
+		return
 	var reaction := Relationships.gift(npc_data.id, _gift_item_id, npc_data)
 	if reaction == "already":
 		return  # gift already used today between the choice showing and resolving
@@ -606,6 +613,58 @@ func _resolve_gift() -> void:
 		dialog.show_lines(lines)
 	gift_given.emit(npc_data.id, _gift_item_id, reaction)
 	_gift_item_id = ""
+
+
+## ---- Marriage M1: bouquet -> dating, pendant -> proposal ----
+
+## Placeholder-but-real lines (M1) — M2 authors a per-candidate verbatim
+## version of both (bible: "the reaction LINE is an M2/M3 hook"). Documented
+## choice: on REFUSAL (below L8, or the target isn't romanceable at all), the
+## bouquet is NOT consumed — a rejected bouquet staying in the player's
+## hotbar reads kinder than losing it for a gift that plainly didn't land,
+## and it mirrors _resolve_gift's own "already" short-circuit (nothing
+## consumed when the gift doesn't actually go through).
+const _BOUQUET_DATING_STARTED_LINE := "A bouquet. For me? ...Yes. Let's see where this goes."
+const _BOUQUET_REFUSAL_ROMANCEABLE_LINE := "A bouquet... it's lovely, but I don't think I'm ready for that. Let's stay friends a while longer."
+const _BOUQUET_REFUSAL_NON_ROMANCEABLE_LINE := "Oh — that's sweet, but not like that. Thank you, though."
+
+
+func _resolve_bouquet_gift() -> void:
+	## Bible §3b: bouquet to a ROMANCEABLE candidate at L8+ starts dating (+
+	## a toast + a generic placeholder reaction line, M2 authors the real
+	## one). Below L8 or non-romanceable: a gentle refusal, no dating, item
+	## NOT consumed (see doc above) — Relationships.gift()'s ordinary bond
+	## math is deliberately skipped for a refusal too, since a bouquet isn't
+	## an ordinary liked/disliked item and refusing it shouldn't ding bond.
+	var dialog := get_tree().get_first_node_in_group("dialog_box") as DialogBox
+	var romanceable := Romance.is_romanceable(npc_data.id)
+	if romanceable and Romance.start_dating(npc_data.id):
+		Inventory.remove_item("bouquet", 1)
+		if dialog != null and not dialog.is_open():
+			var lines: Array[String] = [_BOUQUET_DATING_STARTED_LINE]
+			dialog.show_lines(lines)
+		EventBus.toast_requested.emit("You're dating %s!" % npc_data.display_name)
+		gift_given.emit(npc_data.id, "bouquet", "dating_started")
+		_gift_item_id = ""
+		return
+	var refusal_line := _BOUQUET_REFUSAL_ROMANCEABLE_LINE if romanceable else _BOUQUET_REFUSAL_NON_ROMANCEABLE_LINE
+	if dialog != null and not dialog.is_open():
+		var lines: Array[String] = [refusal_line]
+		dialog.show_lines(lines)
+	gift_given.emit(npc_data.id, "bouquet", "refused")
+	_gift_item_id = ""
+
+
+func _resolve_pendant_proposal() -> void:
+	## Bible §2/§5: pendant to a candidate you're DATING at L10 triggers the
+	## proposal cutscene (parametric DSL scene — see data/events/propose.gd).
+	## The pendant is consumed here (the proposal scene itself doesn't touch
+	## inventory) regardless of accept/decline inside the scene — presenting
+	## it is the "spend" moment, same as a real-life proposal ring.
+	Inventory.remove_item("pendant", 1)
+	gift_given.emit(npc_data.id, "pendant", "proposal_triggered")
+	_gift_item_id = ""
+	RomanceEvents.play_proposal(self, npc_data.id)
 
 
 func _open_shop() -> void:

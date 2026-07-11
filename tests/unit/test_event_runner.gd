@@ -60,6 +60,9 @@ func after_each() -> void:
 	get_tree().paused = false
 	SaveManager.world.erase("relationships")
 	Relationships.restore()
+	Romance._state = {}  # Marriage M1: engage/marry command tests mutate this
+	Romance._spouse = ""
+	SaveManager.world.erase("romance")
 
 
 func _script(lines: Array) -> Dictionary:
@@ -115,6 +118,28 @@ func test_gold_command_adds_gold() -> void:
 	runner.play(_script(["gold 300", "end"]))
 	await wait_process_frames(2)
 	assert_eq(GameState.gold, before + 300)
+
+
+## ---- Marriage M1: engage/marry commands ----
+
+func test_engage_command_sets_engagement_via_romance() -> void:
+	Romance._state = {}
+	Romance._spouse = ""
+	GameState.flags.erase("engaged_to")
+	GameState.flags.erase("wedding_day")
+	runner.play(_script(["engage rosa", "end"]))
+	await wait_process_frames(2)
+	assert_true(Romance.is_engaged())
+	assert_eq(Romance.engaged_to(), "rosa")
+
+
+func test_marry_command_sets_married_and_spouse_via_romance() -> void:
+	Romance._state = {}
+	Romance._spouse = ""
+	runner.play(_script(["marry rosa", "end"]))
+	await wait_process_frames(2)
+	assert_true(Romance.is_married_to("rosa"))
+	assert_eq(Romance.spouse(), "rosa")
 
 
 func test_toast_command_emits_toast_requested() -> void:

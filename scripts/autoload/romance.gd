@@ -170,6 +170,13 @@ func marry(npc_id: String) -> bool:
 	state["married"] = true
 	_spouse = npc_id
 	_persist()
+	# The engagement (GameState.flags engaged_to/wedding_day) is fully spent
+	# the moment a marriage actually lands — clearing it HERE (rather than
+	# leaving it to the wedding DSL script/caller) guarantees
+	# Romance.is_wedding_due() can never re-fire a second wedding for the
+	# same engagement, no matter what calls marry() (the wedding scene today,
+	# a future direct-marry path, or a test).
+	clear_engagement()
 	return true
 
 

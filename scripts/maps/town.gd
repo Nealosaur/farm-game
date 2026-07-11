@@ -136,8 +136,26 @@ func _ready() -> void:
 		(npcs[npc_id] as NPC).refresh_schedule("town")
 	_apply_festival_decor()
 	_add_event_director()
+	if not _check_wedding():
+		event_director.check()
 	EventBus.time_ticked.connect(_on_time_ticked)
 	EventBus.day_passed.connect(_on_day_passed)
+
+
+func _check_wedding() -> bool:
+	## Marriage M1 (bible §2/§5): the wedding fires the next town entry/block
+	## change on or after the day Romance.propose_accept() scheduled it for
+	## (Romance.is_wedding_due()) — same "map checks on entry + block change"
+	## shape as EventDirector's own authored scenes, but driven by Romance's
+	## engagement state rather than TriggerService preconditions (a wedding
+	## isn't gated on flags/hearts/items — it's a plain due-date). Returns
+	## true if it started the scene, so callers can skip their OWN
+	## event_director.check() the same tick (a wedding and an authored
+	## EventScript scene must never compete for the same cutscene slot — see
+	## romance_events.gd's play_wedding_if_due() doc).
+	if GameFlow.cutscene_active:
+		return false
+	return RomanceEvents.play_wedding_if_due(self)
 
 
 func _add_event_director() -> void:
@@ -154,7 +172,11 @@ func _add_event_director() -> void:
 	event_director.current_map_id = "town"
 	event_director.candidates = [GarrickStenBenchEvent.DATA, StenFangSteelEvent.DATA]
 	add_child(event_director)
-	event_director.check()
+	# NOT calling event_director.check() here — Marriage M1's _check_wedding()
+	# (see _ready(), just above this method) must get first refusal on the
+	# very first check too (a wedding and an authored scene must never both
+	# try to start), so the caller sequences: _check_wedding() first, and
+	# only calls event_director.check() itself if no wedding started.
 
 
 func _layout() -> PackedStringArray:
@@ -353,7 +375,7 @@ func _on_time_ticked(_hour, _minute) -> void:
 		_last_festival_phase = festival_phase
 		for npc_id: String in npcs:
 			(npcs[npc_id] as NPC).refresh_schedule("town")
-		if event_director != null:
+		if not _check_wedding() and event_director != null:
 			event_director.check()
 
 
