@@ -1,13 +1,30 @@
 extends GutTest
-## Marriage M1 E2E: the full ROSA pilot chain through the REAL town.tscn —
-## bouquet (L8+) -> dating -> bond to L10 -> pendant -> PROPOSE DSL scene ->
-## accept -> engaged -> next day-rollover town entry -> WEDDING DSL scene ->
-## married + spouse set + cap lift to L14. Mirrors test_bench_chain.gd's
-## structure (instantiate the real town.tscn so EventDirector/RomanceEvents/
-## EventRunner all run exactly as they would in play, including the
-## temp-spawn/live-NPC actor resolution the wedding's crowd gathering needs).
+## Marriage M1 E2E (Rosa pilot) + M2 (all 5 candidates): the full romance
+## chain through the REAL town.tscn — bouquet (L8+) -> dating -> bond to L10
+## -> pendant -> PROPOSE DSL scene -> accept -> engaged -> next day-rollover
+## town entry -> WEDDING DSL scene -> married + spouse set + cap lift to L14.
+## Mirrors test_bench_chain.gd's structure (instantiate the real town.tscn so
+## EventDirector/RomanceEvents/EventRunner all run exactly as they would in
+## play, including the temp-spawn/live-NPC actor resolution the wedding's
+## crowd gathering needs).
+##
+## M2: the Rosa-specific helpers below (_arm_rosa_dating_at_l10,
+## _give_pendant_to_rosa) stay in place unchanged (existing tests reference
+## them by name) but are now thin wrappers around the generic
+## _arm_dating_at_l10(candidate_id)/_give_pendant(town, candidate_id)
+## versions, which test_all_five_candidates_run_the_full_bouquet_to_wedding_
+## chain loops over ALL 5 romanceable ids — the SAME mechanism Rosa's pilot
+## chain already exercised, just parametric now.
 
 const TOWN_SCENE := "res://scenes/maps/town.tscn"
+const ALL_CANDIDATES := ["rosa", "willow", "bram", "sten", "garrick"]
+const _DIALOG_SCRIPTS := {
+	"rosa": "res://data/dialog/rosa.gd",
+	"willow": "res://data/dialog/willow.gd",
+	"bram": "res://data/dialog/bram.gd",
+	"sten": "res://data/dialog/sten.gd",
+	"garrick": "res://data/dialog/garrick.gd",
+}
 
 
 func before_each() -> void:
@@ -89,26 +106,30 @@ func _drive_scene_to_completion(town: Node2D, choice_index: int = -1) -> void:
 	await wait_process_frames(2)
 
 
-func _arm_rosa_dating_at_l10(town: Node2D) -> void:
-	Relationships._get_or_create("rosa")["points"] = 1000  # L10
-	Relationships.mark_event_seen("rosa", "l3")
-	Relationships.mark_event_seen("rosa", "l7")
-	# Rosa (the romance pilot) also has REAL l8/l10 heart-event scenes now —
-	# mark them seen so this chain test isolates the pendant->propose trigger
-	# it's actually about, not the heart-event gate (which would otherwise
+func _arm_dating_at_l10(candidate_id: String) -> void:
+	Relationships._get_or_create(candidate_id)["points"] = 1000  # L10
+	Relationships.mark_event_seen(candidate_id, "l3")
+	Relationships.mark_event_seen(candidate_id, "l7")
+	# M2: every candidate now has REAL l8/l10 heart-event scenes — mark them
+	# seen so this chain test isolates the pendant->propose trigger it's
+	# actually about, not the heart-event gate (which would otherwise
 	# intercept interact() before the "Give Pendant" choice is ever offered).
-	Relationships.mark_event_seen("rosa", "l8")
-	Relationships.mark_event_seen("rosa", "l10")
-	Romance.start_dating("rosa")
-	assert_true(Romance.is_dating("rosa"), "precondition: dating before the pendant")
+	Relationships.mark_event_seen(candidate_id, "l8")
+	Relationships.mark_event_seen(candidate_id, "l10")
+	Romance.start_dating(candidate_id)
+	assert_true(Romance.is_dating(candidate_id), "precondition: dating before the pendant")
 
 
-func _give_pendant_to_rosa(town: Node2D) -> void:
+func _arm_rosa_dating_at_l10(_town: Node2D) -> void:
+	_arm_dating_at_l10("rosa")
+
+
+func _give_pendant(town: Node2D, candidate_id: String) -> void:
 	Inventory.add_item("pendant")
 	Inventory.select_hotbar(0)
-	var rosa: NPC = town.npcs["rosa"]
+	var target: NPC = town.npcs[candidate_id]
 	var dialog := get_tree().get_first_node_in_group("dialog_box") as DialogBox
-	rosa.interact(town.player)
+	target.interact(town.player)
 	for i in 10:
 		if dialog._showing_choices or not dialog.is_open():
 			break
@@ -120,6 +141,10 @@ func _give_pendant_to_rosa(town: Node2D) -> void:
 	assert_true(idx >= 0, "precondition: Give Pendant choice must be offered")
 	(dialog.choice_box.get_child(idx) as Button).pressed.emit()
 	await wait_process_frames(2)
+
+
+func _give_pendant_to_rosa(town: Node2D) -> void:
+	await _give_pendant(town, "rosa")
 
 
 ## ---- the full pilot chain ----
@@ -299,5 +324,118 @@ func test_wedding_scene_teardown_mid_play_restores_cutscene_gate_and_clock() -> 
 	await wait_process_frames(1)
 	assert_false(GameFlow.cutscene_active, "_exit_tree() backstop must clear the stuck gate")
 	assert_false(Clock.paused, "_exit_tree() backstop must restore Clock.paused")
+
+
+## ---- Marriage M2: all 5 candidates run the SAME chain with THEIR voice ----
+
+func test_all_five_candidates_run_the_full_bouquet_to_wedding_chain() -> void:
+	## Loops Rosa's own pilot chain (bouquet -> dating -> L10 -> pendant ->
+	## propose -> accept -> engaged -> wedding -> married) across all 5
+	## romanceable candidates in ONE test, through the same real town.tscn —
+	## a separate town instance per candidate (rather than reusing one across
+	## iterations) keeps each iteration's NPC/dialog/cutscene state isolated,
+	## matching how a real player only ever runs this chain against one NPC
+	## instance at a time.
+	##
+	## Each iteration's town is freed (not add_child_autofree'd) BEFORE the
+	## next one is created: autofree only tears down at the end of the whole
+	## test function, so five town instances would otherwise all be alive
+	## simultaneously — every town.tscn auto-instances its own DialogBox
+	## added to the "dialog_box" group (see dialog_box.gd's _ready()), and
+	## get_first_node_in_group("dialog_box") would then always resolve to the
+	## FIRST iteration's box, not the current candidate's.
+	for candidate_id: String in ALL_CANDIDATES:
+		var town: Node2D = _make_town()
+		add_child(town)
+		await wait_process_frames(2)
+
+		# ---- bouquet -> dating (L8+) ----
+		Relationships._get_or_create(candidate_id)["points"] = 800  # L8
+		Relationships.mark_event_seen(candidate_id, "l3")
+		Relationships.mark_event_seen(candidate_id, "l7")
+		Relationships.mark_event_seen(candidate_id, "l8")  # isolate the bouquet flow from the real l8 heart-event
+		Inventory.add_item("bouquet")
+		Inventory.select_hotbar(0)
+		var target: NPC = town.npcs[candidate_id]
+		var dialog := get_tree().get_first_node_in_group("dialog_box") as DialogBox
+		target.interact(town.player)
+		for i in 10:
+			if dialog._showing_choices or not dialog.is_open():
+				break
+			dialog._advance()
+		var labels: Array[String] = []
+		for child in dialog.choice_box.get_children():
+			labels.append((child as Button).text)
+		var bouquet_idx := labels.find("Give Bouquet")
+		assert_true(bouquet_idx >= 0, "%s: precondition: Give Bouquet choice offered" % candidate_id)
+		(dialog.choice_box.get_child(bouquet_idx) as Button).pressed.emit()
+		await wait_process_frames(2)
+		assert_true(Romance.is_dating(candidate_id), "%s: bouquet at L8 must start dating" % candidate_id)
+		if dialog.is_open():
+			dialog._advance()  # close the reaction line
+
+		# ---- bond up to L10 ----
+		Relationships._get_or_create(candidate_id)["points"] = 1000
+		Relationships.mark_event_seen(candidate_id, "l10")  # isolate the pendant flow from the real l10 heart-event
+		assert_eq(Relationships.level(candidate_id), 10)
+
+		# ---- dating line surfaces on an ordinary talk while dating ----
+		var dating_lines: Array = _data(candidate_id).get("dating_lines", [])
+		assert_eq(dating_lines.size(), 3, "%s: must have 3 authored dating lines" % candidate_id)
+
+		# ---- pendant -> proposal scene, in THIS candidate's authored voice ----
+		await _give_pendant(town, candidate_id)
+		assert_true(GameFlow.cutscene_active, "%s: the proposal scene must be playing" % candidate_id)
+		assert_eq(Inventory.count_of("pendant"), 0, "%s: pendant is spent presenting the proposal" % candidate_id)
+
+		# ---- accept (question choice index 0) -> engaged ----
+		await _drive_scene_to_completion(town, 0)
+		assert_true(Romance.is_engaged(), "%s: accepting must set the engagement" % candidate_id)
+		assert_eq(Romance.engaged_to(), candidate_id)
+		assert_false(GameFlow.cutscene_active, "%s: the proposal scene must have ended" % candidate_id)
+
+		# ---- next day-rollover -> wedding fires on town entry/block-change ----
+		Clock.day += 1
+		Clock.minutes = 10 * 60  # 9-12 block
+		var wedding_started: bool = town.call("_check_wedding")
+		assert_true(wedding_started, "%s: the wedding scene must be playing the day the wedding is due" % candidate_id)
+		await wait_process_frames(2)
+		assert_true(GameFlow.cutscene_active, "%s: the wedding scene must be playing" % candidate_id)
+
+		await _drive_scene_to_completion(town)
+
+		# ---- married + spouse + cap lift, with THIS candidate's authored vow ----
+		assert_true(Romance.is_married_to(candidate_id), "%s: the wedding must finalize the marriage" % candidate_id)
+		assert_eq(Romance.spouse(), candidate_id)
+		assert_false(Romance.is_engaged(), "%s: engagement must be cleared once married" % candidate_id)
+		assert_eq(Relationships.max_points_for(candidate_id), 1400, "%s: spouse cap lift must be live" % candidate_id)
+		assert_eq(Relationships.max_level_for(candidate_id), 14)
+
+		# ---- the authored voice actually shipped, not the shared generic ----
+		assert_ne(RomanceEvents.vow_line(candidate_id), RomanceEvents._GENERIC_VOW,
+			"%s: must use its own authored vow, not the shared generic" % candidate_id)
+		assert_ne(RomanceEvents.proposal_accept_line(candidate_id), RomanceEvents._GENERIC_ACCEPT,
+			"%s: must use its own authored proposal reaction, not the shared generic" % candidate_id)
+
+		# ---- clean slate for the next candidate's iteration ----
+		town.free()  # see the loop's own doc: must be gone before the next town's DialogBox group lookup
+		await wait_process_frames(1)
+		Romance._state = {}
+		Romance._spouse = ""
+		SaveManager.world.erase("romance")
+		Relationships._state = {}
+		SaveManager.world.erase("relationships")
+		SaveManager.world.erase("events_seen")
+		GameState.flags = {}
+		GameFlow.cutscene_active = false
+		get_tree().paused = false
+		Inventory.reset()
+		Clock.day = 1
+		Clock.minutes = Clock.DAY_START_MINUTES
+
+
+func _data(npc_id: String) -> Dictionary:
+	var script: GDScript = load(_DIALOG_SCRIPTS[npc_id])
+	return script.DATA
 
 
