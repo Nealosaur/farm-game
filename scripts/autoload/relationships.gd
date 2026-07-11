@@ -344,7 +344,7 @@ func _decay_one(npc_id: String) -> void:
 ## ---- heart events ----
 
 func pending_event(npc_id: String) -> String:
-	## "l3"/"l7"/"l8"/"l10" when the level gate is met and not yet marked
+	## "l3"/"l7"/"l8"/"l10"/"l14" when the level gate is met and not yet marked
 	## seen, else "". Highest-qualifying-level takes precedence (shouldn't
 	## matter in practice since each lower one is marked seen long before the
 	## next level is reached, but keeps this deterministic).
@@ -356,9 +356,25 @@ func pending_event(npc_id: String) -> String:
 	## romance heart event even if some future content ever pushed their bond
 	## to L8+ — the roster gate is checked first and short-circuits both new
 	## slots together.
+	##
+	## Marriage M3 (bible §3: "14-heart spouse event... the relationship cap
+	## moves to L14 for a spouse"): "l14" is gated on
+	## Romance.is_married_to(npc_id) specifically, NOT just is_romanceable —
+	## L14 is structurally unreachable for a merely-dating candidate anyway
+	## (max_level_for() caps everyone but the current spouse at L10), but the
+	## explicit is_married_to() check documents the real intent (this is the
+	## SPOUSE capstone, not "any romanceable candidate who somehow hit L14")
+	## and keeps this correct even if a future stride ever loosens the level
+	## cap for a non-spouse. Checked ABOVE l10 (a married spouse's L10 event
+	## is always already seen long before L14, same "shouldn't matter in
+	## practice" note as the rest of this function, but the ordering is
+	## correct either way).
 	var state := _get_or_create(npc_id)
 	var seen: Array = state.get("events_seen", [])
 	var lvl := level(npc_id)
+	if Romance.is_married_to(npc_id):
+		if lvl >= 14 and not ("l14" in seen):
+			return "l14"
 	if Romance.is_romanceable(npc_id):
 		if lvl >= 10 and not ("l10" in seen):
 			return "l10"

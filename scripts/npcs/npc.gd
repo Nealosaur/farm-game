@@ -163,9 +163,28 @@ func interact(player: Node) -> void:
 	if dialog == null or dialog.is_open():
 		return
 
+	var pending := Relationships.pending_event(npc_data.id)
+	# Marriage M3: "l14" is the spouse capstone — a full EventRunner cutscene
+	# (camera + speak lines via a temp/live-actor resolve, no player choice),
+	# NOT the ordinary two-choice heart-event shape _play_heart_event()
+	# expects, so it gets its own dedicated branch BEFORE
+	# _pause_walk_for_dialog() runs below. Reason: that helper connects
+	# dialog.finished ONE-SHOT to resume this NPC's walk/wander the moment the
+	# FIRST dialog session closes — exactly right for a single show_lines/
+	# show_choices call, but wrong for the capstone's EventRunner, which opens
+	# and closes the SAME DialogBox once per authored line (see
+	# EventRunner._cmd_speak) and would therefore resume this NPC's walking
+	# mid-cutscene, after just the first spoken line. The capstone scene's own
+	# `face` commands handle orientation instead once it starts.
+	# Relationships.pending_event() already gates this on
+	# Romance.is_married_to() + L14 + not-yet-seen, so reaching here means
+	# every precondition already holds.
+	if pending == "l14":
+		RomanceEvents.play_spouse_capstone(self, npc_data.id)
+		return
+
 	_pause_walk_for_dialog(player)
 
-	var pending := Relationships.pending_event(npc_data.id)
 	if pending != "" and _has_heart_event_data(pending):
 		_play_heart_event(dialog, pending)
 		return

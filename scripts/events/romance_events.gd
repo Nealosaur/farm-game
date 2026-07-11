@@ -159,6 +159,35 @@ static func _scene_parent_for(from_node: Node) -> Node:
 	return from_node
 
 
+## ---- Marriage M3: launching the 14-heart spouse capstone from interact() ----
+
+static func play_spouse_capstone(from_node: Node, spouse_id: String) -> void:
+	## Called from npc.gd's interact() the first time the player talks to
+	## their spouse at L14 (see Relationships.pending_event()'s "l14" gate) —
+	## same "spawn a plain EventRunner as a child of the map root" shape as
+	## play_proposal() above, since the capstone has no TriggerService
+	## precondition matrix of its own either (it's gated on relationship level
+	## + marriage state, which npc.gd/Relationships already own). Marks the
+	## event seen via Relationships.mark_event_seen(spouse_id, "l14") once the
+	## scene finishes, so it never re-fires (mirrors EventDirector's own
+	## "mark forever-seen on scene finish" shape, but through Relationships'
+	## events_seen list rather than SaveManager.world["events_seen"], since
+	## this is a per-NPC heart-event slot like l3/l7/l8/l10, not a map-scoped
+	## authored scene).
+	var parent := _scene_parent_for(from_node)
+	if parent == null:
+		return
+	var runner := EventRunner.new()
+	parent.add_child(runner)
+	runner.finished.connect(runner.queue_free, CONNECT_ONE_SHOT)
+	runner.finished.connect(_on_spouse_capstone_finished.bind(spouse_id), CONNECT_ONE_SHOT)
+	runner.play(SpouseCapstoneEvent.data(spouse_id))
+
+
+static func _on_spouse_capstone_finished(spouse_id: String) -> void:
+	Relationships.mark_event_seen(spouse_id, "l14")
+
+
 ## ---- launching the wedding scene on the due day-rollover ----
 
 static func play_wedding_if_due(from_node: Node) -> bool:
