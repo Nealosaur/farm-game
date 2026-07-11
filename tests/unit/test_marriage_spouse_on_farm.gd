@@ -152,6 +152,22 @@ func test_garrick_as_spouse_keeps_a_single_instance_not_a_duplicate() -> void:
 	add_child_autofree(farm)
 	await wait_process_frames(2)
 	assert_false(farm.npcs.has("garrick"), "Garrick must not get a second registry-driven instance")
+
+
+func test_marrying_sten_keeps_the_forge_reachable_on_the_farm() -> void:
+	## Milestone-review CRITICAL regression guard: marrying Sten vacates the
+	## town smithy (he moves to the farm), so the forge UI MUST exist on the
+	## farm or his "Forge" option dead-ends — silently killing all tool-tier
+	## upgrades / Fangsteel / iridium for the rest of the save.
+	Romance._state = {"sten": {"dating": true, "married": true}}
+	Romance._spouse = "sten"
+	Clock.minutes = 10 * 60  # 9-12: a smithy block, so his "Forge" option is live
+	var farm := (load("res://scenes/maps/farm.tscn") as PackedScene).instantiate()
+	add_child_autofree(farm)
+	await wait_process_frames(2)
+	assert_true(farm.npcs.has("sten"), "Sten spouse spawns on the farm")
+	assert_not_null(farm.get_tree().get_first_node_in_group("forge_screen"),
+		"the forge UI must be instanced on the farm so a Sten spouse can forge at home")
 	assert_not_null(farm.garrick, "Garrick's own dedicated instance must still exist")
 	var garrick_count := 0
 	for child in farm.find_children("*", "NPC", true, false):

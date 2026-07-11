@@ -147,6 +147,12 @@ func _ready() -> void:
 		"res://scripts/ui/dialog_box.gd",
 		"res://scripts/ui/shop_screen.gd",
 		"res://scripts/ui/cooking_screen.gd",
+		# Marrying Sten moves him to the farm and vacates the town smithy; the
+		# forge UI must exist here too or his "Forge" option would dead-end
+		# (milestone-review CRITICAL fix). Naturally gated: the "Forge" choice
+		# only appears when a has_forge NPC is present — on the farm that's
+		# only a Sten spouse.
+		"res://scripts/ui/forge_screen.gd",
 		"res://scripts/ui/journal.gd",
 		"res://scripts/components/day_flow.gd",
 		"res://scripts/ui/pause_menu.gd",
